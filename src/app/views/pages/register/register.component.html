@@ -1,54 +1,356 @@
-<div class="bg-light dark:bg-transparent min-vh-100 d-flex flex-row align-items-center">
+<div class="bg-light dark:bg-dark min-vh-100 d-flex flex-row align-items-center" style="background: linear-gradient(135deg, var(--cui-primary) 0%, var(--cui-secondary) 100%) !important;">
   <c-container>
     <c-row class="justify-content-center">
-      <c-col lg="7" md="9" xl="6">
-        <c-card class="mx-4">
-          <c-card-body class="p-4">
+      <c-col lg="10" xl="8">
+        <c-card style="box-shadow: 0 20px 40px rgba(0,0,0,0.2); border-radius: 20px; border: none; background: var(--cui-card-bg); backdrop-filter: blur(10px);">
+          <c-card-body class="p-5">
             <form [formGroup]="form" (ngSubmit)="onSubmit()" cForm>
-              <h1>Register</h1>
-              <p class="text-body-secondary">Create your account</p>
-              <c-input-group class="mb-3">
-                <span cInputGroupText>
-                  <svg cIcon name="cilUser"></svg>
+              <div class="text-center mb-4">
+                <div class="d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px; background: linear-gradient(135deg, var(--cui-primary, #667eea), var(--cui-secondary, #764ba2)); border-radius: 50%; box-shadow: 0 10px 30px rgba(var(--cui-primary-rgb, 102, 126, 234), 0.3);">
+                  <svg cIcon name="cilUser" style="width: 35px; height: 35px; color: white;"></svg>
+                </div>
+                <h1 class="fw-bold mb-2 text-body-emphasis" style="font-size: 2.2rem;">Crear Cuenta</h1>
+                <p class="text-body-secondary" style="font-size: 1.1rem;">Completa el formulario para registrarte</p>
+              </div>
+
+              <!-- Datos Personales -->
+              <h5 class="text-body-emphasis mb-3">📋 Datos Personales</h5>
+              
+              <c-row>
+                <c-col md="6">
+                  <c-input-group class="mb-3" style="border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.08);">
+                    <span cInputGroupText style="background: var(--cui-input-group-addon-bg); border: none; padding: 0.75rem 1rem;">
+                      <svg cIcon name="cilUser" style="color: var(--cui-primary);"></svg>
+                    </span>
+                    <input 
+                      formControlName="nombres" 
+                      cFormControl 
+                      placeholder="Nombres"
+                      style="border: none; padding: 0.75rem 1rem; background: var(--cui-input-bg); color: var(--cui-input-color);"
+                      [class.is-invalid]="isFieldInvalid('nombres')"
+                    />
+                  </c-input-group>
+                  <div *ngIf="isFieldInvalid('nombres')" class="text-danger mb-2 small">
+                    {{ getFieldError('nombres') }}
+                  </div>
+                </c-col>
+                
+                <c-col md="6">
+                  <c-input-group class="mb-3" style="border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.08);">
+                    <span cInputGroupText style="background: var(--cui-input-group-addon-bg); border: none; padding: 0.75rem 1rem;">
+                      <svg cIcon name="cilUser" style="color: var(--cui-primary);"></svg>
+                    </span>
+                    <input 
+                      formControlName="apellidos" 
+                      cFormControl 
+                      placeholder="Apellidos"
+                      style="border: none; padding: 0.75rem 1rem; background: var(--cui-input-bg); color: var(--cui-input-color);"
+                      [class.is-invalid]="isFieldInvalid('apellidos')"
+                    />
+                  </c-input-group>
+                  <div *ngIf="isFieldInvalid('apellidos')" class="text-danger mb-2 small">
+                    {{ getFieldError('apellidos') }}
+                  </div>
+                </c-col>
+              </c-row>
+
+              <c-row>
+                <c-col md="6">
+                  <c-input-group class="mb-3" style="border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.08);">
+                    <span cInputGroupText style="background: var(--cui-input-group-addon-bg); border: none; padding: 0.75rem 1rem;">
+                      <svg cIcon name="cilUser" style="color: var(--cui-primary);"></svg>
+                    </span>
+                    <select 
+                      formControlName="tipoDocumento" 
+                      cSelect
+                      [class.is-invalid]="isFieldInvalid('tipoDocumento')"
+                    >
+                      <option value="">Seleccionar tipo de documento</option>
+                      <option *ngFor="let tipo of tiposDocumento" [value]="tipo.value">{{ tipo.label }}</option>
+                    </select>
+                  </c-input-group>
+                  <div *ngIf="isFieldInvalid('tipoDocumento')" class="text-danger mb-2 small">
+                    {{ getFieldError('tipoDocumento') }}
+                  </div>
+                </c-col>
+                
+                <c-col md="6">
+                  <c-input-group class="mb-3" style="border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.08);">
+                    <span cInputGroupText style="background: var(--cui-input-group-addon-bg); border: none; padding: 0.75rem 1rem;">
+                      <svg cIcon name="cilUser" style="color: var(--cui-primary);"></svg>
+                    </span>
+                    <input 
+                      formControlName="numeroDocumento" 
+                      cFormControl 
+                      placeholder="Número de documento"
+                      style="border: none; padding: 0.75rem 1rem; background: var(--cui-input-bg); color: var(--cui-input-color);"
+                      [class.is-invalid]="isFieldInvalid('numeroDocumento')"
+                    />
+                  </c-input-group>
+                  <div *ngIf="isFieldInvalid('numeroDocumento')" class="text-danger mb-2 small">
+                    {{ getFieldError('numeroDocumento') }}
+                  </div>
+                </c-col>
+              </c-row>
+
+              <c-row>
+                <c-col md="6">
+                  <c-input-group class="mb-3" style="border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.08);">
+                    <span cInputGroupText style="background: var(--cui-input-group-addon-bg); border: none; padding: 0.75rem 1rem;">
+                      <svg cIcon name="cilCalendar" style="color: var(--cui-primary);"></svg>
+                    </span>
+                    <input 
+                      formControlName="fechaNacimiento" 
+                      cFormControl 
+                      type="date"
+                      style="border: none; padding: 0.75rem 1rem; background: var(--cui-input-bg); color: var(--cui-input-color);"
+                      [class.is-invalid]="isFieldInvalid('fechaNacimiento')"
+                    />
+                  </c-input-group>
+                  <div *ngIf="isFieldInvalid('fechaNacimiento')" class="text-danger mb-2 small">
+                    {{ getFieldError('fechaNacimiento') }}
+                  </div>
+                </c-col>
+                
+                <c-col md="6">
+                  <c-input-group class="mb-3" style="border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.08);">
+                    <span cInputGroupText style="background: var(--cui-input-group-addon-bg); border: none; padding: 0.75rem 1rem;">
+                      <svg cIcon name="cilUser" style="color: var(--cui-primary);"></svg>
+                    </span>
+                    <select 
+                      formControlName="genero" 
+                      cSelect
+                      [class.is-invalid]="isFieldInvalid('genero')"
+                    >
+                      <option value="">Seleccionar género</option>
+                      <option *ngFor="let genero of generos" [value]="genero.value">{{ genero.label }}</option>
+                    </select>
+                  </c-input-group>
+                  <div *ngIf="isFieldInvalid('genero')" class="text-danger mb-2 small">
+                    {{ getFieldError('genero') }}
+                  </div>
+                </c-col>
+              </c-row>
+
+              <!-- Contacto -->
+              <h5 class="text-body-emphasis mb-3 mt-4">📞 Información de Contacto</h5>
+              
+              <c-row>
+                <c-col md="6">
+                  <c-input-group class="mb-3" style="border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.08);">
+                    <span cInputGroupText style="background: var(--cui-input-group-addon-bg); border: none; padding: 0.75rem 1rem;">&#64;</span>
+                    <input 
+                      formControlName="email" 
+                      cFormControl 
+                      type="email"
+                      placeholder="Correo electrónico"
+                      style="border: none; padding: 0.75rem 1rem; background: var(--cui-input-bg); color: var(--cui-input-color);"
+                      [class.is-invalid]="isFieldInvalid('email')"
+                    />
+                  </c-input-group>
+                  <div *ngIf="isFieldInvalid('email')" class="text-danger mb-2 small">
+                    {{ getFieldError('email') }}
+                  </div>
+                </c-col>
+                
+                <c-col md="6">
+                  <c-input-group class="mb-3" style="border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.08);">
+                    <span cInputGroupText style="background: var(--cui-input-group-addon-bg); border: none; padding: 0.75rem 1rem;">
+                      <svg cIcon name="cilUser" style="color: var(--cui-primary);"></svg>
+                    </span>
+                    <input 
+                      formControlName="telefono" 
+                      cFormControl 
+                      placeholder="Teléfono (opcional)"
+                      style="border: none; padding: 0.75rem 1rem; background: var(--cui-input-bg); color: var(--cui-input-color);"
+                      [class.is-invalid]="isFieldInvalid('telefono')"
+                    />
+                  </c-input-group>
+                  <div *ngIf="isFieldInvalid('telefono')" class="text-danger mb-2 small">
+                    {{ getFieldError('telefono') }}
+                  </div>
+                </c-col>
+              </c-row>
+
+              <!-- Dirección (Opcional) -->
+              <h5 class="text-body-emphasis mb-3 mt-4">🏠 Dirección (Opcional)</h5>
+              
+              <c-row>
+                <c-col md="8">
+                  <c-input-group class="mb-3" style="border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.08);">
+                    <span cInputGroupText style="background: var(--cui-input-group-addon-bg); border: none; padding: 0.75rem 1rem;">
+                      <svg cIcon name="cilLocationPin" style="color: var(--cui-primary);"></svg>
+                    </span>
+                    <input 
+                      formControlName="calle" 
+                      cFormControl 
+                      placeholder="Calle y número"
+                      style="border: none; padding: 0.75rem 1rem; background: var(--cui-input-bg); color: var(--cui-input-color);"
+                    />
+                  </c-input-group>
+                </c-col>
+                
+                <c-col md="4">
+                  <c-input-group class="mb-3" style="border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.08);">
+                    <span cInputGroupText style="background: var(--cui-input-group-addon-bg); border: none; padding: 0.75rem 1rem;">
+                      <svg cIcon name="cilUser" style="color: var(--cui-primary);"></svg>
+                    </span>
+                    <input 
+                      formControlName="codigoPostal" 
+                      cFormControl 
+                      placeholder="Código postal"
+                      style="border: none; padding: 0.75rem 1rem; background: var(--cui-input-bg); color: var(--cui-input-color);"
+                    />
+                  </c-input-group>
+                </c-col>
+              </c-row>
+
+              <c-row>
+                <c-col md="4">
+                  <c-input-group class="mb-3" style="border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.08);">
+                    <span cInputGroupText style="background: var(--cui-input-group-addon-bg); border: none; padding: 0.75rem 1rem;">
+                      <svg cIcon name="cilUser" style="color: var(--cui-primary);"></svg>
+                    </span>
+                    <input 
+                      formControlName="ciudad" 
+                      cFormControl 
+                      placeholder="Ciudad"
+                      style="border: none; padding: 0.75rem 1rem; background: var(--cui-input-bg); color: var(--cui-input-color);"
+                    />
+                  </c-input-group>
+                </c-col>
+                
+                <c-col md="4">
+                  <c-input-group class="mb-3" style="border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.08);">
+                    <span cInputGroupText style="background: var(--cui-input-group-addon-bg); border: none; padding: 0.75rem 1rem;">
+                      <svg cIcon name="cilLocationPin" style="color: var(--cui-primary);"></svg>
+                    </span>
+                    <input 
+                      formControlName="departamento" 
+                      cFormControl 
+                      placeholder="Departamento/Provincia"
+                      style="border: none; padding: 0.75rem 1rem; background: var(--cui-input-bg); color: var(--cui-input-color);"
+                    />
+                  </c-input-group>
+                </c-col>
+                
+                <c-col md="4">
+                  <c-input-group class="mb-3" style="border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.08);">
+                    <span cInputGroupText style="background: var(--cui-input-group-addon-bg); border: none; padding: 0.75rem 1rem;">
+                      <svg cIcon name="cilLocationPin" style="color: var(--cui-primary);"></svg>
+                    </span>
+                    <input 
+                      formControlName="pais" 
+                      cFormControl 
+                      placeholder="País"
+                      style="border: none; padding: 0.75rem 1rem; background: var(--cui-input-bg); color: var(--cui-input-color);"
+                    />
+                  </c-input-group>
+                </c-col>
+              </c-row>
+
+              <!-- Credenciales -->
+              <h5 class="text-body-emphasis mb-3 mt-4">🔐 Credenciales de Acceso</h5>
+              
+              <c-input-group class="mb-3" style="border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.08);">
+                <span cInputGroupText style="background: var(--cui-input-group-addon-bg); border: none; padding: 0.75rem 1rem;">
+                  <svg cIcon name="cilUser" style="color: var(--cui-primary);"></svg>
                 </span>
-                <input formControlName="username" autoComplete="name" cFormControl placeholder="Username" />
+                <input 
+                  formControlName="username" 
+                  cFormControl 
+                  placeholder="Nombre de usuario"
+                  style="border: none; padding: 0.75rem 1rem; background: var(--cui-input-bg); color: var(--cui-input-color);"
+                  [class.is-invalid]="isFieldInvalid('username')"
+                />
               </c-input-group>
-              <div *ngIf="form.get('username')?.invalid && form.get('username')?.touched" class="text-danger mb-2">
-                Username es obligatorio
+              <div *ngIf="isFieldInvalid('username')" class="text-danger mb-2 small">
+                {{ getFieldError('username') }}
               </div>
-              <!-- Espacio eliminado -->
-              <c-input-group class="mb-3">
-                <span cInputGroupText>&#64;</span>
-                <input formControlName="email" autoComplete="email" cFormControl placeholder="Email" />
-              </c-input-group>
-              <div *ngIf="form.get('email')?.invalid && form.get('email')?.touched" class="text-danger mb-2">
-                Email inválido
+
+              <c-row>
+                <c-col md="6">
+                  <c-input-group class="mb-3" style="border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.08);">
+                    <span cInputGroupText style="background: var(--cui-input-group-addon-bg); border: none; padding: 0.75rem 1rem;">
+                      <svg cIcon name="cilLockLocked" style="color: var(--cui-primary);"></svg>
+                    </span>
+                    <input 
+                      formControlName="password" 
+                      cFormControl 
+                      type="password"
+                      placeholder="Contraseña"
+                      style="border: none; padding: 0.75rem 1rem; background: var(--cui-input-bg); color: var(--cui-input-color);"
+                      [class.is-invalid]="isFieldInvalid('password')"
+                    />
+                  </c-input-group>
+                  <div *ngIf="isFieldInvalid('password')" class="text-danger mb-2 small">
+                    {{ getFieldError('password') }}
+                  </div>
+                </c-col>
+                
+                <c-col md="6">
+                  <c-input-group class="mb-3" style="border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.08);">
+                    <span cInputGroupText style="background: var(--cui-input-group-addon-bg); border: none; padding: 0.75rem 1rem;">
+                      <svg cIcon name="cilLockLocked" style="color: var(--cui-primary);"></svg>
+                    </span>
+                    <input 
+                      formControlName="confirmPassword" 
+                      cFormControl 
+                      type="password"
+                      placeholder="Confirmar contraseña"
+                      style="border: none; padding: 0.75rem 1rem; background: var(--cui-input-bg); color: var(--cui-input-color);"
+                      [class.is-invalid]="form.errors?.['passwordsMismatch'] && form.get('confirmPassword')?.touched"
+                    />
+                  </c-input-group>
+                  <div *ngIf="form.errors?.['passwordsMismatch'] && form.get('confirmPassword')?.touched" class="text-danger mb-2 small">
+                    Las contraseñas no coinciden
+                  </div>
+                </c-col>
+              </c-row>
+
+              <!-- Mensajes de estado -->
+              <div *ngIf="success" class="alert alert-success mb-4" style="border-radius: 12px; border: none; background: linear-gradient(135deg, #28a745, #20c997); color: white; box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);">
+                {{ success }}
               </div>
-              <!-- Espacio eliminado -->
-              <c-input-group class="mb-3">
-                <span cInputGroupText>
-                  <svg cIcon name="cilLockLocked"></svg>
-                </span>
-                <input formControlName="password" autoComplete="new-password" cFormControl placeholder="Password" type="password" />
-              </c-input-group>
-              <div *ngIf="form.get('password')?.invalid && form.get('password')?.touched" class="text-danger mb-2">
-                Password es obligatorio
+              
+              <div *ngIf="error" class="alert alert-danger mb-4" style="border-radius: 12px; border: none; background: linear-gradient(135deg, #ff6b6b, #ff5252); color: white; box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);">
+                {{ error }}
               </div>
-              <!-- Espacio eliminado -->
-              <c-input-group class="mb-4">
-                <span cInputGroupText>
-                  <svg cIcon name="cilLockLocked"></svg>
-                </span>
-                <input formControlName="confirmPassword" autoComplete="new-password" cFormControl placeholder="Repeat password" type="password" />
-              </c-input-group>
-              <div *ngIf="form.errors?.['passwordsMismatch'] && form.get('confirmPassword')?.touched" class="text-danger mb-2">
-                Las contraseñas no coinciden
-              </div>
-              <!-- Cierre de etiqueta eliminado y continua con boton -->
-              <div class="d-grid">
-                <button cButton color="success" [disabled]="form.invalid">Create Account</button>
-              </div>
-              <div *ngIf="error" class="alert alert-danger mt-3">{{ error }}</div>
+
+              <!-- Botones -->
+              <c-row class="mt-4">
+                <c-col md="6" class="mb-3">
+                  <button 
+                    type="button"
+                    cButton 
+                    class="w-100 py-3 fw-bold" 
+                    routerLink="/login"
+                    style="background: transparent; border: 2px solid var(--cui-border-color); border-radius: 12px; font-size: 1.1rem; color: var(--cui-body-color); transition: all 0.3s ease;"
+                    onmouseover="this.style.background='var(--cui-primary)'; this.style.color='white'; this.style.borderColor='var(--cui-primary)'"
+                    onmouseout="this.style.background='transparent'; this.style.color='var(--cui-body-color)'; this.style.borderColor='var(--cui-border-color)'"
+                  >
+                    ← Volver al Login
+                  </button>
+                </c-col>
+                
+                <c-col md="6">
+                  <button 
+                    type="submit" 
+                    cButton 
+                    class="w-100 py-3 fw-bold" 
+                    [disabled]="form.invalid || isLoading"
+                    style="background: linear-gradient(135deg, var(--cui-primary, #667eea), var(--cui-secondary, #764ba2)); border: none; border-radius: 12px; font-size: 1.1rem; box-shadow: 0 8px 25px rgba(var(--cui-primary-rgb, 102, 126, 234), 0.3); transition: all 0.3s ease; color: white;"
+                    onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 12px 35px rgba(var(--cui-primary-rgb, 102, 126, 234), 0.4)'"
+                    onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 8px 25px rgba(var(--cui-primary-rgb, 102, 126, 234), 0.3)'"
+                  >
+                    <span *ngIf="!isLoading">🚀 Crear Cuenta</span>
+                    <span *ngIf="isLoading">
+                      <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+                      Creando...
+                    </span>
+                  </button>
+                </c-col>
+              </c-row>
             </form>
           </c-card-body>
         </c-card>

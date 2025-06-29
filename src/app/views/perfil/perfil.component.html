@@ -1,0 +1,816 @@
+<c-container>
+  <c-row>
+    <!-- Sidebar del perfil -->
+    <c-col lg="4" class="mb-4">
+      <!-- Card de información básica del usuario -->
+      <c-card class="mb-4">
+        <c-card-body class="text-center">
+          <!-- Avatar del usuario -->
+          <div class="position-relative d-inline-block mb-3">
+            <c-avatar 
+              size="xl" 
+              [src]="profileImageUrl"
+              shape="rounded-1"
+              status="success"
+              textColor="primary"
+              alt="Avatar del usuario">
+            </c-avatar>
+            
+            <!-- Overlay para cambiar imagen (solo en modo edición) -->
+            <div *ngIf="isEditing" 
+                 class="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center bg-dark bg-opacity-50 rounded-1"
+                 style="cursor: pointer;"
+                 (click)="triggerFileInput()">
+              <svg cIcon name="cilCamera" size="lg" class="text-white"></svg>
+            </div>
+            
+            <!-- Input oculto para seleccionar archivo -->
+            <input 
+              type="file" 
+              id="profileImageInput"
+              accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
+              (change)="onImageFileSelected($event)"
+              style="display: none;" />
+          </div>
+          
+          <!-- Información básica -->
+          <h4 class="card-title mb-1">{{ currentPersona?.nombres }} {{ currentPersona?.apellidos }}</h4>
+          <p class="text-muted mb-2">&#64;{{ currentUser?.username }}</p>
+          <span 
+              class="position-absolute top-0 end-0 badge rounded-pill"
+              [class]="'bg-' + userStateBadgeColor">
+              {{ currentUser?.estado || 'ACTIVO' }}
+            </span>
+          <c-badge [color]="userStateBadgeColor" class="mb-3">{{ userRoleLabel }}</c-badge>
+          
+          <!-- Progreso del perfil -->
+          <div class="mb-3">
+            <small class="text-muted">Completitud del perfil</small>
+            <c-progress class="mt-1" [value]="completionPercentage" color="success">
+              {{ completionPercentage }}%
+            </c-progress>
+          </div>
+          
+          <!-- Información rápida -->
+          <div class="d-grid gap-2">
+            <button 
+              cButton 
+              color="primary" 
+              variant="outline"
+              (click)="toggleEdit()"
+              [disabled]="isLoading">
+              <svg cIcon name="cilPencil" class="me-2"></svg>
+              {{ isEditing ? 'Cancelar Edición' : 'Editar Perfil' }}
+            </button>
+            
+            <!-- Botones de imagen de perfil (solo visible en modo edición) -->
+            <div *ngIf="isEditing" class="d-grid gap-2 mt-2">
+              <button 
+                cButton 
+                color="info" 
+                variant="outline"
+                size="sm"
+                (click)="triggerFileInput()"
+                [disabled]="isUploadingImage">
+                <svg cIcon name="cilCamera" class="me-2"></svg>
+                {{ isUploadingImage ? 'Subiendo...' : 'Cambiar Imagen' }}
+              </button>
+              
+              <button 
+                *ngIf="hasCustomImage"
+                cButton 
+                color="danger" 
+                variant="outline"
+                size="sm"
+                (click)="removeProfileImage()"
+                [disabled]="isUploadingImage">
+                <svg cIcon name="cilTrash" class="me-2"></svg>
+                Eliminar Imagen
+              </button>
+            </div>
+          </div>
+        </c-card-body>
+      </c-card>
+      
+      <!-- Card de información adicional -->
+      <c-card class="mb-4">
+        <c-card-header>
+          <h6 class="mb-0">
+            <svg cIcon name="cilInfo" class="me-2"></svg>
+            Información Adicional
+          </h6>
+        </c-card-header>
+        <c-card-body>
+          <ul cListGroup [flush]="true">
+            <li cListGroupItem class="d-flex justify-content-between align-items-center">
+              <small class="text-muted">Último acceso</small>
+              <small>{{ (currentUser?.ultimoLogin | date:'dd/MM/yyyy HH:mm') || 'Nunca' }}</small>
+            </li>
+            <li cListGroupItem class="d-flex justify-content-between align-items-center">
+              <small class="text-muted">Miembro desde</small>
+              <small>{{ (currentUser?.createdAt | date:'dd/MM/yyyy') || 'N/A' }}</small>
+            </li>
+            <li cListGroupItem class="d-flex justify-content-between align-items-center">
+              <small class="text-muted">Email verificado</small>
+              <c-badge 
+                shape="rounded-pill" 
+                [color]="currentUser?.emailVerificado ? 'success' : 'danger'"
+                class="d-flex align-items-center justify-content-center">
+                <svg cIcon 
+                     [name]="currentUser?.emailVerificado ? 'cilCheckCircle' : 'cilXCircle'" 
+                     size="sm"
+                     class="me-1">
+                </svg>
+                <span>{{ currentUser?.emailVerificado ? 'Verificado' : 'No verificado' }}</span>
+              </c-badge>
+            </li>
+          </ul>
+        </c-card-body>
+      </c-card>
+
+      <!-- Card de información específica del rol -->
+      <c-card class="mb-4" *ngIf="getSpecificRoleInfo()">
+        <c-card-header>
+          <h6 class="mb-0">
+            <svg cIcon [name]="isAdmin ? 'cilSettings' : isTutor ? 'cilEducation' : 'cilUser'" class="me-2"></svg>
+            {{ isAdmin ? 'Privilegios de Administrador' : isTutor ? 'Rol de Tutor' : 'Rol de Alumno' }}
+          </h6>
+        </c-card-header>
+        <c-card-body>
+          <p class="text-muted small mb-2">{{ getSpecificRoleInfo() }}</p>
+          
+          <!-- Información específica para tutores -->
+          <div *ngIf="isTutor && alumnosACargo.length > 0" class="mt-3">
+            <small class="text-muted d-block mb-2">Alumnos a cargo:</small>
+            <div class="d-flex flex-wrap gap-1">
+              <c-badge 
+                *ngFor="let alumno of alumnosACargo.slice(0, 3)" 
+                color="info" 
+                class="me-1">
+                <ng-container *ngIf="alumno.persona && typeof alumno.persona === 'object'; else personaId">
+                  {{ alumno.persona.nombres }} {{ alumno.persona.apellidos }}
+                </ng-container>
+                <ng-template #personaId>
+                  Usuario {{ alumno.username }}
+                </ng-template>
+              </c-badge>
+              <c-badge 
+                *ngIf="alumnosACargo.length > 3" 
+                color="secondary">
+                +{{ alumnosACargo.length - 3 }} más
+              </c-badge>
+            </div>
+          </div>
+          
+          <!-- Loading para alumnos -->
+          <div *ngIf="isTutor && isLoadingAlumnos" class="mt-3">
+            <small class="text-muted">Cargando alumnos a cargo...</small>
+          </div>
+        </c-card-body>
+      </c-card>
+    </c-col>
+    
+    <!-- Contenido principal -->
+    <c-col lg="8">
+      <!-- Alertas -->
+      <c-alert 
+        *ngIf="error" 
+        color="danger" 
+        [dismissible]="true"
+        (dismissed)="error = null"
+        class="mb-4">
+        <svg cIcon name="cilWarning" class="me-2"></svg>
+        {{ error }}
+      </c-alert>
+      
+      <c-alert 
+        *ngIf="success" 
+        color="success" 
+        [dismissible]="true"
+        (dismissed)="success = null"
+        class="mb-4">
+        {{ success }}
+      </c-alert>
+      
+      <!-- Tabs de contenido -->
+      <c-card>
+        <c-tabs [activeItemKey]="activeTab">
+          <!-- Navegación de tabs -->
+          <c-tabs-list variant="tabs" class="border-bottom">
+            <button cTab itemKey="personal" (click)="onTabChange('personal')">
+              <svg cIcon name="cilUser" class="me-2"></svg>
+              Datos Personales
+            </button>
+            <button cTab itemKey="contacto" (click)="onTabChange('contacto')">
+              <svg cIcon name="cilPhone" class="me-2"></svg>
+              Contacto y Dirección
+            </button>
+            <button 
+              *ngIf="isTutor" 
+              cTab 
+              itemKey="tutoria" 
+              (click)="onTabChange('tutoria')">
+              <svg cIcon name="cilEducation" class="me-2"></svg>
+              Tutoría
+            </button>
+            <button cTab itemKey="configuracion" (click)="onTabChange('configuracion')">
+              <svg cIcon name="cilSettings" class="me-2"></svg>
+              Configuraciones
+            </button>
+            <button cTab itemKey="seguridad" (click)="onTabChange('seguridad')">
+              <svg cIcon name="cilLockLocked" class="me-2"></svg>
+              Seguridad
+            </button>
+          </c-tabs-list>
+          
+          <!-- Contenido de los tabs -->
+          <c-card-body>
+            <c-tabs-content>
+              <!-- Tab: Datos Personales -->
+              <c-tab-panel itemKey="personal">
+                <div class="p-3">
+                  <form cForm [formGroup]="profileForm" (ngSubmit)="onSaveProfile()">
+                    <c-row>
+                    <c-col md="6">
+                      <div class="mb-3">
+                        <label class="form-label">Nombres *</label>
+                        <c-input-group>
+                          <span cInputGroupText>
+                            <svg cIcon name="cilUser"></svg>
+                          </span>
+                          <input 
+                            cFormControl 
+                            formControlName="nombres"
+                            placeholder="Ingrese sus nombres"
+                            [readonly]="!isEditing"
+                            [class.is-invalid]="isFieldInvalid('nombres')" />
+                        </c-input-group>
+                        <div *ngIf="isFieldInvalid('nombres')" class="invalid-feedback d-block">
+                          {{ getFieldError('nombres') }}
+                        </div>
+                      </div>
+                    </c-col>
+                    
+                    <c-col md="6">
+                      <div class="mb-3">
+                        <label class="form-label">Apellidos *</label>
+                        <c-input-group>
+                          <span cInputGroupText>
+                            <svg cIcon name="cilUser"></svg>
+                          </span>
+                          <input 
+                            cFormControl 
+                            formControlName="apellidos"
+                            placeholder="Ingrese sus apellidos"
+                            [readonly]="!isEditing"
+                            [class.is-invalid]="isFieldInvalid('apellidos')" />
+                        </c-input-group>
+                        <div *ngIf="isFieldInvalid('apellidos')" class="invalid-feedback d-block">
+                          {{ getFieldError('apellidos') }}
+                        </div>
+                      </div>
+                    </c-col>
+                  </c-row>
+                  
+                  <c-row>
+                    <c-col md="6">
+                      <div class="mb-3">
+                        <label class="form-label">Tipo de Documento *</label>
+                        <c-input-group>
+                          <span cInputGroupText>
+                            <svg cIcon name="cilNotes"></svg>
+                          </span>
+                          <select 
+                            cSelect 
+                            formControlName="tipoDocumento"
+                            [class.is-invalid]="isFieldInvalid('tipoDocumento')">
+                            <option value="">Seleccionar tipo</option>
+                            <option *ngFor="let tipo of tiposDocumento" [value]="tipo.value">
+                              {{ tipo.label }}
+                            </option>
+                          </select>
+                        </c-input-group>
+                        <div *ngIf="isFieldInvalid('tipoDocumento')" class="invalid-feedback d-block">
+                          {{ getFieldError('tipoDocumento') }}
+                        </div>
+                      </div>
+                    </c-col>
+                    
+                    <c-col md="6">
+                      <div class="mb-3">
+                        <label class="form-label">Número de Documento *</label>
+                        <c-input-group>
+                          <span cInputGroupText>
+                            <svg cIcon name="cilNotes"></svg>
+                          </span>
+                          <input 
+                            cFormControl 
+                            formControlName="numeroDocumento"
+                            placeholder="Número de documento"
+                            [readonly]="!isEditing || !canEditField('numeroDocumento')"
+                            [class.is-invalid]="isFieldInvalid('numeroDocumento')" />
+                          <span *ngIf="!canEditField('numeroDocumento')" class="input-group-text">
+                            <svg cIcon name="cilLockLocked" size="sm" title="Campo protegido"></svg>
+                          </span>
+                        </c-input-group>
+                        <div *ngIf="isFieldInvalid('numeroDocumento')" class="invalid-feedback d-block">
+                          {{ getFieldError('numeroDocumento') }}
+                        </div>
+                      </div>
+                    </c-col>
+                  </c-row>
+                  
+                  <c-row>
+                    <c-col md="6">
+                      <div class="mb-3">
+                        <label class="form-label">Fecha de Nacimiento *</label>
+                        <c-input-group>
+                          <span cInputGroupText>
+                            <svg cIcon name="cilCalendar"></svg>
+                          </span>
+                          <input 
+                            cFormControl 
+                            type="date"
+                            formControlName="fechaNacimiento"
+                            [readonly]="!isEditing"
+                            [class.is-invalid]="isFieldInvalid('fechaNacimiento')" />
+                        </c-input-group>
+                        <div *ngIf="isFieldInvalid('fechaNacimiento')" class="invalid-feedback d-block">
+                          {{ getFieldError('fechaNacimiento') }}
+                        </div>
+                      </div>
+                    </c-col>
+                    
+                    <c-col md="6">
+                      <div class="mb-3">
+                        <label class="form-label">Género *</label>
+                        <c-input-group>
+                          <span cInputGroupText>
+                            <svg cIcon name="cilPeople"></svg>
+                          </span>
+                          <select 
+                            cSelect 
+                            formControlName="genero"
+                            [class.is-invalid]="isFieldInvalid('genero')">
+                            <option value="">Seleccionar género</option>
+                            <option *ngFor="let genero of generos" [value]="genero.value">
+                              {{ genero.label }}
+                            </option>
+                          </select>
+                        </c-input-group>
+                        <div *ngIf="isFieldInvalid('genero')" class="invalid-feedback d-block">
+                          {{ getFieldError('genero') }}
+                        </div>
+                      </div>
+                    </c-col>
+                  </c-row>
+                  
+                  <div *ngIf="isEditing" class="d-flex justify-content-center gap-3 mt-4 pt-3 border-top">
+                    <button 
+                      type="submit" 
+                      cButton 
+                      color="success"
+                      size="lg"
+                      class="d-flex align-items-center justify-content-center"
+                      [disabled]="isLoading || profileForm.invalid">
+                      {{ isLoading ? 'Guardando...' : 'Guardar Cambios' }}
+                    </button>
+                    <button 
+                      type="button" 
+                      cButton 
+                      color="secondary" 
+                      variant="outline"
+                      size="lg"
+                      class="d-flex align-items-center justify-content-center"
+                      (click)="toggleEdit()">
+                      Cancelar
+                    </button>
+                  </div>
+                </form>
+                </div>
+              </c-tab-panel>
+              
+              <!-- Tab: Contacto y Dirección -->
+              <c-tab-panel itemKey="contacto">
+                <div class="p-3">
+                  <form cForm [formGroup]="profileForm" (ngSubmit)="onSaveProfile()">
+                    <h6 class="mb-3">📞 Información de Contacto</h6>
+                  
+                  <c-row>
+                    <c-col md="6">
+                      <div class="mb-3">
+                        <label class="form-label">Email *</label>
+                        <c-input-group>
+                          <span cInputGroupText>&#64;</span>
+                          <input 
+                            cFormControl 
+                            type="email"
+                            formControlName="email"
+                            placeholder="correo@ejemplo.com"
+                            [readonly]="!isEditing"
+                            [class.is-invalid]="isFieldInvalid('email')" />
+                        </c-input-group>
+                        <div *ngIf="isFieldInvalid('email')" class="invalid-feedback d-block">
+                          {{ getFieldError('email') }}
+                        </div>
+                      </div>
+                    </c-col>
+                    
+                    <c-col md="6">
+                      <div class="mb-3">
+                        <label class="form-label">Teléfono</label>
+                        <c-input-group>
+                          <span cInputGroupText>
+                            <svg cIcon name="cilPhone"></svg>
+                          </span>
+                          <input 
+                            cFormControl 
+                            formControlName="telefono"
+                            placeholder="+54 11 1234-5678"
+                            [readonly]="!isEditing"
+                            [class.is-invalid]="isFieldInvalid('telefono')" />
+                        </c-input-group>
+                        <div *ngIf="isFieldInvalid('telefono')" class="invalid-feedback d-block">
+                          {{ getFieldError('telefono') }}
+                        </div>
+                      </div>
+                    </c-col>
+                  </c-row>
+                  
+                  <hr class="my-4">
+                  <h6 class="mb-3">🏠 Dirección (Opcional)</h6>
+                  
+                  <div class="mb-3">
+                    <label class="form-label">Calle y Número</label>
+                    <c-input-group>
+                      <span cInputGroupText>
+                        <svg cIcon name="cilLocationPin"></svg>
+                      </span>
+                      <input 
+                        cFormControl 
+                        formControlName="calle"
+                        placeholder="Ej: Av. Corrientes 1234"
+                        [readonly]="!isEditing" />
+                    </c-input-group>
+                  </div>
+                  
+                  <c-row>
+                    <c-col md="4">
+                      <div class="mb-3">
+                        <label class="form-label">Ciudad</label>
+                        <input 
+                          cFormControl 
+                          formControlName="ciudad"
+                          placeholder="Ciudad"
+                          [readonly]="!isEditing" />
+                      </div>
+                    </c-col>
+                    
+                    <c-col md="4">
+                      <div class="mb-3">
+                        <label class="form-label">Provincia/Departamento</label>
+                        <input 
+                          cFormControl 
+                          formControlName="departamento"
+                          placeholder="Provincia"
+                          [readonly]="!isEditing" />
+                      </div>
+                    </c-col>
+                    
+                    <c-col md="4">
+                      <div class="mb-3">
+                        <label class="form-label">Código Postal</label>
+                        <input 
+                          cFormControl 
+                          formControlName="codigoPostal"
+                          placeholder="1234"
+                          [readonly]="!isEditing" />
+                      </div>
+                    </c-col>
+                  </c-row>
+                  
+                  <div class="mb-3">
+                    <label class="form-label">País</label>
+                    <input 
+                      cFormControl 
+                      formControlName="pais"
+                      placeholder="Argentina"
+                      [readonly]="!isEditing" />
+                  </div>
+                  
+                  <div *ngIf="isEditing" class="d-flex justify-content-center gap-3 mt-4 pt-3 border-top">
+                    <button 
+                      type="submit" 
+                      cButton 
+                      color="success"
+                      size="lg"
+                      class="d-flex align-items-center justify-content-center"
+                      [disabled]="isLoading || profileForm.invalid">
+                      {{ isLoading ? 'Guardando...' : 'Guardar Cambios' }}
+                    </button>
+                    <button 
+                      type="button" 
+                      cButton 
+                      color="secondary" 
+                      variant="outline"
+                      size="lg"
+                      class="d-flex align-items-center justify-content-center"
+                      (click)="toggleEdit()">
+                      Cancelar
+                    </button>
+                  </div>
+                </form>
+                </div>
+              </c-tab-panel>
+              
+              <!-- Tab: Tutoría (solo para tutores) -->
+              <c-tab-panel itemKey="tutoria" *ngIf="isTutor">
+                <div class="p-3">
+                  <div class="row">
+                  <div class="col-12">
+                    <h6 class="mb-3">
+                      <svg cIcon name="cilEducation" class="me-2"></svg>
+                      Gestión de Tutoría
+                    </h6>
+                    
+                    <!-- Estadísticas de tutoría -->
+                    <div class="row mb-4">
+                      <div class="col-md-4">
+                        <c-card class="text-center">
+                          <c-card-body>
+                            <div class="h4 text-primary">{{ alumnosACargo.length }}</div>
+                            <div class="text-muted small">Alumnos a cargo</div>
+                          </c-card-body>
+                        </c-card>
+                      </div>
+                      <div class="col-md-4">
+                        <c-card class="text-center">
+                          <c-card-body>
+                            <div class="h4 text-success">-</div>
+                            <div class="text-muted small">Sesiones este mes</div>
+                          </c-card-body>
+                        </c-card>
+                      </div>
+                      <div class="col-md-4">
+                        <c-card class="text-center">
+                          <c-card-body>
+                            <div class="h4 text-info">-</div>
+                            <div class="text-muted small">Reportes pendientes</div>
+                          </c-card-body>
+                        </c-card>
+                      </div>
+                    </div>
+                    
+                    <!-- Lista de alumnos a cargo -->
+                    <c-card>
+                      <c-card-header>
+                        <h6 class="mb-0">Alumnos a Cargo</h6>
+                      </c-card-header>
+                      <c-card-body>
+                        <!-- Loading -->
+                        <div *ngIf="isLoadingAlumnos" class="text-center py-4">
+                          <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Cargando...</span>
+                          </div>
+                          <div class="mt-2 text-muted">Cargando alumnos...</div>
+                        </div>
+                        
+                        <!-- Lista de alumnos -->
+                        <div *ngIf="!isLoadingAlumnos && alumnosACargo.length > 0">
+                          <div 
+                            *ngFor="let alumno of alumnosACargo; let i = index" 
+                            class="border-bottom py-3"
+                            [class.border-0]="i === alumnosACargo.length - 1">
+                            <div class="d-flex align-items-center">
+                              <c-avatar 
+                                class="me-3" 
+                                size="md">
+                                <svg cIcon name="cilUser"></svg>
+                              </c-avatar>
+                              <div class="flex-grow-1">
+                                <div class="fw-semibold">
+                                  <ng-container *ngIf="alumno.persona && typeof alumno.persona === 'object'; else usernameOnly">
+                                    {{ alumno.persona.nombres }} {{ alumno.persona.apellidos }}
+                                  </ng-container>
+                                  <ng-template #usernameOnly>
+                                    {{ alumno.username }}
+                                  </ng-template>
+                                </div>
+                                <div class="text-muted small">
+                                  <ng-container *ngIf="alumno.persona && typeof alumno.persona === 'object' && alumno.persona.email">
+                                    {{ alumno.persona.email }}
+                                  </ng-container>
+                                  <ng-container *ngIf="!alumno.persona || typeof alumno.persona === 'string'">
+                                    Usuario: {{ alumno.username }}
+                                  </ng-container>
+                                </div>
+                              </div>
+                              <div class="text-end">
+                                <c-badge [color]="alumno.estado === 'ACTIVO' ? 'success' : 'secondary'">
+                                  {{ alumno.estado || 'ACTIVO' }}
+                                </c-badge>
+                                <div class="text-muted small mt-1">
+                                  Último acceso: {{ (alumno.ultimoLogin | date:'dd/MM/yyyy') || 'Nunca' }}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <!-- Sin alumnos -->
+                        <div *ngIf="!isLoadingAlumnos && alumnosACargo.length === 0" class="text-center py-4">
+                          <svg cIcon name="cilEducation" size="3xl" class="text-muted mb-3"></svg>
+                          <div class="text-muted">No tienes alumnos asignados actualmente.</div>
+                        </div>
+                      </c-card-body>
+                    </c-card>
+                  </div>
+                </div>
+                </div>
+              </c-tab-panel>
+              
+              <!-- Tab: Configuraciones -->
+              <c-tab-panel itemKey="configuracion">
+                <div class="p-3">
+                  <form cForm [formGroup]="profileForm" (ngSubmit)="onSaveProfile()">
+                    <h6 class="mb-3">🔔 Notificaciones</h6>
+                  
+                  <div class="mb-3 form-check form-switch">
+                    <input 
+                      class="form-check-input" 
+                      type="checkbox" 
+                      formControlName="notificacionesEmail"
+                      id="emailNotifications">
+                    <label class="form-check-label ms-2" for="emailNotifications">
+                      Recibir notificaciones por email
+                    </label>
+                  </div>
+                  
+                  <div class="mb-3 form-check form-switch">
+                    <input 
+                      class="form-check-input" 
+                      type="checkbox" 
+                      formControlName="notificacionesPush"
+                      id="pushNotifications">
+                    <label class="form-check-label ms-2" for="pushNotifications">
+                      Recibir notificaciones push
+                    </label>
+                  </div>
+                  
+                  <hr class="my-4">
+                  <h6 class="mb-3">🔐 Privacidad</h6>
+                  
+                  <div class="mb-3 form-check form-switch">
+                    <input 
+                      class="form-check-input" 
+                      type="checkbox" 
+                      formControlName="perfilPublico"
+                      id="publicProfile">
+                    <label class="form-check-label ms-2" for="publicProfile">
+                      Hacer perfil público
+                    </label>
+                    <small class="form-text text-muted d-block">
+                      Otros usuarios podrán ver tu información básica
+                    </small>
+                  </div>
+                  
+                  <hr class="my-4">
+                  <h6 class="mb-3">🎨 Apariencia</h6>
+                  
+                  <div class="mb-3">
+                    <label class="form-label">Tema</label>
+                    <select 
+                      cSelect 
+                      formControlName="tema">
+                      <option value="auto">Automático</option>
+                      <option value="light">Claro</option>
+                      <option value="dark">Oscuro</option>
+                    </select>
+                  </div>
+                  
+                  <div *ngIf="isEditing" class="d-flex justify-content-center gap-3 mt-4 pt-3 border-top">
+                    <button 
+                      type="submit" 
+                      cButton 
+                      color="success"
+                      size="lg"
+                      class="d-flex align-items-center justify-content-center"
+                      [disabled]="isLoading">
+                      {{ isLoading ? 'Guardando...' : 'Guardar Configuraciones' }}
+                    </button>
+                    <button 
+                      type="button" 
+                      cButton 
+                      color="secondary" 
+                      variant="outline"
+                      size="lg"
+                      class="d-flex align-items-center justify-content-center"
+                      (click)="toggleEdit()">
+                      Cancelar
+                    </button>
+                  </div>
+                </form>
+                </div>
+              </c-tab-panel>
+              
+              <!-- Tab: Seguridad -->
+              <c-tab-panel itemKey="seguridad">
+                <div class="p-3">
+                  <div class="row">
+                  <div class="col-md-8">
+                    <h6 class="mb-3">🔐 Cambiar Contraseña</h6>
+                    
+                    <form cForm [formGroup]="passwordForm" (ngSubmit)="onChangePassword()">
+                      <div class="mb-3">
+                        <label class="form-label">Contraseña Actual *</label>
+                        <c-input-group>
+                          <span cInputGroupText>
+                            <svg cIcon name="cilLockLocked"></svg>
+                          </span>
+                          <input 
+                            cFormControl 
+                            type="password"
+                            formControlName="currentPassword"
+                            placeholder="Ingrese su contraseña actual"
+                            [class.is-invalid]="isFieldInvalid('currentPassword', passwordForm)" />
+                        </c-input-group>
+                        <div *ngIf="isFieldInvalid('currentPassword', passwordForm)" class="invalid-feedback d-block">
+                          {{ getFieldError('currentPassword', passwordForm) }}
+                        </div>
+                      </div>
+                      
+                      <div class="mb-3">
+                        <label class="form-label">Nueva Contraseña *</label>
+                        <c-input-group>
+                          <span cInputGroupText>
+                            <svg cIcon name="cilLockLocked"></svg>
+                          </span>
+                          <input 
+                            cFormControl 
+                            type="password"
+                            formControlName="newPassword"
+                            placeholder="Ingrese su nueva contraseña"
+                            [class.is-invalid]="isFieldInvalid('newPassword', passwordForm)" />
+                        </c-input-group>
+                        <div *ngIf="isFieldInvalid('newPassword', passwordForm)" class="invalid-feedback d-block">
+                          {{ getFieldError('newPassword', passwordForm) }}
+                        </div>
+                      </div>
+                      
+                      <div class="mb-3">
+                        <label class="form-label">Confirmar Nueva Contraseña *</label>
+                        <c-input-group>
+                          <span cInputGroupText>
+                            <svg cIcon name="cilLockLocked"></svg>
+                          </span>
+                          <input 
+                            cFormControl 
+                            type="password"
+                            formControlName="confirmPassword"
+                            placeholder="Confirme su nueva contraseña"
+                            [class.is-invalid]="passwordForm.errors?.['passwordsMismatch'] && passwordForm.get('confirmPassword')?.touched" />
+                        </c-input-group>
+                        <div *ngIf="passwordForm.errors?.['passwordsMismatch'] && passwordForm.get('confirmPassword')?.touched" class="invalid-feedback d-block">
+                          Las contraseñas no coinciden
+                        </div>
+                      </div>
+                      
+                      <div class="d-flex justify-content-center mt-4 pt-3 border-top">
+                        <button 
+                          type="submit" 
+                          cButton 
+                          color="warning"
+                          size="lg"
+                          class="d-flex align-items-center justify-content-center"
+                          [disabled]="isLoading || passwordForm.invalid">
+                          <svg cIcon name="cilShieldAlt" class="me-2"></svg>
+                          {{ isLoading ? 'Cambiando...' : 'Cambiar Contraseña' }}
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                  
+                  <div class="col-md-4">
+                    <div class="alert alert-info">
+                      <h6>
+                        <svg cIcon name="cilInfo" class="me-2"></svg>
+                        Consejos de Seguridad
+                      </h6>
+                      <small>
+                        • Use al menos 8 caracteres<br>
+                        • Combine letras, números y símbolos<br>
+                        • No use información personal<br>
+                        • Cambie su contraseña regularmente
+                      </small>
+                    </div>
+                  </div>
+                </div>
+                </div>
+              </c-tab-panel>
+            </c-tabs-content>
+          </c-card-body>
+        </c-tabs>
+      </c-card>
+    </c-col>
+  </c-row>
+</c-container>

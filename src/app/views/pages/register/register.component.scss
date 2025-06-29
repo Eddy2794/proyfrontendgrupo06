@@ -1,0 +1,44 @@
+// Animaciones suaves para los input groups
+.input-group {
+  transition: all 0.3s ease;
+  
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.12) !important;
+  }
+}
+
+// Estilos mejorados para los iconos de input group
+.input-group-text {
+  svg {
+    transition: color 0.3s ease;
+  }
+}
+
+// Estados de validación mejorados
+.is-invalid {
+  border-color: #dc3545 !important;
+  box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25) !important;
+}
+
+// Mejoras específicas para el formulario de registro
+form {
+  .row {
+    margin-bottom: 0.5rem;
+  }
+  
+  h5 {
+    border-left: 4px solid var(--cui-primary);
+    padding-left: 1rem;
+    margin-left: -1rem;
+    background: linear-gradient(90deg, rgba(var(--cui-primary-rgb), 0.1) 0%, transparent 100%);
+    padding: 0.5rem 0 0.5rem 1rem;
+    border-radius: 0 8px 8px 0;
+  }
+}
+
+// Loading state para el botón
+.spinner-border-sm {
+  width: 0.875rem;
+  height: 0.875rem;
+}
