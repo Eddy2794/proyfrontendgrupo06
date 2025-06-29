@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { AuthGuard } from './services/auth.guard';
+import { TorneoFormComponent } from './views/torneo-form/torneo-form.component';
 
 export const routes: Routes = [
   {
@@ -54,6 +55,17 @@ export const routes: Routes = [
       {
         path: 'pages',
         loadChildren: () => import('./views/pages/routes').then((m) => m.routes)
+      },
+      {
+        path: 'torneos',
+        loadChildren: () => import('./views/torneo/routes').then((m) => m.routes)
+      },
+      {
+        path: 'torneo-form/:id',
+        component: TorneoFormComponent,
+        data: {
+          title: 'Nuevo torneo'
+        }
       }
     ]
   },

@@ -1,0 +1,32 @@
+<h1 class="my-2">Torneos</h1>
+
+<div class="row mb-2">
+    <div class="col-12">
+        <button class=" btn btn-primary" (click)="agregar()">NUEVO TORNEO</button>
+    </div>
+</div>
+<table class="table">
+    <thead>
+        <tr>
+            <th scope="col">Nombre</th>
+            <th scope="col">Fecha de inicio</th>
+            <th scope="col">Organizador</th>
+            <th scope="col">Direccion</th>
+            <th scope="col">Costo inscripcion</th>
+            <th scope="col">Acciones</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr *ngFor="let t of torneos">
+            <td>{{ t.nombre }}</td>
+            <td>{{ t.fecha_inicio | date:'dd/MM/yyyy'}}</td>
+            <td>{{ t.organizador }}</td>
+            <td>{{ t.lugar}} - {{ t.direccion}}</td>
+            <td>{{ t.costo_inscripcion | currency}}</td>
+            <td>
+                <button class="btn btn-primary mb-1" (click)="modificar(t)">Modificar</button>
+                <button class="btn btn-primary" (click)="eliminarTorneo(t._id!)">Eliminar</button>
+            </td>
+        </tr>
+    </tbody>
+</table>
