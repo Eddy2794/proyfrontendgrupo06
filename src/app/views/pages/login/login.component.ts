@@ -2,16 +2,17 @@ import { Component, OnInit } from '@angular/core';
 import { NgStyle, NgIf } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { AuthService } from '../../../services/auth.service';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { environment } from '../../../../environments/environment';
 import { IconDirective } from '@coreui/icons-angular';
 import { ContainerComponent, RowComponent, ColComponent, CardGroupComponent, TextColorDirective, CardComponent, CardBodyComponent, InputGroupComponent, InputGroupTextDirective, FormControlDirective, ButtonDirective } from '@coreui/angular';
+import { LoginModel } from '../../../models';
 
 @Component({
     selector: 'app-login',
     templateUrl: './login.component.html',
     styleUrls: ['./login.component.scss'],
-    imports: [ContainerComponent, RowComponent, ColComponent, CardGroupComponent, TextColorDirective, CardComponent, CardBodyComponent, InputGroupComponent, InputGroupTextDirective, FormControlDirective, ButtonDirective, IconDirective, NgStyle, NgIf, ReactiveFormsModule]
+    imports: [ContainerComponent, RowComponent, ColComponent, CardGroupComponent, TextColorDirective, CardComponent, CardBodyComponent, InputGroupComponent, InputGroupTextDirective, FormControlDirective, ButtonDirective, IconDirective, NgStyle, NgIf, ReactiveFormsModule, RouterLink]
 })
 export class LoginComponent implements OnInit {
   form: FormGroup;
@@ -63,9 +64,21 @@ export class LoginComponent implements OnInit {
     }
     
     this.error = null;
-    const credentials = this.form.value;
     
-    this.auth.login(credentials).subscribe({
+    // Crear instancia del modelo de login
+    const loginModel = new LoginModel({
+      username: this.form.value.username?.trim(),
+      password: this.form.value.password
+    });
+    
+    // Validar usando el modelo
+    if (!loginModel.isValid) {
+      this.error = 'Por favor, complete todos los campos.';
+      return;
+    }
+    
+    // Enviar los datos usando el modelo
+    this.auth.login(loginModel.toJSON()).subscribe({
       next: (response) => {
         console.log('Login exitoso', response);
         // La redirección se maneja automáticamente en el servicio

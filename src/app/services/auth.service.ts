@@ -7,34 +7,38 @@ import { switchMap, map } from 'rxjs/operators';
 import * as CryptoJS from 'crypto-js';
 import { SecurityConfig } from '../config/security.config';
 import { NotificationService } from './notification.service';
+import { 
+  AuthResponse, 
+  RegisterRequest, 
+  SimpleLoginRequest, 
+  AuthState, 
+  User, 
+  Persona, 
+  AuthTokens,
+  UserModel,
+  PersonaModel,
+  AuthStateModel,
+  UserRole
+} from '../models';
 
-interface LoginResponse { 
-  success?: boolean;
-  token?: string; 
-  user?: any; 
-  message?: string;
-  data?: {
-    token?: string;
-    user?: any;
-    [key: string]: any;
-  };
-  [key: string]: any;
-}
-
-interface UserProfile {
+interface UserProfile extends User {
   _id: string;
   username: string;
-  persona: any;
-  rol: string;
+  persona: Persona;
+  rol: UserRole;
 }
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
+  private authStateSubject = new BehaviorSubject<AuthState>(new AuthStateModel());
   private tokenSubject = new BehaviorSubject<string | null>(null);
-  private userSubject = new BehaviorSubject<UserProfile | null>(null);
+  private userSubject = new BehaviorSubject<User | null>(null);
+  private personaSubject = new BehaviorSubject<Persona | null>(null);
   
+  public authState$ = this.authStateSubject.asObservable();
   public token$ = this.tokenSubject.asObservable();
   public user$ = this.userSubject.asObservable();
+  public persona$ = this.personaSubject.asObservable();
   
   // Cache para el estado de autenticación
   private _isAuthenticated = false;
@@ -115,7 +119,7 @@ export class AuthService {
   /**
    * Login con validación completa y manejo de errores mejorado
    */
-  login(credentials: { username: string; password: string; }): Observable<LoginResponse> {
+  login(credentials: SimpleLoginRequest): Observable<AuthResponse> {
     if (!credentials.username || !credentials.password) {
       return throwError(() => new Error('Username y password son requeridos'));
     }
@@ -149,20 +153,26 @@ export class AuthService {
     };
     
     const url = `${environment.apiUrl}/auth/login`;
-    return this.http.post<LoginResponse>(url, payload).pipe(
-      tap((response: LoginResponse) => {
-        // El token puede estar en response.token o response.data.token
-        const token = response.token || (response as any).data?.token;
-        const user = response.user || (response as any).data?.user;
+    return this.http.post<AuthResponse>(url, payload).pipe(
+      tap((response: AuthResponse) => {
+        // El token puede estar directamente en response.token o en response.data.token
+        const token = response.token || response.data?.token;
+        const user = response.user || response.data?.user;
         
         if (token) {
           this.setAuthData(token, user);
+          if (response.success) {
+            this.notificationService.showSuccess('Login exitoso', response.message || 'Bienvenido');
+          }
         } else {
           console.error('No se encontró token en la respuesta:', response);
+          throw new Error('Token no recibido del servidor');
         }
       }),
       catchError((error) => {
         console.error('Error de login:', error);
+        const errorMessage = error.error?.message || 'Error de autenticación';
+        this.notificationService.showError('Error de login', errorMessage);
         return throwError(() => error);
       })
     );
@@ -179,7 +189,7 @@ export class AuthService {
   /**
    * Establecer datos de autenticación
    */
-  private setAuthData(token: string, user?: any): void {
+  private setAuthData(token: string, user?: User): void {
     if (!token) {
       console.error('Token no proporcionado a setAuthData');
       return;
@@ -191,9 +201,28 @@ export class AuthService {
     this._isAuthenticated = true;
     this._tokenValidationPromise = null;
     
+    // Actualizar estado de autenticación
+    const authState = new AuthStateModel();
+    authState.isAuthenticated = true;
+    authState.tokens = { 
+      accessToken: token, 
+      refreshToken: undefined, 
+      expiresIn: 0, 
+      tokenType: 'Bearer' 
+    };
+    
     if (user) {
       this.userSubject.next(user);
+      authState.user = user;
+      
+      // Si el usuario tiene una persona asociada, también la actualizamos
+      if (user.persona && typeof user.persona !== 'string') {
+        this.personaSubject.next(user.persona as Persona);
+        authState.persona = user.persona as Persona;
+      }
     }
+    
+    this.authStateSubject.next(authState);
     
     // Navegar al dashboard después de login exitoso
     // Usar setTimeout para evitar problemas de timing
@@ -220,14 +249,38 @@ export class AuthService {
     localStorage.removeItem('token');
     this.tokenSubject.next(null);
     this.userSubject.next(null);
+    this.personaSubject.next(null);
     this._isAuthenticated = false;
     this._tokenValidationPromise = null;
+    
+    // Limpiar estado de autenticación
+    const authState = new AuthStateModel();
+    authState.clear();
+    this.authStateSubject.next(authState);
   }
 
-  register(data: any): Observable<{message: string}> {
+  register(registerRequest: RegisterRequest): Observable<AuthResponse> {
     const url = `${environment.apiUrl}/auth/register`;
-    return this.http.post<{message: string}>(url, data).pipe(
-      tap(() => this.router.navigate(['/login']))
+    return this.http.post<AuthResponse>(url, registerRequest).pipe(
+      tap((response) => {
+        if (response.success) {
+          this.notificationService.showSuccess('Registro exitoso', response.message || 'Usuario registrado correctamente');
+          this.router.navigate(['/login']);
+        }
+        
+        // Si el registro incluye un token (auto-login), manejarlo
+        const token = response.token || response.data?.token;
+        const user = response.user || response.data?.user;
+        if (token && user) {
+          this.setAuthData(token, user);
+        }
+      }),
+      catchError((error) => {
+        console.error('Error de registro:', error);
+        const errorMessage = error.error?.message || 'Error al registrar usuario';
+        this.notificationService.showError('Error de registro', errorMessage);
+        return throwError(() => error);
+      })
     );
   }
 
@@ -294,8 +347,22 @@ export class AuthService {
   /**
    * Obtener usuario actual
    */
-  get currentUser(): UserProfile | null {
+  get currentUser(): User | null {
     return this.userSubject.value;
+  }
+
+  /**
+   * Obtener persona actual
+   */
+  get currentPersona(): Persona | null {
+    return this.personaSubject.value;
+  }
+
+  /**
+   * Obtener estado de autenticación actual
+   */
+  get currentAuthState(): AuthState {
+    return this.authStateSubject.value;
   }
 
   /**
@@ -374,5 +441,60 @@ export class AuthService {
         }, 100);
       });
     });
+  }
+
+  /**
+   * Obtener usuario actual como Observable (útil para componentes)
+   */
+  getCurrentUser(): Observable<User> {
+    // Primero intentar usar el usuario en cache
+    const currentUser = this.userSubject.value;
+    if (currentUser) {
+      return new Observable(observer => {
+        observer.next(currentUser);
+        observer.complete();
+      });
+    }
+
+    // Si no hay usuario en cache, intentar validar el token y obtener el perfil
+    return new Observable(observer => {
+      this.validateTokenWithBackend()
+        .then(isValid => {
+          if (isValid && this.userSubject.value) {
+            observer.next(this.userSubject.value);
+            observer.complete();
+          } else {
+            observer.error(new Error('Usuario no autenticado'));
+          }
+        })
+        .catch(error => {
+          observer.error(new Error('Usuario no autenticado'));
+        });
+    });
+  }
+
+  /**
+   * Actualizar el usuario actual en el estado de autenticación
+   */
+  updateCurrentUser(user: User): void {
+    console.log('Actualizando usuario actual en auth service:', user);
+    this.userSubject.next(user);
+    
+    // También actualizar persona si está incluida
+    if (user.persona && typeof user.persona === 'object') {
+      this.personaSubject.next(user.persona as Persona);
+    }
+  }
+
+  /**
+   * Refrescar datos del usuario desde el backend
+   */
+  refreshUserProfile(): Observable<User> {
+    return this.http.get<UserProfile>(`${environment.apiUrl}/auth/profile`).pipe(
+      tap((user) => {
+        console.log('Usuario refrescado desde backend:', user);
+        this.updateCurrentUser(user);
+      })
+    );
   }
 }

@@ -62,7 +62,7 @@
       <c-avatar
         shape="rounded-1"
         [size]="'md'"
-        src="./assets/images/avatars/8.jpg"
+        [src]="(user$ | async)?.imagenPerfil || './assets/images/avatars/avatar.png'"
         status="success"
         textColor="primary"
         alt="User avatar"
@@ -71,9 +71,21 @@
     <ul cDropdownMenu class="pt-0 w-auto">
       <li>
         <h6 cDropdownHeader class="bg-body-secondary text-body-secondary fw-semibold py-2 rounded-top">
-          Account
+          <ng-container *ngIf="user$ | async as user">
+            {{ user.persona?.nombres || user.username }}
+          </ng-container>
+          <ng-container *ngIf="!(user$ | async)">
+            Account
+          </ng-container>
         </h6>
       </li>
+      <li *ngIf="user$ | async as user">
+        <div class="px-3 py-2 text-muted small">
+          <div>{{ '&#64;' + user.username }}</div>
+          <div *ngIf="user.persona?.email">{{ user.persona.email }}</div>
+        </div>
+      </li>
+      <li><hr cDropdownDivider></li>
       <li>
         <a cDropdownItem routerLink="">
           <svg cIcon class="me-2" name="cilBell"></svg>
@@ -111,9 +123,9 @@
       </li>
       <li></li>
       <li>
-        <a cDropdownItem routerLink="">
+        <a cDropdownItem routerLink="/perfil">
           <svg cIcon class="me-2" name="cilUser"></svg>
-          Profile
+          Mi Perfil
         </a>
       </li>
       <li>
@@ -165,17 +177,16 @@
       <svg cIcon [name]="icons()" size="lg"></svg>
     </button>
     <div cDropdownMenu>
-      @for (mode of colorModes; track mode.name) {
-        <button
-          (click)="colorMode.set(mode.name)"
-          [active]="colorMode()===mode.name"
-          cDropdownItem
-          class="d-flex align-items-center"
-        >
-          <svg cIcon class="me-2" [name]="mode.icon" size="lg"></svg>
-          {{ mode.text }}
-        </button>
-      }
+      <button
+        *ngFor="let mode of colorModes"
+        (click)="colorMode.set(mode.name)"
+        [active]="colorMode()===mode.name"
+        cDropdownItem
+        class="d-flex align-items-center"
+      >
+        <svg cIcon class="me-2" [name]="mode.icon" size="lg"></svg>
+        {{ mode.text }}
+      </button>
     </div>
   </c-dropdown>
 </ng-template>
