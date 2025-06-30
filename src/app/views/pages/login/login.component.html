@@ -1,75 +1,124 @@
-<div class="bg-light dark:bg-transparent min-vh-100 d-flex flex-row align-items-center">
+<div class="bg-light dark:bg-dark min-vh-100 d-flex flex-row align-items-center" style="background: linear-gradient(135deg, var(--cui-primary) 0%, var(--cui-secondary) 100%) !important;">
   <c-container breakpoint="md">
     <c-row class="justify-content-center">
       <c-col lg="10" xl="8">
-        <c-card-group>
-          <c-card class="p-4">
+        <c-card-group style="box-shadow: 0 20px 40px rgba(0,0,0,0.2); border-radius: 20px; overflow: hidden;">
+          <c-card class="p-5 text-center border-0" style="background: var(--cui-card-bg); backdrop-filter: blur(10px);">
             <c-card-body>
               <form [formGroup]="form" (ngSubmit)="onSubmit()">
-                <h1>Login</h1>
-                <p class="text-body-secondary">Sign In to your account</p>
-                <c-input-group class="mb-3">
-                  <span cInputGroupText>
-                    <svg cIcon name="cilUser"></svg>
+                <div class="mb-4">
+                  <div class="d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px; background: linear-gradient(135deg, var(--cui-primary, #667eea), var(--cui-secondary, #764ba2)); border-radius: 50%; box-shadow: 0 10px 30px rgba(var(--cui-primary-rgb, 102, 126, 234), 0.3);">
+                    <svg cIcon name="cilUser" style="width: 35px; height: 35px;"></svg>
+                  </div>
+                  <h1 class="fw-bold mb-2 text-body-emphasis" style="font-size: 2.2rem;">Bienvenido</h1>
+                  <p class="text-body-secondary" style="font-size: 1.1rem;">Inicia sesión en tu cuenta</p>
+                </div>
+                <c-input-group class="mb-4" style="border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.08);">
+                  <span cInputGroupText style="background: var(--cui-input-group-addon-bg); border: none; padding: 0.75rem 1rem;">
+                    <svg cIcon name="cilUser" style="color: var(--cui-primary, #667eea);"></svg>
                   </span>
                   <input 
                     cFormControl
                     formControlName="username" 
                     autoComplete="username" 
-                    placeholder="Username"
+                    placeholder="Nombre de usuario"
                     class="form-control"
+                    style="border: none; padding: 0.75rem 1rem; font-size: 1rem; background: var(--cui-input-bg); color: var(--cui-input-color, inherit);"
                     [class.is-invalid]="form.get('username')?.invalid && form.get('username')?.touched"
                   />
                 </c-input-group>
-                <c-input-group class="mb-4">
-                  <span cInputGroupText>
-                    <svg cIcon name="cilLockLocked"></svg>
+                <c-input-group class="mb-4" style="border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.08);">
+                  <span cInputGroupText style="background: var(--cui-input-group-addon-bg); border: none; padding: 0.75rem 1rem;">
+                    <svg cIcon name="cilLockLocked" style="color: var(--cui-primary, #667eea);"></svg>
                   </span>
                   <input
                     cFormControl
                     formControlName="password"
                     autoComplete="current-password"
-                    placeholder="Password"
+                    placeholder="Contraseña"
                     type="password"
                     class="form-control"
+                    style="border: none; padding: 0.75rem 1rem; font-size: 1rem; background: var(--cui-input-bg); color: var(--cui-input-color, inherit);"
                     [class.is-invalid]="form.get('password')?.invalid && form.get('password')?.touched"
                   />
                 </c-input-group>
-                <div *ngIf="error" class="alert alert-danger">{{ error }}</div>
-                <c-row>
-                  <c-col xs="6">
-                    <button type="submit" cButton class="px-4" color="primary" [disabled]="form.invalid">
-                      Login
-                    </button>
-                  </c-col>
-                  <c-col class="text-end" xs="6">
-                    <button cButton class="px-0" color="link">
-                      Forgot password?
+                <div *ngIf="error" class="alert alert-danger mb-4" style="border-radius: 12px; border: none; background: linear-gradient(135deg, #ff6b6b, #ff5252); color: white; box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);">{{ error }}</div>
+                <c-row class="mb-4">
+                  <c-col xs="12">
+                    <button 
+                      type="submit" 
+                      cButton 
+                      class="w-100 py-3 fw-bold" 
+                      [disabled]="form.invalid"
+                      style="background: linear-gradient(135deg, var(--cui-primary, #667eea), var(--cui-secondary, #764ba2)); border: none; border-radius: 12px; font-size: 1.1rem; box-shadow: 0 8px 25px rgba(var(--cui-primary-rgb, 102, 126, 234), 0.3); transition: all 0.3s ease;"
+                      onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 12px 35px rgba(var(--cui-primary-rgb, 102, 126, 234), 0.4)'"
+                      onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 8px 25px rgba(var(--cui-primary-rgb, 102, 126, 234), 0.3)'"
+                    >
+                      Iniciar Sesión
                     </button>
                   </c-col>
                 </c-row>
+                
+                <div class="text-center mb-4">
+                  <button 
+                    cButton 
+                    class="btn-link text-decoration-none" 
+                    style="color: var(--cui-primary, #667eea); font-weight: 500; background: none; border: none;"
+                    onmouseover="this.style.color='var(--cui-secondary, #764ba2)'"
+                    onmouseout="this.style.color='var(--cui-primary, #667eea)'"
+                  >
+                    ¿Olvidaste tu contraseña?
+                  </button>
+                </div>
                 <!-- Google OAuth Button -->
-                <c-row class="my-4">
-                  <c-col>
-                    <button cButton class="w-100 d-flex align-items-center justify-content-center" (click)="loginWithGoogle()" style="background: #4285F4; color: #fff;">
-                      <img src="https://developers.google.com/identity/images/g-logo.png" alt="Google logo" width="20" height="20" class="me-2"/>
-                      Continuar con Google
-                    </button>
-                  </c-col>
-                </c-row>
+                <div class="mb-4">
+                  <div class="d-flex align-items-center mb-3">
+                    <hr class="flex-grow-1" style="border-color: var(--cui-border-color, #e9ecef);">
+                    <span class="px-3 text-body-secondary" style="font-size: 0.9rem;">O</span>
+                    <hr class="flex-grow-1" style="border-color: var(--cui-border-color, #e9ecef);">
+                  </div>
+                  <button 
+                    cButton 
+                    class="w-100 d-flex align-items-center justify-content-center py-3" 
+                    (click)="loginWithGoogle()" 
+                    style="background: var(--cui-card-bg, white); color: var(--cui-body-color, #5f6368); border: 2px solid var(--cui-border-color, #dadce0); border-radius: 12px; font-weight: 500; box-shadow: 0 4px 15px rgba(0,0,0,0.08); transition: all 0.3s ease;"
+                    onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 6px 20px rgba(0,0,0,0.12)'; this.style.borderColor='var(--cui-primary, #1a73e8)'"
+                    onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(0,0,0,0.08)'; this.style.borderColor='var(--cui-border-color, #dadce0)'"
+                  >
+                    <img src="https://developers.google.com/identity/images/g-logo.png" alt="Google logo" width="20" height="20" class="me-3"/>
+                    Continuar con Google
+                  </button>
+                </div>
               </form>
             </c-card-body>
           </c-card>
-          <c-card [ngStyle]="{'minWidth.%': 44}" class="text-white bg-primary py-5">
-            <c-card-body class="text-center">
-              <div>
-                <h2>Sign up</h2>
-                <p>
-                  Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod
-                  tempor incididunt ut labore et dolore magna aliqua.
+          <c-card [ngStyle]="{'minWidth.%': 44}" class="text-white py-5 border-0" style="background: linear-gradient(135deg, var(--cui-secondary, #764ba2) 0%, var(--cui-primary, #667eea) 100%); position: relative; overflow: hidden;">
+            <!-- Decorative elements -->
+            <div style="position: absolute; top: -50px; right: -50px; width: 200px; height: 200px; background: rgba(255,255,255,0.1); border-radius: 50%; transform: rotate(45deg);"></div>
+            <div style="position: absolute; bottom: -30px; left: -30px; width: 150px; height: 150px; background: rgba(255,255,255,0.08); border-radius: 50%;"></div>
+            
+            <c-card-body class="text-center position-relative">
+              <div style="z-index: 2; position: relative;">
+                <div class="mb-4">
+                  <div class="d-inline-flex align-items-center justify-content-center mb-3" style="width: 70px; height: 70px; background: rgba(255,255,255,0.2); border-radius: 50%; backdrop-filter: blur(10px);">
+                    <svg cIcon name="cilUser" style="width: 30px; height: 30px; color: white;"></svg>
+                  </div>
+                </div>
+                <h2 class="fw-bold mb-3" style="font-size: 2rem; color: white;">¡Únete a nosotros!</h2>
+                <p class="mb-4" style="font-size: 1.1rem; opacity: 0.9; line-height: 1.6; color: white;">
+                  Descubre todas las funcionalidades que tenemos preparadas para ti. 
+                  Crea tu cuenta y comienza tu experiencia.
                 </p>
-                <button [active]="true" cButton class="mt-3" color="primary" routerLink="/register">
-                  Register Now!
+                <button 
+                  [active]="true" 
+                  cButton 
+                  class="mt-3 px-5 py-3 fw-bold" 
+                  routerLink="/register"
+                  style="background: rgba(255,255,255,0.2); border: 2px solid rgba(255,255,255,0.3); border-radius: 25px; color: white; font-size: 1.1rem; backdrop-filter: blur(10px); transition: all 0.3s ease;"
+                  onmouseover="this.style.background='rgba(255,255,255,0.3)'; this.style.transform='translateY(-2px)'"
+                  onmouseout="this.style.background='rgba(255,255,255,0.2)'; this.style.transform='translateY(0)'"
+                >
+                  ¡Registrarme Ahora!
                 </button>
               </div>
             </c-card-body>

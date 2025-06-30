@@ -4,11 +4,33 @@ export const navItems: INavData[] = [
   {
     name: 'Dashboard',
     url: '/dashboard',
-    iconComponent: { name: 'cil-speedometer' },
-    badge: {
-      color: 'info',
-      text: 'NEW'
-    }
+    iconComponent: { name: 'cil-speedometer' }
+  },
+  {
+    name: 'Mi Perfil',
+    url: '/perfil',
+    iconComponent: { name: 'cil-user' }
+  },
+  {
+    title: true,
+    name: 'Pagos'
+  },
+  {
+    name: 'Pagos',
+    url: '/pagos',
+    iconComponent: { name: 'cil-credit-card' },
+    children: [
+      {
+        name: 'Realizar Pago',
+        url: '/pagos/realizar-pago',
+        iconComponent: { name: 'cil-plus' }
+      },
+      {
+        name: 'Historial',
+        url: '/pagos/historial',
+        iconComponent: { name: 'cil-history' }
+      }
+    ]
   },
   {
     title: true,
@@ -251,6 +273,11 @@ export const navItems: INavData[] = [
       color: 'info',
       text: 'NEW'
     }
+  },
+  {
+    name: 'Profesor',
+    url: '/profesor',
+    iconComponent: { name: 'cil-user' }
   },
   {
     title: true,

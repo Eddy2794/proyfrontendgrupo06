@@ -4,7 +4,6 @@ import { ActivatedRoute } from '@angular/router';
 import { IconDirective, IconSetService } from '@coreui/icons-angular';
 import { brandSet, flagSet, freeSet } from '@coreui/icons';
 import { CardBodyComponent, CardComponent, CardHeaderComponent, ColComponent, RowComponent } from '@coreui/angular';
-import { DocsLinkComponent } from '@docs-components/public-api';
 
 @Component({
     templateUrl: 'coreui-icons.component.html',
@@ -14,7 +13,6 @@ import { DocsLinkComponent } from '@docs-components/public-api';
         CardHeaderComponent,
         CardBodyComponent,
         ColComponent,
-        DocsLinkComponent,
         IconDirective,
         RowComponent
     ]

@@ -49,12 +49,24 @@ export const routes: Routes = [
         loadChildren: () => import('./views/widgets/routes').then((m) => m.routes)
       },
       {
+        path: 'pagos',
+        loadChildren: () => import('./views/pagos/routes').then((m) => m.routes)
+      },
+      {
+        path: 'perfil',
+        loadChildren: () => import('./views/perfil/routes').then((m) => m.routes)
+      },
+      {
         path: 'charts',
         loadChildren: () => import('./views/charts/routes').then((m) => m.routes)
       },
       {
         path: 'pages',
         loadChildren: () => import('./views/pages/routes').then((m) => m.routes)
+      },
+      {
+        path: 'profesor',
+        loadChildren: () => import('./views/profesor/routes').then((m) => m.routes)
       },
       {
         path: 'torneos',

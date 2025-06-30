@@ -25,11 +25,12 @@ import {
 
 import { IconDirective } from '@coreui/icons-angular';
 import { AuthService } from '../../../services/auth.service';
+import { User, Persona } from '../../../models';
 
 @Component({
     selector: 'app-default-header',
     templateUrl: './default-header.component.html',
-  imports: [ContainerComponent, HeaderTogglerDirective, SidebarToggleDirective, IconDirective, HeaderNavComponent, NavItemComponent, NavLinkDirective, RouterLink, RouterLinkActive, NgTemplateOutlet, BreadcrumbRouterComponent, DropdownComponent, DropdownToggleDirective, AvatarComponent, DropdownMenuDirective, DropdownHeaderDirective, DropdownItemDirective, BadgeComponent, DropdownDividerDirective, CommonModule]
+  imports: [ContainerComponent, HeaderTogglerDirective, SidebarToggleDirective, IconDirective, HeaderNavComponent, NavItemComponent, NavLinkDirective, RouterLink, RouterLinkActive, NgTemplateOutlet, BreadcrumbRouterComponent, DropdownComponent, DropdownToggleDirective, AvatarComponent, DropdownMenuDirective, DropdownHeaderDirective, DropdownItemDirective, BadgeComponent, DropdownDividerDirective, CommonModule, AsyncPipe]
 })
 export class DefaultHeaderComponent extends HeaderComponent implements OnInit {
 
@@ -160,8 +161,9 @@ export class DefaultHeaderComponent extends HeaderComponent implements OnInit {
    */
   getUserDisplayName(): string {
     const user = this.auth.currentUser;
-    if (user?.persona) {
-      return `${user.persona.nombres} ${user.persona.apellidos}`;
+    if (user?.persona && typeof user.persona !== 'string') {
+      const persona = user.persona as Persona;
+      return `${persona.nombres} ${persona.apellidos}`;
     }
     return user?.username || 'Usuario';
   }

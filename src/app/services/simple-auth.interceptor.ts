@@ -5,15 +5,8 @@ import { Observable } from 'rxjs';
 @Injectable()
 export class SimpleAuthInterceptor implements HttpInterceptor {
 
+  // Este interceptor es redundante si usas AuthInterceptor, puedes eliminarlo o dejarlo vacío
   intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
-    // Obtener token directamente del localStorage para evitar dependencias circulares
-    const token = localStorage.getItem('token');
-    
-    // Agregar token de autorización si existe
-    const authReq = token ? req.clone({
-      setHeaders: { Authorization: `Bearer ${token}` }
-    }) : req;
-
-    return next.handle(authReq);
+    return next.handle(req);
   }
 }
