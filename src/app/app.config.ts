@@ -13,7 +13,7 @@ import { ReactiveFormsModule } from '@angular/forms';
 
 import { DropdownModule, SidebarModule } from '@coreui/angular';
 import { IconSetService } from '@coreui/icons-angular';
-import { SimpleAuthInterceptor } from './services/simple-auth.interceptor';
+import { AuthInterceptor } from './services/auth.interceptor';
 import { routes } from './app.routes';
 
 export const appConfig: ApplicationConfig = {
@@ -35,6 +35,6 @@ export const appConfig: ApplicationConfig = {
     provideAnimationsAsync(),
     importProvidersFrom(HttpClientModule),
     importProvidersFrom(ReactiveFormsModule),
-    { provide: HTTP_INTERCEPTORS, useClass: SimpleAuthInterceptor, multi: true }
+    { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true }
   ]
 };

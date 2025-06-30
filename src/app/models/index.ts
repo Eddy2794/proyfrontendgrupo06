@@ -7,6 +7,12 @@ export * from './user.model';
 // Exportar modelos de Autenticación
 export * from './auth.model';
 
+// Exportar modelos de Categoría Escuela
+export * from './categoria-escuela.model';
+
+// Exportar modelos de Pago
+export * from './pago.model';
+
 // Re-exportar tipos comunes
 export type { TipoDocumento, Genero, EstadoPersona, Direccion } from './persona.model';
 export type { UserRole, UserState, UserSettings, AuthHistory } from './user.model';

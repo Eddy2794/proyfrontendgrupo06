@@ -6,7 +6,7 @@ import { delay, filter, map, tap } from 'rxjs/operators';
 
 import { ColorModeService } from '@coreui/angular';
 import { IconSetService } from '@coreui/icons-angular';
-import { iconSubset } from './icons/icon-subset';
+import { IconSubset, iconSubset } from './icons/icon-subset';
 
 @Component({
     selector: 'app-root',
