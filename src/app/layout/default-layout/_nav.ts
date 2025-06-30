@@ -270,6 +270,11 @@ export const navItems: INavData[] = [
     }
   },
   {
+    name: 'Profesor',
+    url: '/profesor',
+    iconComponent: { name: 'cil-user' }
+  },
+  {
     title: true,
     name: 'Extras'
   },
