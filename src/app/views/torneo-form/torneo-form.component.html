@@ -1,0 +1,37 @@
+<h1 class="my-2">Crear nuevo torneo</h1>
+<form>
+    <div class="mb-3">
+        <label for="idnombre" class="form-label">Nombre</label>
+        <input name="nombre" type="text" class="form-control" id="idnombre" [(ngModel)]="torneo.nombre">
+    </div>
+    <div class="mb-3">
+        <label for="idDescripcion" class="form-label">Descripcion</label>
+        <input name="descripcion" type="text" class="form-control" id="idDescripcion" [(ngModel)]="torneo.descripcion">
+    </div>
+    <div class="mb-3">
+        <label for="idlugar" class="form-label">Lugar</label>
+        <input name="lugar" type="text" class="form-control" id="idlugar" [(ngModel)]="torneo.lugar">
+    </div>
+    <div class="mb-3">
+        <label for="idDireccion" class="form-label">Direccion</label>
+        <input name="direccion" type="text" class="form-control" id="idDireccion" [(ngModel)]="torneo.direccion">
+    </div>
+    <div class="mb-3">
+        <label for="idOrganizador" class="form-label">Organizador</label>
+        <input name="organizador" type="text" class="form-control" id="idOrganizador" [(ngModel)]="torneo.organizador">
+    </div>
+    <div class="mb-3">
+        <label for="idinscripcion" class="form-label">Costo de inscripcion</label>
+        <input name="costo_inscripcion" type="number" class="form-control" id="idinscripcion"
+            [(ngModel)]="torneo.costo_inscripcion">
+    </div>
+    <div class="mb-3">
+        <label for="idinicio" class="form-label">Fecha de inicio</label>
+        <input name="fecha_inicio" type="date" class="form-control" id="idinicio" [(ngModel)]="torneo.fecha_inicio">
+    </div>
+
+    <button type="button" class="btn btn-primary me-2" *ngIf="accion == 'new'"
+        (click)="agregarTorneo()">Guardar</button>
+    <button type="button" class="btn btn-primary me-2" *ngIf="accion == 'update'"
+        (click)="actualizarTorneo()">Actualizar</button>
+</form>
