@@ -1,0 +1,169 @@
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header">
+          <h4 class="mb-0">
+            {{ accion === 'new' ? 'Nueva Categoría' : 'Modificar Categoría' }}
+          </h4>
+        </div>
+        <div class="card-body">
+          <div *ngIf="loading" class="text-center">
+            <div class="spinner-border" role="status">
+              <span class="visually-hidden">Cargando...</span>
+            </div>
+          </div>
+
+          <form *ngIf="!loading">
+            <div class="row">
+              <!-- Información Básica -->
+              <div class="col-md-6">
+                <h5 class="mb-3">Información Básica</h5>
+                
+                <div class="mb-3">
+                  <label for="idNombre" class="form-label">Nombre *</label>
+                  <input name="nombre" type="text" class="form-control" id="idNombre" 
+                         [(ngModel)]="categoria.nombre" required>
+                </div>
+
+                <div class="mb-3">
+                  <label for="idDescripcion" class="form-label">Descripción</label>
+                  <textarea name="descripcion" class="form-control" id="idDescripcion" 
+                            [(ngModel)]="categoria.descripcion" rows="3" 
+                            maxlength="500"></textarea>
+                  <div class="form-text">Máximo 500 caracteres</div>
+                </div>
+
+                <div class="mb-3">
+                  <label for="idNivel" class="form-label">Nivel *</label>
+                  <select name="nivel" class="form-select" id="idNivel" 
+                          [(ngModel)]="categoria.nivel" required>
+                    <option *ngFor="let nivel of niveles" [value]="nivel">{{ nivel }}</option>
+                  </select>
+                </div>
+
+                <div class="mb-3">
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="idActiva" 
+                           name="activa" [(ngModel)]="categoria.activa">
+                    <label class="form-check-label" for="idActiva">
+                      Categoría activa
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Configuración Numérica -->
+              <div class="col-md-6">
+                <h5 class="mb-3">Configuración</h5>
+                
+                <div class="row">
+                  <div class="col-6">
+                    <div class="mb-3">
+                      <label for="idEdadMin" class="form-label">Edad Mínima *</label>
+                      <input name="edad_min" type="number" class="form-control" id="idEdadMin" 
+                             [(ngModel)]="categoria.edad_min" min="3" max="100" required>
+                    </div>
+                  </div>
+                  <div class="col-6">
+                    <div class="mb-3">
+                      <label for="idEdadMax" class="form-label">Edad Máxima *</label>
+                      <input name="edad_max" type="number" class="form-control" id="idEdadMax" 
+                             [(ngModel)]="categoria.edad_max" min="3" max="100" required>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="mb-3">
+                  <label for="idCuotaMensual" class="form-label">Cuota Mensual *</label>
+                  <div class="input-group">
+                    <span class="input-group-text">$</span>
+                    <input name="cuota_mensual" type="number" class="form-control" id="idCuotaMensual" 
+                           [(ngModel)]="categoria.cuota_mensual" min="0" step="0.01" required>
+                  </div>
+                </div>
+
+                <div class="mb-3">
+                  <label for="idMaxAlumnos" class="form-label">Máximo de Alumnos *</label>
+                  <input name="max_alumnos" type="number" class="form-control" id="idMaxAlumnos" 
+                         [(ngModel)]="categoria.max_alumnos" min="1" max="100" required>
+                </div>
+              </div>
+            </div>
+
+            <!-- Horarios -->
+            <div class="row mt-4">
+              <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                  <h5 class="mb-0">Horarios</h5>
+                  <button type="button" class="btn btn-outline-primary btn-sm" 
+                          (click)="agregarHorario()">
+                    <i class="fas fa-plus"></i> Agregar Horario
+                  </button>
+                </div>
+
+                <div *ngIf="categoria.horarios.length === 0" class="alert alert-info">
+                  <i class="fas fa-info-circle"></i> No hay horarios configurados. 
+                  Haga clic en "Agregar Horario" para añadir uno.
+                </div>
+
+                <div *ngFor="let horario of categoria.horarios; let i = index" 
+                     class="card mb-3">
+                  <div class="card-body">
+                    <div class="row align-items-center">
+                      <div class="col-md-3">
+                        <label class="form-label">Día</label>
+                        <select class="form-select" [(ngModel)]="horario.dia" 
+                                [name]="'dia_' + i">
+                          <option *ngFor="let dia of diasSemana" [value]="dia">{{ dia }}</option>
+                        </select>
+                      </div>
+                      <div class="col-md-3">
+                        <label class="form-label">Hora Inicio</label>
+                        <input type="time" class="form-control" [(ngModel)]="horario.hora_inicio" 
+                               [name]="'hora_inicio_' + i">
+                      </div>
+                      <div class="col-md-3">
+                        <label class="form-label">Hora Fin</label>
+                        <input type="time" class="form-control" [(ngModel)]="horario.hora_fin" 
+                               [name]="'hora_fin_' + i">
+                      </div>
+                      <div class="col-md-3">
+                        <label class="form-label">&nbsp;</label>
+                        <div>
+                          <button type="button" class="btn btn-outline-danger btn-sm" 
+                                  (click)="eliminarHorario(i)">
+                            <i class="fas fa-trash"></i> Eliminar
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Botones de Acción -->
+            <div class="row mt-4">
+              <div class="col-12">
+                <div class="d-flex gap-2">
+                  <button type="button" class="btn btn-primary" *ngIf="accion == 'new'"
+                          (click)="agregarCategoria()" [disabled]="loading">
+                    <i class="fas fa-save"></i> Guardar
+                  </button>
+                  <button type="button" class="btn btn-primary" *ngIf="accion == 'update'"
+                          (click)="actualizarCategoria()" [disabled]="loading">
+                    <i class="fas fa-save"></i> Actualizar
+                  </button>
+                  <button type="button" class="btn btn-secondary" (click)="cancelar()">
+                    <i class="fas fa-times"></i> Cancelar
+                  </button>
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
