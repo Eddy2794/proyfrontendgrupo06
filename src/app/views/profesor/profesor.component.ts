@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { Router, ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { ProfesorService } from '../../services/profesor.service';
 import { 
@@ -16,8 +17,7 @@ import {
   FormLabelDirective,
   FormSelectDirective,
   GutterDirective,
-  RowDirective,
-  TableDirective
+  RowDirective
 } from '@coreui/angular';
 import { IconDirective } from '@coreui/icons-angular';
 import { NgIf, NgFor } from '@angular/common';
@@ -42,7 +42,6 @@ import { NgIf, NgFor } from '@angular/common';
     FormSelectDirective,
     GutterDirective,
     RowDirective,
-    TableDirective,
     IconDirective,
     NgIf,
     NgFor
@@ -79,12 +78,13 @@ export class ProfesorComponent implements OnInit {
     activo_laboral: false,
     _id: ''
   };
-  profesores: any[] = [];
   isSubmitting = false;
   successMessage = '';
   errorMessage = '';
   isEditing = false;
   editingId: string | null = null;
+  emailValidating = false;
+  emailValid = true;
   
   // Opciones para los selects
   tiposDocumento = [
@@ -115,21 +115,80 @@ export class ProfesorComponent implements OnInit {
     { value: 'OTRO', label: 'Otro' }
   ];
   
-  constructor(private profesorService: ProfesorService) {}
+  constructor(
+    private profesorService: ProfesorService,
+    private router: Router,
+    private route: ActivatedRoute
+  ) {}
 
   ngOnInit() {
-    this.getProfesores();
+    // Verificar si hay datos de navegación para editar un profesor
+    const state = history.state;
+    console.log('Estado de navegación:', state);
+    
+    if (state && state.profesor && state.isEditing) {
+      console.log('Cargando profesor para editar desde state:', state.profesor);
+      this.loadProfesorForEdit(state.profesor);
+    } else {
+      // Verificar si hay parámetros de ruta para editar
+      this.route.queryParams.subscribe(params => {
+        console.log('Parámetros de ruta:', params);
+        if (params['edit'] === 'true' && params['id']) {
+          console.log('Cargando profesor desde parámetros de ruta, ID:', params['id']);
+          this.loadProfesorById(params['id']);
+        } else {
+          console.log('No hay datos de profesor para editar');
+        }
+      });
+    }
   }
 
-  getProfesores() {
-    this.profesorService.getProfesores().subscribe({
+  loadProfesorForEdit(profesor: any) {
+    console.log('Iniciando loadProfesorForEdit con:', profesor);
+    this.isEditing = true;
+    this.editingId = profesor._id;
+    console.log('profesor que llega para editar ', profesor);
+    
+    // Mapear los datos del backend a la estructura del formulario
+    this.profesor = {
+      personaData: {
+        _id: profesor.persona?._id || '',
+        nombres: profesor.persona?.nombres || '',
+        apellidos: profesor.persona?.apellidos || '',
+        telefono: profesor.persona?.telefono || '',
+        tipoDocumento: profesor.persona?.tipoDocumento || '',
+        numeroDocumento: profesor.persona?.numeroDocumento || '',
+        fechaNacimiento: profesor.persona?.fechaNacimiento ? new Date(profesor.persona.fechaNacimiento).toISOString().split('T')[0] : '',
+        genero: profesor.persona?.genero || '',
+        email: profesor.persona?.email || '',
+        direccion: {
+          calle: profesor.persona?.direccion?.calle || '',
+          ciudad: profesor.persona?.direccion?.ciudad || '',
+          departamento: profesor.persona?.direccion?.departamento || '',
+          codigoPostal: profesor.persona?.direccion?.codigoPostal || '',
+          pais: profesor.persona?.direccion?.pais || ''
+        }
+      },
+      titulo: profesor.titulo || '',
+      experiencia_anios: profesor.experiencia_anios || 0,
+      fecha_contratacion: profesor.fecha_contratacion ? new Date(profesor.fecha_contratacion).toISOString().split('T')[0] : '',
+      salario: profesor.salario || 0,
+      activo_laboral: profesor.activo_laboral || true,
+      _id: profesor._id || ''
+    };
+    console.log('Profesor mapeado:', this.profesor);
+  }
+
+  loadProfesorById(id: string) {
+    console.log('Cargando profesor por ID:', id);
+    this.profesorService.getProfesor(id).subscribe({
       next: (response: any) => {
-        this.profesores = response.data;
-        console.log('profesores', this.profesores);
+        console.log('Profesor cargado desde servicio:', response);
+        this.loadProfesorForEdit(response.data || response);
       },
       error: (error) => {
-        this.errorMessage = 'Error al cargar los profesores';
-        console.error('Error:', error);
+        console.error('Error al cargar profesor:', error);
+        this.errorMessage = 'Error al cargar los datos del profesor';
       }
     });
   }
@@ -160,11 +219,13 @@ export class ProfesorComponent implements OnInit {
     
     this.profesorService.createProfesor(profesorEnviar).subscribe({
       next: (response: any) => {
-        this.profesores.push(response.data);
         this.successMessage = 'Profesor creado exitosamente';
         this.onReset();
         this.isSubmitting = false;
-        this.getProfesores();
+        // Navegar a la lista después de crear
+        setTimeout(() => {
+          this.router.navigate(['/profesor/lista']);
+        }, 1500);
       },
       error: (error) => {
         this.errorMessage = 'Error al crear el profesor';
@@ -180,13 +241,15 @@ export class ProfesorComponent implements OnInit {
     console.log('profesorEnviar', profesor);
     this.profesorService.updateProfesor(id, profesor).subscribe({
       next: (response: any) => {
-        this.profesores = this.profesores.map((p: any) => p._id === id ? response.data : p);
         this.successMessage = 'Profesor actualizado exitosamente';
         this.onReset();
         this.isSubmitting = false;
         this.isEditing = false;
         this.editingId = null;
-        this.getProfesores();
+        // Navegar a la lista después de actualizar
+        setTimeout(() => {
+          this.router.navigate(['/profesor/lista']);
+        }, 1500);
       },
       error: (error) => {
         this.errorMessage = 'Error al actualizar el profesor';
@@ -200,8 +263,11 @@ export class ProfesorComponent implements OnInit {
     if (confirm('¿Estás seguro de que quieres eliminar este profesor?')) {
       this.profesorService.deleteProfesor(id).subscribe({
         next: (response: any) => {
-          this.profesores = this.profesores.filter((p: any) => p._id !== id);
           this.successMessage = 'Profesor eliminado exitosamente';
+          // Navegar a la lista después de eliminar
+          setTimeout(() => {
+            this.router.navigate(['/profesor/lista']);
+          }, 1500);
         },
         error: (error) => {
           this.errorMessage = 'Error al eliminar el profesor';
@@ -211,63 +277,12 @@ export class ProfesorComponent implements OnInit {
     }
   }
 
-  getProfesor(profesor: any) {
-    this.isEditing = true;
-    this.editingId = profesor._id;
-    console.log('profesor que llega al getProfesor ', profesor);
-    
-    // Mapear los datos del backend a la estructura del formulario
-    this.profesor = {
-      personaData: {
-        _id: profesor.persona?._id || '',
-        nombres: profesor.persona?.nombres || '',
-        apellidos: profesor.persona?.apellidos || '',
-        telefono: profesor.persona?.telefono || '',
-        tipoDocumento: profesor.persona?.tipoDocumento || '',
-        numeroDocumento: profesor.persona?.numeroDocumento || '',
-        fechaNacimiento: profesor.persona?.fechaNacimiento ? new Date(profesor.persona.fechaNacimiento).toISOString().split('T')[0] : '',
-        genero: profesor.persona?.genero || '',
-        email: profesor.persona?.email || '',
-        direccion: {
-          calle: profesor.persona?.direccion?.calle || '',
-          ciudad: profesor.persona?.direccion?.ciudad || '',
-          departamento: profesor.persona?.direccion?.departamento || '',
-          codigoPostal: profesor.persona?.direccion?.codigoPostal || '',
-          pais: profesor.persona?.direccion?.pais || ''
-        }
-      },
-      titulo: profesor.titulo || '',
-      experiencia_anios: profesor.experiencia_anios || 0,
-      fecha_contratacion: profesor.fecha_contratacion ? new Date(profesor.fecha_contratacion).toISOString().split('T')[0] : '',
-      salario: profesor.salario || 0,
-      activo_laboral: profesor.activo_laboral || true,
-      _id: profesor._id || ''
-    };
-  }
-
-  editProfesor(id: string, profesor: any) {
-    this.profesorService.updateProfesor(id, profesor).subscribe({
-      next: (response: any) => {
-        this.profesores = this.profesores.map((p: any) => p._id === id ? response.data : p);
-        this.successMessage = 'Profesor actualizado exitosamente';
-        this.onReset();
-        this.isSubmitting = false;
-        this.isEditing = false;
-        this.editingId = null;
-        this.getProfesores();
-      },
-      error: (error) => {
-        this.errorMessage = 'Error al actualizar el profesor';
-        this.isSubmitting = false;
-        console.error('Error:', error);
-      }
-    });
-  }
-
   cancelEdit() {
     this.isEditing = false;
     this.editingId = null;
     this.onReset();
+    // Navegar de vuelta a la lista
+    this.router.navigate(['/profesor/lista']);
   }
 
   onReset() {
@@ -308,5 +323,10 @@ export class ProfesorComponent implements OnInit {
     if (control && control.control) {
       control.control.markAsTouched();
     }
+  }
+
+  // Método para navegar a la lista
+  goToList() {
+    this.router.navigate(['/profesor/lista']);
   }
 }

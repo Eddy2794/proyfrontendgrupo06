@@ -27,4 +27,10 @@ export class ProfesorService {
   deleteProfesor(id: string) {
     return this.http.delete(`${environment.apiUrl}/profesores/${id}`);
   }
+
+  validateEmailUnique(email: string, excludeId?: string) {
+    return this.http.get(`${environment.apiUrl}/profesores/validate-email`, {
+      params: { email, excludeId: excludeId || '' }
+    });
+  }
 }

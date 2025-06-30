@@ -13,10 +13,16 @@
     <c-col lg="10" xl="8">
       <c-card>
         <c-card-header>
-          <h4>
-            <svg cIcon name="cilUser" size="sm"></svg>
-            {{ isEditing ? 'Editar Profesor' : 'Nuevo Profesor' }}
-          </h4>
+          <div class="d-flex justify-content-between align-items-center">
+            <h4>
+              <svg cIcon name="cilUser" size="sm"></svg>
+              {{ isEditing ? 'Editar Profesor' : 'Nuevo Profesor' }}
+            </h4>
+            <button cButton color="secondary" (click)="goToList()">
+              <svg cIcon name="cilList" size="sm" class="me-2"></svg>
+              Ver Lista
+            </button>
+          </div>
         </c-card-header>
         <c-card-body>
           <form #profesorFormNg="ngForm" (ngSubmit)="onSubmit()" [gutter]="3" [validated]="profesorFormValidated"
@@ -267,58 +273,6 @@
               </button>
             </c-col>
           </form>
-        </c-card-body>
-      </c-card>
-    </c-col>
-  </c-row>
-
-  <!-- Tabla de Profesores -->
-  <c-row class="mt-5">
-    <c-col [xs]="12">
-      <c-card>
-        <c-card-header>
-          <h4>
-            <svg cIcon name="cilList" size="sm"></svg>
-            Lista de Profesores
-          </h4>
-        </c-card-header>
-        <c-card-body>
-          <div class="table-responsive">
-            <table cTable [hover]="true" [striped]="true">
-              <thead>
-                <tr>
-                  <th scope="col">#</th>
-                  <th scope="col">Apellidos</th>
-                  <th scope="col">Nombres</th>
-                  <th scope="col">Email</th>
-                  <th scope="col">Teléfono</th>
-                  <th scope="col">Acciones</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr *ngFor="let profesor of profesores; let i = index">
-                  <th scope="row">{{ i + 1 }}</th>
-                  <td>{{ profesor.persona?.apellidos || profesor.apellidos }}</td>
-                  <td>{{ profesor.persona?.nombres || profesor.nombres }}</td>
-                  <td>{{ profesor.persona?.email || profesor.email }}</td>
-                  <td>{{ profesor.persona?.telefono || 'No disponible' }}</td>
-                  <td>
-                    <button cButton color="primary" size="sm" class="me-1" (click)="getProfesor(profesor)">
-                      <svg cIcon name="cilPencil" size="sm"></svg>
-                      Actualizar
-                    </button>
-                    <button cButton color="danger" size="sm" (click)="getProfesor(profesor)">
-                      <svg cIcon name="cilTrash" size="sm"></svg>
-                      Eliminar
-                    </button>
-                  </td>
-                </tr>
-                <tr *ngIf="profesores.length === 0">
-                  <td colspan="6" class="text-center">No hay profesores registrados</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
         </c-card-body>
       </c-card>
     </c-col>
