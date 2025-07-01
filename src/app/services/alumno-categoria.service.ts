@@ -1,154 +1,102 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable, of } from 'rxjs';
-import { map, catchError } from 'rxjs/operators';
-import { environment } from '../../environments/environment';
-
-export interface AlumnoCategoria {
-  _id: string;
-  alumno: any;
-  categoria: any;
-  fecha_inscripcion: Date;
-  estado: string;
-  observaciones?: string;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-export interface AlumnoCategoriaStats {
-  totalInscripciones: number;
-  inscripcionesPorCategoria: { categoria: string; cantidad: number }[];
-  inscripcionesPorDia: { fecha: string; cantidad: number }[];
-  inscripcionesPorMes: { mes: string; cantidad: number }[];
-  inscripcionesPorAno: { ano: string; cantidad: number }[];
-  categorias: { _id: string; nombre: string; color?: string }[];
-}
+import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { AlumnoCategoria, AlumnoCategoriaModel } from '../models/alumno-categoria.model';
 
 @Injectable({
   providedIn: 'root'
 })
 export class AlumnoCategoriaService {
-  private apiUrl = `${environment.apiUrl}/alumno-categorias`;
 
-  constructor(private http: HttpClient) {}
+  private apiUrl = 'http://localhost:3000/api/alumno-categorias'; 
 
-  /**
-   * Obtener todas las inscripciones con filtros
-   */
-  getAllInscripciones(filters: any = {}): Observable<any> {
-    let params = new HttpParams();
+  constructor(private http: HttpClient) { }
 
-    Object.keys(filters).forEach(key => {
-      if (filters[key] !== null && filters[key] !== undefined && filters[key] !== '') {
-        params = params.set(key, filters[key]);
-      }
-    });
-
-    return this.http.get<any>(this.apiUrl, { params });
+  // Obtener todas las relaciones alumno-categoría
+  getAlumnoCategorias(): Observable<any> {
+    let httpOptions = {
+      headers: new HttpHeaders(),
+      params: new HttpParams().set('populate', 'alumno,categoria_datos')
+    }
+    console.log('Haciendo petición a:', this.apiUrl + '/');
+    console.log('Opciones HTTP:', httpOptions);
+    return this.http.get<any>(this.apiUrl + '/', httpOptions);
   }
 
-  /**
-   * Obtener estadísticas de inscripciones por período
-   */
-  getInscripcionesStats(periodo: 'day' | 'month' | 'year' = 'month'): Observable<AlumnoCategoriaStats> {
-    let params = new HttpParams().set('period', periodo);
-    
-    return this.http.get<any>(`${this.apiUrl}/stats`, { params }).pipe(
-      map(response => {
-        if (response.success && response.data) {
-          return response.data;
-        }
-        return this.getFallbackStats(periodo);
-      }),
-      catchError(() => {
-        return of(this.getFallbackStats(periodo));
+  // Obtener una relación por ID
+  getAlumnoCategoria(id: string): Observable<any> {
+    let httpOptions = {
+      headers: new HttpHeaders(),
+      params: new HttpParams().set('populate', 'alumno_datos,categoria_datos')
+    }
+    return this.http.get(this.apiUrl + '/' + id, httpOptions);
+  }
+
+  // Obtener categorías de un alumno específico
+  getCategoriasPorAlumno(alumnoId: string): Observable<any> {
+    let httpOptions = {
+      headers: new HttpHeaders(),
+      params: new HttpParams().set('populate', 'alumno_datos,categoria_datos')
+    }
+    return this.http.get<any>(this.apiUrl + '/alumno/' + alumnoId, httpOptions);
+  }
+
+  // Obtener alumnos de una categoría específica
+  getAlumnosPorCategoria(categoriaId: string): Observable<any> {
+    let httpOptions = {
+      headers: new HttpHeaders(),
+      params: new HttpParams().set('populate', 'alumno_datos,categoria_datos')
+    }
+    return this.http.get<any>(this.apiUrl + '/categoria/' + categoriaId, httpOptions);
+  }
+
+  // Crear nueva relación alumno-categoría
+  addAlumnoCategoria(alumnoCategoria: AlumnoCategoria): Observable<any> {
+    let httpOption = {
+      headers: new HttpHeaders({
+        'Content-Type': 'application/json'
       })
-    );
+    }
+    let body: any = JSON.stringify(alumnoCategoria);
+    return this.http.post(this.apiUrl + '/', body, httpOption);
   }
 
-  /**
-   * Obtener inscripciones por categoría
-   */
-  getByCategoria(categoriaId: string): Observable<any> {
-    return this.http.get<any>(`${this.apiUrl}/categoria/${categoriaId}`);
+  // Actualizar relación alumno-categoría
+  updateAlumnoCategoria(alumnoCategoria: AlumnoCategoria): Observable<any> {
+    let httpOption = {
+      headers: new HttpHeaders({
+        'Content-Type': 'application/json'
+      })
+    }
+    let body: any = JSON.stringify(alumnoCategoria);
+    return this.http.put(this.apiUrl + '/' + alumnoCategoria._id, body, httpOption);
   }
 
-  /**
-   * Obtener inscripciones por alumno
-   */
-  getByAlumno(alumnoId: string): Observable<any> {
-    return this.http.get<any>(`${this.apiUrl}/alumno/${alumnoId}`);
+  // Eliminar relación alumno-categoría (soft delete)
+  deleteAlumnoCategoria(id: string): Observable<any> { 
+    let httpOptions = {
+      headers: new HttpHeaders(),
+      params: new HttpParams()
+    }
+    return this.http.delete(this.apiUrl + '/' + id, httpOptions);
   }
 
-  /**
-   * Crear nueva inscripción
-   */
-  createInscripcion(data: any): Observable<any> {
-    return this.http.post<any>(this.apiUrl, data);
+  // Eliminar relación alumno-categoría permanentemente
+  deleteAlumnoCategoriaFisico(id: string): Observable<any> { 
+    let httpOptions = {
+      headers: new HttpHeaders(),
+      params: new HttpParams()
+    }
+    return this.http.delete(this.apiUrl + '/eliminar/' + id, httpOptions);
   }
 
-  /**
-   * Actualizar inscripción
-   */
-  updateInscripcion(id: string, data: any): Observable<any> {
-    return this.http.put<any>(`${this.apiUrl}/${id}`, data);
+  // Restaurar relación alumno-categoría
+  restoreAlumnoCategoria(id: string): Observable<any> {
+    let httpOption = {
+      headers: new HttpHeaders({
+        'Content-Type': 'application/json'
+      })
+    }
+    return this.http.patch(this.apiUrl + '/restaurar/' + id, {}, httpOption);
   }
-
-  /**
-   * Eliminar inscripción (soft delete)
-   */
-  deleteInscripcion(id: string): Observable<any> {
-    return this.http.delete<any>(`${this.apiUrl}/${id}`);
-  }
-
-  /**
-   * Obtener datos de respaldo en caso de error
-   */
-  private getFallbackStats(periodo: string): AlumnoCategoriaStats {
-    return {
-      totalInscripciones: 247,
-      inscripcionesPorCategoria: [
-        { categoria: 'Karate Infantil', cantidad: 89 },
-        { categoria: 'Karate Juvenil', cantidad: 67 },
-        { categoria: 'Karate Adultos', cantidad: 54 },
-        { categoria: 'Karate Avanzado', cantidad: 37 }
-      ],
-      inscripcionesPorDia: periodo === 'day' ? [
-        { fecha: 'Lun', cantidad: 12 },
-        { fecha: 'Mar', cantidad: 8 },
-        { fecha: 'Mié', cantidad: 15 },
-        { fecha: 'Jue', cantidad: 10 },
-        { fecha: 'Vie', cantidad: 18 },
-        { fecha: 'Sáb', cantidad: 22 },
-        { fecha: 'Dom', cantidad: 6 }
-      ] : [],
-      inscripcionesPorMes: periodo === 'month' ? [
-        { mes: 'Enero', cantidad: 25 },
-        { mes: 'Febrero', cantidad: 32 },
-        { mes: 'Marzo', cantidad: 28 },
-        { mes: 'Abril', cantidad: 35 },
-        { mes: 'Mayo', cantidad: 42 },
-        { mes: 'Junio', cantidad: 38 },
-        { mes: 'Julio', cantidad: 45 },
-        { mes: 'Agosto', cantidad: 40 },
-        { mes: 'Septiembre', cantidad: 36 },
-        { mes: 'Octubre', cantidad: 33 },
-        { mes: 'Noviembre', cantidad: 30 },
-        { mes: 'Diciembre', cantidad: 27 }
-      ] : [],
-      inscripcionesPorAno: periodo === 'year' ? [
-        { ano: '2021', cantidad: 180 },
-        { ano: '2022', cantidad: 220 },
-        { ano: '2023', cantidad: 190 },
-        { ano: '2024', cantidad: 260 },
-        { ano: '2025', cantidad: 247 }
-      ] : [],
-      categorias: [
-        { _id: '1', nombre: 'Karate Infantil', color: '#20a8d8' },
-        { _id: '2', nombre: 'Karate Juvenil', color: '#4dbd74' },
-        { _id: '3', nombre: 'Karate Adultos', color: '#f86c6b' },
-        { _id: '4', nombre: 'Karate Avanzado', color: '#ffc107' }
-      ]
-    };
-  }
-}
+} 

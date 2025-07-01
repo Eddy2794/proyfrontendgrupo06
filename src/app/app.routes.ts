@@ -90,6 +90,18 @@ export const routes: Routes = [
         }
       },
       {
+        path: 'alumno',
+        loadChildren: () => import('./views/alumno/routes').then((m) => m.routes)
+      },
+      {
+        path: 'alumno-categoria',
+        loadChildren: () => import('./views/alumno_categoria/routes').then((m) => m.routes)
+      },
+      {
+        path: 'cuota',
+        loadChildren: () => import('./views/cuota/routes').then((m) => m.routes)
+      },
+      {
         path: 'categorias',
         loadChildren: () => import('./views/categoria/routes').then((m) => m.routes)
       },

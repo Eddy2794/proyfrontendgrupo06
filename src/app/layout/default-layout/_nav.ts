@@ -57,6 +57,31 @@ export const navItems: INavData[] = [
     url: '/torneos-categorias',
     iconComponent: {name: 'cil-list'}
   },
+  {
+    title: true,
+    name: 'Alumnos'
+  },
+  {
+    name: 'Alumnos',
+    iconComponent: { name: 'cil-user' },
+    children: [
+      {
+        name: 'Alumnos',
+        url: '/alumno',
+        iconComponent: { name: 'cil-plus' }
+      },
+      {
+        name: 'Alumno-Categoría',
+        url: '/alumno-categoria',
+        iconComponent: { name: 'cil-list' }
+      },
+      {
+        name: 'Cuotas',
+        url: '/cuota',
+        iconComponent: { name: 'cil-dollar' }
+      }
+    ]
+  },
   // {
   //   name: 'Components',
   //   title: true
