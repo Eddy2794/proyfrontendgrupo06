@@ -3,6 +3,32 @@ import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { AlumnoCategoria, AlumnoCategoriaModel } from '../models/alumno-categoria.model';
 
+// Interfaces para estadísticas
+export interface AlumnoCategoriaStats {
+  totalInscripciones: number;
+  inscripcionesPorCategoria: Array<{
+    categoria: string;
+    cantidad: number;
+  }>;
+  inscripcionesPorMes: Array<{
+    mes: string;
+    cantidad: number;
+  }>;
+  inscripcionesPorDia: Array<{
+    fecha: string;
+    cantidad: number;
+  }>;
+  inscripcionesPorAno: Array<{
+    ano: number;
+    cantidad: number;
+  }>;
+  categorias: Array<{
+    _id: string;
+    nombre: string;
+    color?: string;
+  }>;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -99,4 +125,14 @@ export class AlumnoCategoriaService {
     }
     return this.http.patch(this.apiUrl + '/restaurar/' + id, {}, httpOption);
   }
-} 
+
+  // Obtener estadísticas de inscripciones
+  getInscripcionesStats(period: 'day' | 'month' | 'year' = 'month'): Observable<AlumnoCategoriaStats> {
+    const httpOptions = {
+      headers: new HttpHeaders(),
+      params: new HttpParams().set('period', period)
+    };
+    
+    return this.http.get<AlumnoCategoriaStats>(this.apiUrl + '/stats', httpOptions);
+  }
+}

@@ -97,4 +97,34 @@ export class AlumnoService {
     }
     return this.http.patch(this.apiUrl + '/restaurar/' + id, {}, httpOption);
   }
-} 
+
+  // Método para obtener alumnos con filtros de paginación
+  getAllAlumnos(params: any = {}, page: number = 1, limit: number = 10): Observable<any> {
+    let httpParams = new HttpParams()
+      .set('page', page.toString())
+      .set('limit', limit.toString())
+      .set('populate', 'persona_datos,tutor_datos');
+    
+    // Agregar parámetros adicionales
+    Object.keys(params).forEach(key => {
+      if (params[key] !== undefined && params[key] !== null) {
+        httpParams = httpParams.set(key, params[key]);
+      }
+    });
+
+    const httpOptions = {
+      headers: new HttpHeaders(),
+      params: httpParams
+    };
+    
+    return this.http.get<any>(this.apiUrl + '/', httpOptions);
+  }
+
+  // Obtener estadísticas de alumnos por mes
+  getAlumnosPorMes(): Observable<any> {
+    const httpOptions = {
+      headers: new HttpHeaders()
+    };
+    return this.http.get<any>(this.apiUrl + '/stats/por-mes', httpOptions);
+  }
+}

@@ -12,7 +12,7 @@ import { ColorModeService } from '@coreui/angular';
 
 @Component({
   selector: 'app-categoria-form',
-  imports: [FormsModule, CommonModule, IconDirective, ToastComponent, NotificationsComponent],
+  imports: [FormsModule, CommonModule, IconDirective, NotificationsComponent],
   templateUrl: './categoria-form.component.html',
   styleUrl: './categoria-form.component.scss'
 })

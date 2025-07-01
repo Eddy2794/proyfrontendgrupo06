@@ -60,7 +60,6 @@ import { ChartData } from 'chart.js';
     FormControlDirective,
     InputGroupComponent,
     InputGroupTextDirective,
-    FormSelectDirective,
     ProgressComponent,
     TooltipDirective,
     IconDirective,

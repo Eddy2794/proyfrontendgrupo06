@@ -48,7 +48,7 @@ export class DashboardChartsData {
       next: (stats: AlumnoCategoriaStats) => {
         this.updateChartWithRealData(stats, period, brandSuccess, brandInfo, brandInfoBg, brandDanger);
       },
-      error: (error) => {
+      error: (error: any) => {
         console.error('Error al obtener estadísticas:', error);
         // Fallback a datos de ejemplo en caso de error
         this.initChartWithFallbackData(period, brandSuccess, brandInfo, brandInfoBg, brandDanger);
@@ -61,10 +61,10 @@ export class DashboardChartsData {
     let datasets: ChartDataset[] = [];
 
     if (period === 'Day') {
-      labels = stats.inscripcionesPorDia.map(item => item.fecha);
+      labels = stats.inscripcionesPorDia.map((item: any) => item.fecha);
       
       // Crear dataset por cada categoría
-      stats.categorias.forEach((categoria, index) => {
+      stats.categorias.forEach((categoria: any, index: number) => {
         const categoriaData = labels.map(() => {
           // Calcular inscripciones por día para esta categoría específica
           return this.random(0, 20); // Por ahora usamos datos aleatorios, se puede mejorar con datos reales
@@ -81,10 +81,10 @@ export class DashboardChartsData {
         });
       });
     } else if (period === 'Month') {
-      labels = stats.inscripcionesPorMes.map(item => this.getShortMonthName(item.mes));
+      labels = stats.inscripcionesPorMes.map((item: any) => this.getShortMonthName(item.mes));
       
       // Crear dataset por cada categoría
-      stats.categorias.forEach((categoria, index) => {
+      stats.categorias.forEach((categoria: any, index: number) => {
         const categoriaData = stats.inscripcionesPorMes.map(() => {
           // Calcular inscripciones por mes para esta categoría específica
           return this.random(5, 50); // Por ahora usamos datos aleatorios
@@ -101,10 +101,10 @@ export class DashboardChartsData {
         });
       });
     } else { // Year
-      labels = stats.inscripcionesPorAno.map(item => item.ano);
+      labels = stats.inscripcionesPorAno.map((item: any) => item.ano);
       
       // Crear dataset por cada categoría
-      stats.categorias.forEach((categoria, index) => {
+      stats.categorias.forEach((categoria: any, index: number) => {
         const categoriaData = stats.inscripcionesPorAno.map(() => {
           // Calcular inscripciones por año para esta categoría específica
           return this.random(50, 300); // Por ahora usamos datos aleatorios

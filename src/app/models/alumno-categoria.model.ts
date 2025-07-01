@@ -1,5 +1,5 @@
 import { Alumno, AlumnoModel } from './alumno.model';
-//import { Categoria, CategoriaModel } from './categoria.model';
+import { CategoriaEscuela } from './categoria-escuela.model';
 
 // Tipos constantes basados en el backend
 export type EstadoAlumnoCategoria = 'ACTIVO' | 'INACTIVO';
@@ -8,7 +8,7 @@ export type EstadoAlumnoCategoria = 'ACTIVO' | 'INACTIVO';
 export interface AlumnoCategoria {
   _id?: string;
   alumno: string | Alumno; // ID o objeto completo de Alumno
-  //categoria: string | Categoria; // ID o objeto completo de Categoria
+  categoria: string | CategoriaEscuela; // ID o objeto completo de Categoria
   fecha_inscripcion: Date | string;
   estado?: EstadoAlumnoCategoria;
   observaciones?: string;
@@ -19,14 +19,14 @@ export interface AlumnoCategoria {
   
   // Campos populados (cuando vienen del backend con populate)
   alumno_datos?: Alumno;
-  //categoria_datos?: Categoria;
+  categoria_datos?: CategoriaEscuela;
 }
 
 // Clase para el modelo AlumnoCategoria con validaciones y métodos auxiliares
 export class AlumnoCategoriaModel implements AlumnoCategoria {
   _id?: string;
   alumno: string | Alumno;
-  //categoria: string | Categoria;
+  categoria: string | CategoriaEscuela;
   fecha_inscripcion: Date | string;
   estado?: EstadoAlumnoCategoria;
   observaciones?: string;
@@ -35,12 +35,12 @@ export class AlumnoCategoriaModel implements AlumnoCategoria {
   createdAt?: Date | string;
   updatedAt?: Date | string;
   alumno_datos?: Alumno;
-  //categoria_datos?: Categoria;
+  categoria_datos?: CategoriaEscuela;
 
   constructor(data: Partial<AlumnoCategoria> = {}) {
     this._id = data._id;
     this.alumno = data.alumno || '';
-    //this.categoria = data.categoria || '';
+    this.categoria = data.categoria || '';
     this.fecha_inscripcion = data.fecha_inscripcion || new Date();
     this.estado = data.estado || 'ACTIVO';
     this.observaciones = data.observaciones;
@@ -49,7 +49,7 @@ export class AlumnoCategoriaModel implements AlumnoCategoria {
     this.createdAt = data.createdAt;
     this.updatedAt = data.updatedAt;
     this.alumno_datos = data.alumno_datos;
-    //this.categoria_datos = data.categoria_datos;
+    this.categoria_datos = data.categoria_datos;
   }
 
   // Método para obtener el nombre del alumno
@@ -69,9 +69,9 @@ export class AlumnoCategoriaModel implements AlumnoCategoria {
 
   // Método para obtener el nombre de la categoría
   get nombreCategoria(): string {
-    //if (this.categoria_datos) {
-    //  return this.categoria_datos.nombre;
-    //}
+    if (this.categoria_datos) {
+      return this.categoria_datos.nombre;
+    }
     return 'Categoría no identificada';
   }
 
@@ -81,14 +81,14 @@ export class AlumnoCategoriaModel implements AlumnoCategoria {
   }
 
   // Método para obtener el ID de la categoría
-  //get categoriaId(): string {
-    //return typeof this.categoria === 'string' ? this.categoria : this.categoria._id || '';
-  //}
+  get categoriaId(): string {
+    return typeof this.categoria === 'string' ? this.categoria : this.categoria._id || '';
+  }
 
   // Método para verificar si tiene datos populados
-  //get tieneDatosCompletos(): boolean {
-    //return !!(this.alumno_datos && this.categoria_datos);
-  //}
+  get tieneDatosCompletos(): boolean {
+    return !!(this.alumno_datos && this.categoria_datos);
+  }
 
   // Método para obtener la fecha de inscripción formateada
   get fechaInscripcionFormateada(): string {
@@ -119,7 +119,7 @@ export class AlumnoCategoriaModel implements AlumnoCategoria {
     return {
       _id: this._id,
       alumno: this.alumnoId,
-      //categoria: this.categoriaId,
+      categoria: this.categoriaId,
       fecha_inscripcion: this.fecha_inscripcion,
       estado: this.estado,
       observaciones: this.observaciones,

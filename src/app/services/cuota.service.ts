@@ -137,4 +137,24 @@ export class CuotaService {
     let body: any = JSON.stringify(datosPago);
     return this.http.patch(this.apiUrl + '/' + id + '/pagar', body, httpOption);
   }
-} 
+
+  // Obtener cuotas pendientes del año actual
+  getCuotasPendientesAnioActual(): Observable<any> {
+    const httpOptions = {
+      headers: new HttpHeaders(),
+      params: new HttpParams()
+        .set('estado', 'PENDIENTE')
+        .set('year', new Date().getFullYear().toString())
+        .set('populate', 'alumno_categoria_datos')
+    };
+    return this.http.get<any>(this.apiUrl + '/', httpOptions);
+  }
+
+  // Obtener estadísticas de cuotas por mes
+  getCuotasPorMes(): Observable<any> {
+    const httpOptions = {
+      headers: new HttpHeaders()
+    };
+    return this.http.get<any>(this.apiUrl + '/stats/por-mes', httpOptions);
+  }
+}

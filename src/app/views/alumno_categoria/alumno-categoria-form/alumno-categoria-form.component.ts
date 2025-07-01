@@ -4,10 +4,10 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AlumnoCategoriaService } from '../../../services/alumno-categoria.service';
 import { AlumnoService } from '../../../services/alumno.service';
-//import { CategoriaService } from '../../../services/categoria.service';
+import { CategoriaEscuelaService } from '../../../services/categoria-escuela.service';
 import { AlumnoCategoria, AlumnoCategoriaModel } from '../../../models/alumno-categoria.model';
 import { Alumno } from '../../../models/alumno.model';
-//import { Categoria } from '../../../models/categoria.model';
+import { CategoriaEscuela } from '../../../models/categoria-escuela.model';
 
 @Component({
   standalone: true,
@@ -19,7 +19,7 @@ import { Alumno } from '../../../models/alumno.model';
 export class AlumnoCategoriaFormComponent implements OnInit {
   relacion: AlumnoCategoriaModel = new AlumnoCategoriaModel();
   alumnos: Alumno[] = [];
-  //categorias: Categoria[] = [];
+  categorias: CategoriaEscuela[] = [];
   isEdit = false;
   loading = false;
 
@@ -28,11 +28,11 @@ export class AlumnoCategoriaFormComponent implements OnInit {
     private router: Router,
     private alumnoCategoriaService: AlumnoCategoriaService,
     private alumnoService: AlumnoService,
-    //private categoriaService: CategoriaService
+    private categoriaEscuelaService: CategoriaEscuelaService
   ) {}
 
   ngOnInit(): void {
-   /* const id = this.route.snapshot.paramMap.get('id');
+    const id = this.route.snapshot.paramMap.get('id');
     this.cargarAlumnos();
     this.cargarCategorias();
     if (id && id !== '0') {
@@ -68,7 +68,7 @@ export class AlumnoCategoriaFormComponent implements OnInit {
       this.relacion = new AlumnoCategoriaModel();
       // this.relacion.fecha_inscripcion = ''; // Dejar vacío para que el usuario la seleccione
       this.relacion.estado = 'ACTIVO';
-    }*/
+    }
   }
 
   cargarAlumnos() {
@@ -96,6 +96,19 @@ export class AlumnoCategoriaFormComponent implements OnInit {
       }
     });
   }*/
+
+  cargarCategorias() {
+    this.categoriaEscuelaService.getCategorias({ estado: 'ACTIVA' }).subscribe({
+      next: (result) => {
+        console.log('Respuesta categorias:', result);
+        this.categorias = result.data?.categorias || [];
+        console.log('Categorias cargadas:', this.categorias);
+      },
+      error: () => {
+        alert('Error al cargar categorías');
+      }
+    });
+  }
 
   guardar() {
     if (this.isEdit) {

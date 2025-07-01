@@ -177,7 +177,7 @@ export class WidgetsDropdownComponent implements OnInit, AfterContentInit, OnDes
    */
   private loadDashboardData(): void {
     forkJoin({
-      alumnos: this.alumnoService.getAllAlumnos({ estado: 'ACTIVO' }, 1, 1000),
+      alumnos: this.alumnoService.getAlumnos(),
       alumnosPorMes: this.alumnoService.getAlumnosPorMes(),
       cuotasPendientes: this.cuotaService.getCuotasPendientesAnioActual(),
       cuotasPorMes: this.cuotaService.getCuotasPorMes(),

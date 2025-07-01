@@ -80,7 +80,7 @@ export class DashboardComponent implements OnInit {
       next: (stats: AlumnoCategoriaStats) => {
         this.updateDashboardData(stats);
       },
-      error: (error) => {
+      error: (error: any) => {
         console.error('Error al cargar datos de inscripciones:', error);
         this.setFallbackData();
       }
@@ -91,7 +91,7 @@ export class DashboardComponent implements OnInit {
     // Actualizar estadísticas generales
     this.estadisticasGenerales.totalInscripciones = stats.totalInscripciones;
     this.estadisticasGenerales.categoriasMasPopular = stats.inscripcionesPorCategoria
-      .sort((a, b) => b.cantidad - a.cantidad)[0]?.categoria || 'N/A';
+      .sort((a: any, b: any) => b.cantidad - a.cantidad)[0]?.categoria || 'N/A';
     
     // Calcular crecimiento mensual (simulado)
     const ultimosMeses = stats.inscripcionesPorMes.slice(-2);
@@ -105,9 +105,9 @@ export class DashboardComponent implements OnInit {
     this.estadisticasGenerales.alumnosActivos = stats.totalInscripciones;
 
     // Crear datos para las tarjetas de progreso
-    const maxInscripciones = Math.max(...stats.inscripcionesPorCategoria.map(c => c.cantidad), 1);
+    const maxInscripciones = Math.max(...stats.inscripcionesPorCategoria.map((c: any) => c.cantidad), 1);
     
-    this.inscripcionesData = stats.inscripcionesPorCategoria.map((cat, index) => ({
+    this.inscripcionesData = stats.inscripcionesPorCategoria.map((cat: any, index: number) => ({
       categoria: cat.categoria,
       totalAlumnos: cat.cantidad,
       porcentaje: Math.round((cat.cantidad / maxInscripciones) * 100),
@@ -198,7 +198,7 @@ export class DashboardComponent implements OnInit {
       next: (stats: AlumnoCategoriaStats) => {
         this.updateDashboardData(stats);
       },
-      error: (error) => {
+      error: (error: any) => {
         console.error('Error al actualizar datos:', error);
       }
     });
