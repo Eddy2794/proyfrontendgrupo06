@@ -1,0 +1,35 @@
+<h1 class="my-2">Inscripciones categorias en torneo</h1>
+
+<div class="row mb-2">
+    <div class="col-12">
+        <button class=" btn btn-primary" (click)="agregar()">Nueva asignacion</button>
+    </div>
+</div>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th scope="col">Nombre del torneo</th>
+            <th scope="col">Descripcion del torneo</th>
+            <th scope="col">Observacion de la inscripcion</th>
+            <th scope="col">Lugar del torneo</th>
+            <th scope="col">Fecha de inicio del torneo</th>
+            <th scope="col">Categoria que disputa el torneo</th>
+            <th scope="col">Acciones</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr *ngFor="let t of torneosCategorias">
+            <td>{{ t.torneo.nombre }}</td>
+            <td>{{ t.torneo.descripcion }}</td>
+            <td>{{ t.observaciones }}</td>
+            <td>{{ t.torneo.lugar }}</td>
+            <td>{{ t.torneo.fecha_inicio | date:'dd/MM/yyyy' }}</td>
+            <td>{{ t.categoria.nombre }}</td>
+            <td>
+                <button class="btn btn-primary mb-1" (click)="modificar(t)">Modificar</button>
+                <button class="btn btn-primary" (click)="eliminarTorneoCategoria(t._id)">Eliminar</button>
+            </td>
+        </tr>
+    </tbody>
+</table>

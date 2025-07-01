@@ -1,0 +1,30 @@
+<div class="card mt-5">
+    <div class="card-header">
+        Crear Asignacion
+    </div>
+    <div class="card-body">
+        <form>
+            <div class="mb-3">
+                <label for="idtorneo" class="form-label">Torneos</label>
+                <select id="idtorneo" class="form-select" name="torneo" [(ngModel)]="torneoCategoria.torneo">
+                    <option *ngFor="let t of torneos" [ngValue]="t._id"> {{t.nombre}}
+                    </option>
+                </select>
+            </div>
+            <div class="mb-3">
+                <label for="idcategoria" class="form-label">Categorias</label>
+                <select id="idcategoria" class="form-select" name="categoria" [(ngModel)]="torneoCategoria.categoria">
+                    <option *ngFor="let c of categorias" [ngValue]="c._id"> {{c.nombre}}
+                    </option>
+                </select>
+            </div>
+            <div class="mb-3">
+                <label for="idobservacion" class="form-label">Observacion</label>
+                <input name="observacion" type="text" class="form-control" id="idobservacion"
+                    [(ngModel)]="torneoCategoria.observaciones">
+            </div>
+            <button type="button" class="btn btn-primary me-2" *ngIf="accion == 'new'" (click)="agregarTorneoCategoria()">Guardar</button>
+            <button type="button" class="btn btn-primary"  *ngIf="accion == 'update'" (click)="actualizarTorneoCategoria()">Actualizar</button>
+        </form>
+    </div>
+</div>
