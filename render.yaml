@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: proyfrontendgrupo06
+    env: node
+    plan: free
+    buildCommand: |
+      pnpm install --no-frozen-lockfile
+      npx @angular/cli@latest build --configuration production
+    startCommand: npx serve -s dist/coreui-free-angular-admin-template -l 3000
+    publishPath: dist/coreui-free-angular-admin-template
+    envVars:
+      - key: NODE_ENV
+        value: production
+    # Para servir archivos estáticos de Angular
+    staticPublishPath: dist/coreui-free-angular-admin-template

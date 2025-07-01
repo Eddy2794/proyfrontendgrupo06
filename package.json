@@ -13,7 +13,8 @@
   "scripts": {
     "ng": "ng",
     "start": "ng serve -o",
-    "build": "ng build",
+    "build": "ng build --configuration production",
+    "build:render": "npx @angular/cli@latest build --configuration production",
     "watch": "ng build --watch --configuration development",
     "test": "ng test"
   },
@@ -40,11 +41,13 @@
     "@kurkle/color": "^0.4.0",
     "@mercadopago/sdk-js": "^0.0.3",
     "@popperjs/core": "^2.11.8",
+    "bootstrap-icons": "^1.13.1",
     "chart.js": "^4.5.0",
     "crypto-js": "^4.2.0",
     "lodash-es": "^4.17.21",
     "ngx-scrollbar": "^13.0.3",
     "rxjs": "~7.8.2",
+    "serve": "^14.2.3",
     "tslib": "^2.8.1",
     "zone.js": "~0.15.1"
   },
