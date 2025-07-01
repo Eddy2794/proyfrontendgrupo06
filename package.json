@@ -12,8 +12,10 @@
   },
   "scripts": {
     "ng": "ng",
-    "start": "ng serve -o",
+    "start": "node server.js",
+    "start:dev": "ng serve -o",
     "build": "ng build --configuration production",
+    "postbuild": "node postbuild.js --configuration production",
     "build:render": "npx @angular/cli@latest build --configuration production",
     "watch": "ng build --watch --configuration development",
     "test": "ng test"

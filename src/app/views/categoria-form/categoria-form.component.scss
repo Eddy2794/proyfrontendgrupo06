@@ -1,0 +1,44 @@
+// Categoria Form Component Styles
+.categoria-form {
+  .form-container {
+    max-width: 600px;
+    margin: 0 auto;
+  }
+
+  .form-header {
+    border-bottom: 1px solid var(--cui-border-color);
+    padding-bottom: 1rem;
+    margin-bottom: 2rem;
+  }
+
+  .form-actions {
+    border-top: 1px solid var(--cui-border-color);
+    padding-top: 1rem;
+    margin-top: 2rem;
+    display: flex;
+    gap: 0.5rem;
+    justify-content: flex-end;
+  }
+
+  .required-field {
+    color: var(--cui-danger);
+  }
+
+  .form-help-text {
+    font-size: 0.875rem;
+    color: var(--cui-text-muted);
+  }
+}
+
+// Dark mode adjustments
+[data-coreui-theme="dark"] {
+  .categoria-form {
+    .form-header {
+      border-bottom-color: var(--cui-border-color-translucent);
+    }
+
+    .form-actions {
+      border-top-color: var(--cui-border-color-translucent);
+    }
+  }
+}
