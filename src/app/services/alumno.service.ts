@@ -1,137 +1,100 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
-import { environment } from '../../environments/environment';
-
-export interface AlumnoStats {
-  totalAlumnos: number;
-  alumnosPorMes: { mes: string; cantidad: number }[];
-  alumnosActivos: number;
-  alumnosInactivos: number;
-}
-
-export interface Alumno {
-  _id: string;
-  persona: any;
-  numero_socio: string;
-  fecha_inscripcion: Date;
-  estado: string;
-  observaciones?: string;
-  createdAt: Date;
-  updatedAt: Date;
-}
+import { Alumno, AlumnoModel } from '../models/alumno.model';
 
 @Injectable({
   providedIn: 'root'
 })
 export class AlumnoService {
-  private apiUrl = `${environment.apiUrl}/alumnos`;
 
-  constructor(private http: HttpClient) {}
+  private apiUrl = 'http://localhost:3000/api/alumnos'; 
 
-  /**
-   * Obtener todos los alumnos con filtros y paginación
-   */
-  getAllAlumnos(filters: any = {}, page: number = 1, limit: number = 10): Observable<any> {
-    let params = new HttpParams()
-      .set('page', page.toString())
-      .set('limit', limit.toString());
+  constructor(private http: HttpClient) { }
 
-    Object.keys(filters).forEach(key => {
-      if (filters[key] !== null && filters[key] !== undefined && filters[key] !== '') {
-        params = params.set(key, filters[key]);
-      }
-    });
-
-    return this.http.get<any>(this.apiUrl, { params });
+  // Obtener todos los alumnos
+  getAlumnos(): Observable<any> {
+    let httpOptions = {
+      headers: new HttpHeaders(),
+      params: new HttpParams().set('populate', 'persona_datos,tutor_datos')
+    }
+    return this.http.get<any>(this.apiUrl + '/', httpOptions);
   }
 
-  /**
-   * Obtener estadísticas de alumnos usando rutas existentes
-   */
-  getAlumnoStats(): Observable<AlumnoStats> {
-    // Usar la ruta GET /alumnos con filtros para obtener estadísticas
-    return this.getAllAlumnos({}, 1, 999).pipe(
-      map((response: any) => this.processAlumnoStats(response))
-    );
+  // Obtener un alumno por ID
+  getAlumno(id: string): Observable<any> {
+    let httpOptions = {
+      headers: new HttpHeaders(),
+      params: new HttpParams().set('populate', 'persona_datos,tutor_datos')
+    }
+    return this.http.get(this.apiUrl + '/' + id, httpOptions);
   }
 
-  /**
-   * Obtener alumnos registrados por mes (calculado desde datos existentes)
-   */
-  getAlumnosPorMes(): Observable<any> {
-    return this.getAllAlumnos({}, 1, 999).pipe(
-      map((response: any) => this.processAlumnosPorMes(response))
-    );
+  // Buscar alumno por número de socio
+  getAlumnoByNumeroSocio(numeroSocio: string): Observable<any> {
+    let httpOptions = {
+      headers: new HttpHeaders(),
+      params: new HttpParams().set('populate', 'persona_datos,tutor_datos')
+    }
+    return this.http.get<any>(this.apiUrl + '/numero-socio/' + numeroSocio, httpOptions);
   }
 
-  /**
-   * Procesar respuesta para generar estadísticas
-   */
-  private processAlumnoStats(response: any): AlumnoStats {
-    const alumnos = response.data?.docs || response.data || response.alumnos || [];
-    const activos = alumnos.filter((a: any) => a.estado === 'ACTIVO');
-    const inactivos = alumnos.filter((a: any) => a.estado === 'INACTIVO');
-    
-    return {
-      totalAlumnos: alumnos.length,
-      alumnosActivos: activos.length,
-      alumnosInactivos: inactivos.length,
-      alumnosPorMes: this.groupByMonth(alumnos, 'fecha_inscripcion')
-    };
+  // Obtener alumnos por tutor
+  getAlumnosByTutor(tutorId: string): Observable<any> {
+    let httpOptions = {
+      headers: new HttpHeaders(),
+      params: new HttpParams().set('populate', 'persona_datos,tutor_datos')
+    }
+    return this.http.get<any>(this.apiUrl + '/tutor/' + tutorId, httpOptions);
   }
 
-  /**
-   * Procesar datos para gráfico por mes
-   */
-  private processAlumnosPorMes(response: any): any {
-    const alumnos = response.data?.docs || response.data || response.alumnos || [];
-    return this.groupByMonth(alumnos, 'fecha_inscripcion');
+  // Crear nuevo alumno
+  addAlumno(alumno: Alumno): Observable<any> {
+    let httpOption = {
+      headers: new HttpHeaders({
+        'Content-Type': 'application/json'
+      })
+    }
+    let body: any = JSON.stringify(alumno);
+    return this.http.post(this.apiUrl + '/', body, httpOption);
   }
 
-  /**
-   * Agrupar datos por mes
-   */
-  private groupByMonth(items: any[], dateField: string): { mes: string; cantidad: number }[] {
-    const monthGroups: { [key: string]: number } = {};
-    
-    items.forEach(item => {
-      if (item[dateField]) {
-        const date = new Date(item[dateField]);
-        const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-        monthGroups[monthKey] = (monthGroups[monthKey] || 0) + 1;
-      }
-    });
-
-    return Object.entries(monthGroups).map(([mes, cantidad]) => ({ mes, cantidad }));
+  // Actualizar alumno
+  updateAlumno(alumno: Alumno): Observable<any> {
+    let httpOption = {
+      headers: new HttpHeaders({
+        'Content-Type': 'application/json'
+      })
+    }
+    let body: any = JSON.stringify(alumno);
+    return this.http.put(this.apiUrl + '/' + alumno._id, body, httpOption);
   }
 
-  /**
-   * Obtener alumno por ID
-   */
-  getAlumnoById(id: string): Observable<any> {
-    return this.http.get<any>(`${this.apiUrl}/${id}`);
+  // Eliminar alumno (soft delete)
+  deleteAlumno(id: string): Observable<any> { 
+    let httpOptions = {
+      headers: new HttpHeaders(),
+      params: new HttpParams()
+    }
+    return this.http.delete(this.apiUrl + '/' + id, httpOptions);
   }
 
-  /**
-   * Crear nuevo alumno
-   */
-  createAlumno(alumnoData: any): Observable<any> {
-    return this.http.post<any>(this.apiUrl, alumnoData);
+  // Eliminar alumno permanentemente
+  deleteAlumnoFisico(id: string): Observable<any> { 
+    let httpOptions = {
+      headers: new HttpHeaders(),
+      params: new HttpParams()
+    }
+    return this.http.delete(this.apiUrl + '/eliminar/' + id, httpOptions);
   }
 
-  /**
-   * Actualizar alumno
-   */
-  updateAlumno(id: string, alumnoData: any): Observable<any> {
-    return this.http.put<any>(`${this.apiUrl}/${id}`, alumnoData);
+  // Restaurar alumno
+  restoreAlumno(id: string): Observable<any> {
+    let httpOption = {
+      headers: new HttpHeaders({
+        'Content-Type': 'application/json'
+      })
+    }
+    return this.http.patch(this.apiUrl + '/restaurar/' + id, {}, httpOption);
   }
-
-  /**
-   * Eliminar alumno (soft delete)
-   */
-  deleteAlumno(id: string): Observable<any> {
-    return this.http.delete<any>(`${this.apiUrl}/${id}`);
-  }
-}
+} 
