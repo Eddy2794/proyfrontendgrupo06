@@ -1,7 +1,8 @@
 import { NgTemplateOutlet, AsyncPipe, CommonModule } from '@angular/common';
-import { Component, computed, inject, input, OnInit } from '@angular/core';
+import { Component, computed, inject, input, OnInit, OnDestroy } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
-import { Observable } from 'rxjs';
+import { Observable, Subscription, BehaviorSubject, combineLatest, timer, fromEvent } from 'rxjs';
+import { map, startWith, catchError, delay, switchMap, take } from 'rxjs/operators';
 
 import {
   AvatarComponent,
@@ -25,14 +26,17 @@ import {
 
 import { IconDirective } from '@coreui/icons-angular';
 import { AuthService } from '../../../services/auth.service';
+import { UserStateService } from '../../../services/user-state.service';
 import { User, Persona } from '../../../models';
 
 @Component({
     selector: 'app-default-header',
     templateUrl: './default-header.component.html',
-  imports: [ContainerComponent, HeaderTogglerDirective, SidebarToggleDirective, IconDirective, HeaderNavComponent, NavItemComponent, NavLinkDirective, RouterLink, RouterLinkActive, NgTemplateOutlet, BreadcrumbRouterComponent, DropdownComponent, DropdownToggleDirective, AvatarComponent, DropdownMenuDirective, DropdownHeaderDirective, DropdownItemDirective, BadgeComponent, DropdownDividerDirective, CommonModule, AsyncPipe]
+  imports: [ContainerComponent, HeaderTogglerDirective, SidebarToggleDirective, IconDirective, HeaderNavComponent, NavItemComponent, NavLinkDirective, RouterLink, RouterLinkActive, NgTemplateOutlet, BreadcrumbRouterComponent, DropdownComponent, DropdownToggleDirective, AvatarComponent, DropdownMenuDirective, DropdownHeaderDirective, DropdownItemDirective, 
+    // BadgeComponent, 
+    DropdownDividerDirective, CommonModule, AsyncPipe]
 })
-export class DefaultHeaderComponent extends HeaderComponent implements OnInit {
+export class DefaultHeaderComponent extends HeaderComponent implements OnInit, OnDestroy {
 
   readonly #colorModeService = inject(ColorModeService);
   readonly colorMode = this.#colorModeService.colorMode;
@@ -40,6 +44,10 @@ export class DefaultHeaderComponent extends HeaderComponent implements OnInit {
   // Observables para la información del usuario
   user$: Observable<any>;
   isAuthenticated$: Observable<string | null>;
+  
+  // Estado interno para manejo de usuario
+  private userDataSubject = new BehaviorSubject<any>(null);
+  private subscriptions: Subscription[] = [];
 
   readonly colorModes = [
     { name: 'light', text: 'Light', icon: 'cilSun' },
@@ -52,16 +60,137 @@ export class DefaultHeaderComponent extends HeaderComponent implements OnInit {
     return this.colorModes.find(mode => mode.name === currentMode)?.icon ?? 'cilSun';
   });
 
-  constructor(private auth: AuthService) {
+  constructor(private auth: AuthService, private userStateService: UserStateService) {
     super();
-    // Inicializar observables después del constructor
-    this.user$ = this.auth.user$;
+    
+    // Inicializar observables
+    this.user$ = this.userDataSubject.asObservable();
     this.isAuthenticated$ = this.auth.token$;
+    
+    // Escuchar eventos de focus/visibility para restaurar usuario
+    this.setupVisibilityListeners();
   }
 
   ngOnInit(): void {
-    // Inicialización del componente
-    // Aquí se puede agregar lógica adicional si es necesaria
+    // Forzar inicialización del servicio de autenticación si es necesario
+    this.auth.initializeAuthIfNeeded();
+    
+    // Cargar datos del usuario inmediatamente
+    this.loadUserData();
+    
+    // Configurar timer para verificación periódica del usuario
+    const userCheckTimer = timer(0, 2000).pipe(
+      switchMap(() => this.auth.user$),
+      take(10) // Limitar a 10 verificaciones para evitar loops infinitos
+    ).subscribe(user => {
+      if (user && !this.userDataSubject.value) {
+        console.log('Usuario detectado en verificación periódica:', user);
+        this.userDataSubject.next(user);
+      }
+    });
+    
+    // Suscribirse a cambios del usuario desde el servicio
+    const userSub = this.auth.user$.subscribe(user => {
+      console.log('Usuario actualizado en header:', user);
+      this.userDataSubject.next(user);
+    });
+    
+    // Suscribirse a cambios del token para recargar usuario si es necesario
+    const tokenSub = this.auth.token$.subscribe(token => {
+      if (token && !this.userDataSubject.value) {
+        console.log('Token detectado, cargando datos del usuario...');
+        this.loadUserData();
+      } else if (!token) {
+        console.log('Token perdido, limpiando datos del usuario');
+        this.userDataSubject.next(null);
+      }
+    });
+    
+    this.subscriptions.push(userSub, tokenSub, userCheckTimer);
+  }
+
+  ngOnDestroy(): void {
+    // Limpiar suscripciones para evitar memory leaks
+    this.subscriptions.forEach(sub => sub.unsubscribe());
+  }
+
+  /**
+   * Configurar listeners para eventos de visibilidad y focus
+   */
+  private setupVisibilityListeners(): void {
+    // Escuchar cuando la página vuelve a ser visible
+    const visibilityListener = fromEvent(document, 'visibilitychange').subscribe(() => {
+      if (!document.hidden && this.auth.token && !this.userDataSubject.value) {
+        console.log('Página visible, verificando datos del usuario...');
+        this.loadUserData();
+      }
+    });
+    
+    // Escuchar cuando la ventana obtiene el foco
+    const focusListener = fromEvent(window, 'focus').subscribe(() => {
+      if (this.auth.token && !this.userDataSubject.value) {
+        console.log('Ventana enfocada, verificando datos del usuario...');
+        this.loadUserData();
+      }
+    });
+    
+    this.subscriptions.push(visibilityListener, focusListener);
+  }
+
+  /**
+   * Cargar datos del usuario desde el servicio
+   */
+  private loadUserData(): void {
+    // Primero intentar usar el usuario en cache del servicio
+    const currentUser = this.auth.currentUser;
+    if (currentUser) {
+      console.log('Usuario encontrado en cache:', currentUser);
+      this.userDataSubject.next(currentUser);
+      return;
+    }
+
+    // Verificar localStorage directamente como fallback
+    const storedUser = localStorage.getItem('currentUser');
+    if (storedUser && this.auth.token) {
+      try {
+        const user = JSON.parse(storedUser);
+        console.log('Usuario restaurado desde localStorage:', user);
+        this.userDataSubject.next(user);
+        // También actualizar el servicio de auth
+        this.auth.updateCurrentUser(user);
+        return;
+      } catch (error) {
+        console.error('Error parseando usuario desde localStorage:', error);
+      }
+    }
+
+    // Si no hay usuario en cache pero hay token, intentar refrescar desde backend
+    if (this.auth.token) {
+      console.log('No hay usuario en cache, refrescando desde backend...');
+      const refreshSub = this.auth.refreshUserProfile().pipe(
+        catchError(error => {
+          console.error('Error refrescando perfil de usuario:', error);
+          // Si falla el refresh, intentar usar el UserStateService
+          this.userStateService.forceRestoreUserState();
+          return [];
+        })
+      ).subscribe(user => {
+        if (user) {
+          console.log('Usuario refrescado exitosamente:', user);
+          this.userDataSubject.next(user);
+        }
+      });
+      
+      this.subscriptions.push(refreshSub);
+    }
+  }
+
+  /**
+   * Forzar recarga de datos del usuario
+   */
+  public refreshUserData(): void {
+    console.log('Forzando recarga de datos del usuario...');
+    this.loadUserData();
   }
 
   sidebarId = input('sidebar1');

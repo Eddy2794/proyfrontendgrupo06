@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: proyfrontendgrupo06
+    env: node
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    staticPublishPath: ./dist/coreui-free-angular-admin-template
+    # Variables de entorno que pueden ser configuradas:
+    # NODE_ENV=production (se configura automáticamente)

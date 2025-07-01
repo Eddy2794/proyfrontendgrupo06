@@ -20,7 +20,7 @@ export interface CategoriasResponse {
 export class CategoriaEscuelaService {
   private http = inject(HttpClient);
   // Usar la ruta correcta del backend
-  private apiUrl = `${environment.apiUrl}/categorias`;
+  private apiUrl = `${environment.apiUrl}/categoria-escuela`;
 
   /**
    * Obtener todas las categorías de escuela
