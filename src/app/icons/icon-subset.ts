@@ -328,4 +328,3 @@ export const iconSubset = {
   logo,
   signet
 };
-

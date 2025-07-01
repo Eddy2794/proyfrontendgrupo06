@@ -7,6 +7,9 @@ export * from './user.model';
 // Exportar modelos de Autenticación
 export * from './auth.model';
 
+// Exportar modelos de Categoría
+export * from './categoria';
+
 // Exportar modelos de Categoría Escuela
 export * from './categoria-escuela.model';
 
