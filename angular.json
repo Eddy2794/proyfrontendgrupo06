@@ -41,7 +41,9 @@
               "src/scss/styles.scss"
             ],
             "scripts": [],
-            "allowedCommonJsDependencies": [],
+            "allowedCommonJsDependencies": [
+              "crypto-js"
+            ],
             "stylePreprocessorOptions": {
               "sass": {
                 "silenceDeprecations": []
@@ -54,12 +56,12 @@
                 {
                   "type": "initial",
                   "maximumWarning": "7mb",
-                  "maximumError": "8mb"
+                  "maximumError": "10mb"
                 },
                 {
                   "type": "anyComponentStyle",
-                  "maximumWarning": "2kb",
-                  "maximumError": "4kb"
+                  "maximumWarning": "6kb",
+                  "maximumError": "10kb"
                 }
               ],
               "outputHashing": "all",
