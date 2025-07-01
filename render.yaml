@@ -4,10 +4,9 @@ services:
     env: node
     plan: free
     buildCommand: |
-      pnpm install --no-frozen-lockfile
+      pnpm install --no-frozen-lockfile --production=false
       pnpm build
     startCommand: node server.js
-    publishPath: dist/coreui-free-angular-admin-template
     envVars:
       - key: NODE_ENV
         value: production
