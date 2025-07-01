@@ -18,15 +18,12 @@ export class AuthInterceptor implements HttpInterceptor {
 
     return next.handle(authReq).pipe(
       catchError((error: HttpErrorResponse) => {
-        // Manejar errores de autenticación sin usar Router para evitar dependencia circular
         if (error.status === 401) {
           console.warn('Token inválido o expirado, limpiando sesión');
-          // Solo limpiar el estado sin redirigir para evitar dependencia circular
           this.auth.logout();
           return throwError(() => error);
         }
         
-        // Manejar otros errores
         if (error.status === 403) {
           console.warn('Acceso denegado');
         }

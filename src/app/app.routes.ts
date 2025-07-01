@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { AuthGuard } from './services/auth.guard';
+import { TorneoFormComponent } from './views/torneo-form/torneo-form.component';
 
 export const routes: Routes = [
   {
@@ -48,6 +49,10 @@ export const routes: Routes = [
         loadChildren: () => import('./views/widgets/routes').then((m) => m.routes)
       },
       {
+        path: 'pagos',
+        loadChildren: () => import('./views/pagos/routes').then((m) => m.routes)
+      },
+      {
         path: 'perfil',
         loadChildren: () => import('./views/perfil/routes').then((m) => m.routes)
       },
@@ -66,6 +71,17 @@ export const routes: Routes = [
       {
         path: 'profesor-categoria',
         loadChildren: () => import('./views/profesor-categoria/routes').then((m) => m.routes)
+      },
+      {
+        path: 'torneos',
+        loadChildren: () => import('./views/torneo/routes').then((m) => m.routes)
+      },
+      {
+        path: 'torneo-form/:id',
+        component: TorneoFormComponent,
+        data: {
+          title: 'Nuevo torneo'
+        }
       }
     ]
   },

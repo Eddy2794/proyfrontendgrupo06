@@ -22,7 +22,7 @@ import {
 } from '@coreui/angular';
 import { IconDirective } from '@coreui/icons-angular';
 import { NgIf, NgFor } from '@angular/common';
-import { CategoriaService } from '../../../services/categoria.service';
+//import { CategoriaService } from '../../../services/categoria.service';
 
 @Component({
   selector: 'app-profesor-categoria-form',
@@ -75,14 +75,14 @@ export class ProfesorCategoriaFormComponent implements OnInit {
   constructor(
     private profesorCategoriaService: ProfesorCategoriaService, 
     private profesorService: ProfesorService,
-    private categoriaService: CategoriaService,
+ //   private categoriaService: CategoriaService,
     private router: Router,
     private route: ActivatedRoute
   ) {}
 
   ngOnInit() {
     this.getProfesores();
-    this.getCategorias();
+    //this.getCategorias();
     
     // Verificar si hay datos de navegación para editar
     const state = history.state;
@@ -118,7 +118,7 @@ export class ProfesorCategoriaFormComponent implements OnInit {
     });
   }
 
-  getCategorias() {
+  /*getCategorias() {
     this.categoriaService.getCategorias().subscribe({
       next: (response: any) => {
         console.log("categorias desde el form", response);
@@ -129,7 +129,7 @@ export class ProfesorCategoriaFormComponent implements OnInit {
         this.errorMessage = 'Error al cargar las categorias';
       }
     });
-  }
+  }*/
 
   loadProfesorCategoriaForEdit(profesorCategoria: any) {
     console.log('Iniciando loadProfesorCategoriaForEdit con:', profesorCategoria);

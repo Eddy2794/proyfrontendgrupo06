@@ -13,6 +13,27 @@ export const navItems: INavData[] = [
   },
   {
     title: true,
+    name: 'Pagos'
+  },
+  {
+    name: 'Pagos',
+    url: '/pagos',
+    iconComponent: { name: 'cil-credit-card' },
+    children: [
+      {
+        name: 'Realizar Pago',
+        url: '/pagos/realizar-pago',
+        iconComponent: { name: 'cil-plus' }
+      },
+      {
+        name: 'Historial',
+        url: '/pagos/historial',
+        iconComponent: { name: 'cil-history' }
+      }
+    ]
+  },
+  {
+    title: true,
     name: 'Theme'
   },
   {
@@ -25,6 +46,11 @@ export const navItems: INavData[] = [
     url: '/theme/typography',
     linkProps: { fragment: 'headings' },
     iconComponent: { name: 'cil-pencil' }
+  },
+  {
+    name: 'Torneos',
+    url: '/torneos',
+    iconComponent: { name: 'cil-list' }
   },
   {
     name: 'Components',

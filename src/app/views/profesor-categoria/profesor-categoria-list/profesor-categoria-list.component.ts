@@ -14,7 +14,7 @@ import {
 } from '@coreui/angular';
 import { IconDirective } from '@coreui/icons-angular';
 import { NgIf, NgFor, NgClass } from '@angular/common';
-import { CategoriaService } from '../../../services/categoria.service';
+//import { CategoriaService } from '../../../services/categoria.service';
 import { FormsModule } from '@angular/forms';
 import { DatePipe } from '@angular/common';
 
@@ -53,14 +53,14 @@ export class ProfesorCategoriaListComponent implements OnInit {
   constructor(
     private profesorCategoriaService: ProfesorCategoriaService,
     private profesorService: ProfesorService,
-    private categoriaService: CategoriaService,
+ //   private categoriaService: CategoriaService,
     private router: Router
   ) {}
 
   ngOnInit() {
     this.getProfesorCategorias();
     this.getProfesores();
-    this.getCategorias();
+ //   this.getCategorias();
   }
 
   getProfesorCategorias() {
@@ -88,14 +88,14 @@ export class ProfesorCategoriaListComponent implements OnInit {
     });
   }
 
-  getCategorias() {
+  /*getCategorias() {
     this.categoriaService.getCategorias().subscribe({
       next: (response: any) => {
         console.log(response);
         this.categorias = response.data.categorias;
       }
     });
-  }
+  }*/
   
   onEditProfesorCategoria(profesorCategoria: any) {
     console.log('onEditProfesorCategoria llamado con:', profesorCategoria);
