@@ -1,0 +1,103 @@
+<div class="card shadow-sm mb-5">
+  <div class="card-header bg-primary text-white">
+    <h4 class="mb-0">{{ isEdit ? 'Editar Alumno' : 'Nuevo Alumno' }}</h4>
+  </div>
+  <div class="card-body">
+    <form (ngSubmit)="guardar()" *ngIf="!loading">
+      <div class="row">
+        <div class="col-md-6 mb-3">
+          <label for="persona" class="form-label">Alumno</label>
+          <select id="persona" class="form-select" [(ngModel)]="alumno.persona" name="persona" required [disabled]="isEdit" #persona="ngModel">
+            <option [ngValue]="''">Seleccione una persona</option>
+            <option *ngFor="let p of personas" [ngValue]="p._id">{{ p.nombres }} {{ p.apellidos }} - {{ p.numeroDocumento }}</option>
+          </select>
+          <div *ngIf="persona.invalid && persona.touched" class="text-danger small">
+            El alumno es obligatorio.
+          </div>
+          <div *ngIf="isEdit && alumno.persona_datos" class="form-text text-info">
+            Alumno actual: {{ alumno.persona_datos.nombres }} {{ alumno.persona_datos.apellidos }}
+          </div>
+        </div>
+        <div class="col-md-6 mb-3">
+          <label for="tutor" class="form-label">Tutor</label>
+          <select id="tutor" class="form-select" [(ngModel)]="alumno.tutor" name="tutor" required #tutor="ngModel">
+            <option [ngValue]="''">Seleccione un tutor</option>
+            <option *ngFor="let p of personas" [ngValue]="p._id">{{ p.nombres }} {{ p.apellidos }} - {{ p.numeroDocumento }}</option>
+          </select>
+          <div *ngIf="tutor.invalid && tutor.touched" class="text-danger small">
+            El tutor es obligatorio.
+          </div>
+          <div *ngIf="isEdit && alumno.tutor_datos" class="form-text text-info">
+            Tutor actual: {{ alumno.tutor_datos.nombres }} {{ alumno.tutor_datos.apellidos }}
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-6 mb-3">
+          <label for="numero_socio" class="form-label">Número de Socio</label>
+          <input id="numero_socio" class="form-control" [(ngModel)]="alumno.numero_socio" name="numero_socio" required #numero_socio="ngModel" />
+          <div *ngIf="numero_socio.invalid && numero_socio.touched" class="text-danger small">
+            El número de socio es obligatorio.
+          </div>
+        </div>
+        <div class="col-md-6 mb-3">
+          <label for="estado" class="form-label">Estado</label>
+          <select id="estado" class="form-select" [(ngModel)]="alumno.estado" name="estado" required #estado="ngModel">
+            <option *ngFor="let e of estados" [ngValue]="e.value">{{ e.label }}</option>
+          </select>
+          <div *ngIf="estado.invalid && estado.touched" class="text-danger small">
+            El estado es obligatorio.
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-6 mb-3">
+          <label for="contacto_emergencia" class="form-label">Contacto de Emergencia</label>
+          <input id="contacto_emergencia" class="form-control" [(ngModel)]="alumno.contacto_emergencia" name="contacto_emergencia" required #contacto_emergencia="ngModel" />
+          <div *ngIf="contacto_emergencia.invalid && contacto_emergencia.touched" class="text-danger small">
+            El contacto de emergencia es obligatorio.
+          </div>
+        </div>
+        <div class="col-md-6 mb-3">
+          <label for="telefono_emergencia" class="form-label">Teléfono de Emergencia</label>
+          <input id="telefono_emergencia" class="form-control" [(ngModel)]="alumno.telefono_emergencia" name="telefono_emergencia" required #telefono_emergencia="ngModel" />
+          <div *ngIf="telefono_emergencia.invalid && telefono_emergencia.touched" class="text-danger small">
+            El teléfono de emergencia es obligatorio.
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-6 mb-3">
+          <label for="fecha_inscripcion" class="form-label">Fecha de Inscripción</label>
+          <input id="fecha_inscripcion" type="date" class="form-control" [(ngModel)]="alumno.fecha_inscripcion" name="fecha_inscripcion" required #fecha_inscripcion="ngModel" />
+          <div *ngIf="fecha_inscripcion.invalid && fecha_inscripcion.touched" class="text-danger small">
+            La fecha de inscripción es obligatoria.
+          </div>
+        </div>
+        <div class="col-md-6 mb-3">
+          <label for="autoriza_fotos" class="form-label">Autoriza uso de fotos</label>
+          <div class="form-check">
+            <input type="checkbox" class="form-check-input" id="autoriza_fotos" [(ngModel)]="alumno.autoriza_fotos" name="autoriza_fotos" />
+            <label class="form-check-label" for="autoriza_fotos">Sí</label>
+          </div>
+        </div>
+      </div>
+      <div class="mb-3">
+        <label for="observaciones_medicas" class="form-label">Observaciones Médicas</label>
+        <textarea id="observaciones_medicas" class="form-control" [(ngModel)]="alumno.observaciones_medicas" name="observaciones_medicas"></textarea>
+        <div class="form-text">Opcional</div>
+      </div>
+      <div class="d-flex justify-content-end gap-3 mt-4">
+        <button type="submit" class="btn btn-success btn-lg px-4">
+          <i class="bi bi-save me-2"></i> Guardar
+        </button>
+        <button type="button" class="btn btn-secondary btn-lg px-4" (click)="cancelar()">
+          <i class="bi bi-x-lg me-2"></i> Cancelar
+        </button>
+      </div>
+    </form>
+    <div *ngIf="loading">
+      <p>Cargando...</p>
+    </div>
+  </div>
+</div> 
