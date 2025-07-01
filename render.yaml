@@ -3,8 +3,13 @@ services:
     name: proyfrontendgrupo06
     env: node
     plan: free
-    buildCommand: npm install && npm run build
-    startCommand: npm start
-    staticPublishPath: ./dist/coreui-free-angular-admin-template
-    # Variables de entorno que pueden ser configuradas:
-    # NODE_ENV=production (se configura automáticamente)
+    buildCommand: |
+      pnpm install --no-frozen-lockfile
+      npx @angular/cli@latest build --configuration production
+    startCommand: npx serve -s dist/coreui-free-angular-admin-template -l 3000
+    publishPath: dist/coreui-free-angular-admin-template
+    envVars:
+      - key: NODE_ENV
+        value: production
+    # Para servir archivos estáticos de Angular
+    staticPublishPath: dist/coreui-free-angular-admin-template
