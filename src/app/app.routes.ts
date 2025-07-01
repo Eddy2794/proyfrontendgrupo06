@@ -77,6 +77,10 @@ export const routes: Routes = [
         loadChildren: () => import('./views/torneo/routes').then((m) => m.routes)
       },
       {
+        path: 'user',
+        loadChildren: () => import('./views/user/routes').then((m) => m.routes)
+      },
+      {
         path: 'torneo-form/:id',
         component: TorneoFormComponent,
         data: {

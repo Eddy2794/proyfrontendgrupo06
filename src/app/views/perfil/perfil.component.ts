@@ -233,10 +233,10 @@ export class PerfilComponent implements OnInit, OnDestroy {
       pais: this.currentPersona.direccion?.pais || '',
       
       // Configuraciones de usuario
-      notificacionesEmail: this.currentUser.configuraciones?.notificaciones?.email ?? true,
-      notificacionesPush: this.currentUser.configuraciones?.notificaciones?.push ?? false,
-      perfilPublico: this.currentUser.configuraciones?.privacidad?.perfilPublico ?? false,
-      tema: this.currentUser.configuraciones?.tema || 'auto'
+      notificacionesEmail: this.currentUser.configuraciones?.notificacionesEmail ?? true,
+      notificacionesPush: this.currentUser.configuraciones?.notificacionesPush ?? false,
+      perfilPublico: this.currentUser.configuraciones?.perfilPublico ?? false,
+      tema: this.currentUser.configuraciones?.temaOscuro ? 'dark' : 'light'
     });
 
     // Deshabilitar todos los campos inicialmente (solo se habilitan en modo edición)

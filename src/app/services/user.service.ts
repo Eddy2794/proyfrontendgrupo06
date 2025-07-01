@@ -102,4 +102,107 @@ export class UserService {
   deleteAccount(): Observable<ApiResponse<any>> {
     return this.http.delete<ApiResponse<any>>(`${this.apiUrl}/auth/account`);
   }
+
+  // ==================== MÉTODOS ADMINISTRATIVOS ====================
+
+  /**
+   * Obtener todos los usuarios (solo para administradores)
+   */
+  getAllUsers(page: number = 1, limit: number = 10, search?: string, estado?: string, rol?: string): Observable<ApiResponse<{users: User[], total: number, totalPages: number, currentPage: number}>> {
+    let params = `?page=${page}&limit=${limit}`;
+    if (search) {
+      params += `&search=${encodeURIComponent(search)}`;
+    }
+    if (estado) {
+      params += `&estado=${estado}`;
+    }
+    if (rol) {
+      params += `&rol=${rol}`;
+    }
+    return this.http.get<ApiResponse<{users: User[], total: number, totalPages: number, currentPage: number}>>(`${this.apiUrl}/users${params}`);
+  }
+
+  /**
+   * Obtener usuario por ID (solo para administradores)
+   */
+  getUserById(userId: string): Observable<ApiResponse<User>> {
+    return this.http.get<ApiResponse<User>>(`${this.apiUrl}/users/${userId}`);
+  }
+
+  /**
+   * Obtener perfil completo de usuario por ID (solo para administradores)
+   */
+  getUserProfile(userId: string): Observable<ApiResponse<User>> {
+    return this.http.get<ApiResponse<User>>(`${this.apiUrl}/users/${userId}/profile`);
+  }
+
+  /**
+   * Crear nuevo usuario (solo para administradores)
+   */
+  createUser(userData: { persona: string; username: string; password: string; rol?: string }): Observable<ApiResponse<User>> {
+    return this.http.post<ApiResponse<User>>(`${this.apiUrl}/users`, userData);
+  }
+
+  /**
+   * Actualizar usuario (solo para administradores)
+   */
+  updateUser(userId: string, userData: { username?: string; rol?: string; estado?: string }): Observable<ApiResponse<User>> {
+    return this.http.put<ApiResponse<User>>(`${this.apiUrl}/users/${userId}`, userData);
+  }
+
+  /**
+   * Eliminar usuario (solo para administradores) - Soft Delete
+   */
+  deleteUser(userId: string): Observable<ApiResponse<any>> {
+    return this.http.delete<ApiResponse<any>>(`${this.apiUrl}/users/${userId}`);
+  }
+
+  /**
+   * Restaurar usuario eliminado (solo para administradores)
+   */
+  restoreUser(userId: string): Observable<ApiResponse<User>> {
+    return this.http.post<ApiResponse<User>>(`${this.apiUrl}/users/${userId}/restore`, {});
+  }
+
+  /**
+   * Activar usuario (solo para administradores)
+   */
+  activateUser(userId: string): Observable<ApiResponse<User>> {
+    return this.http.patch<ApiResponse<User>>(`${this.apiUrl}/users/${userId}/activate`, {});
+  }
+
+  /**
+   * Obtener usuarios por rol (solo para administradores)
+   */
+  getUsersByRole(role: string, page: number = 1, limit: number = 10): Observable<ApiResponse<{users: User[], total: number}>> {
+    return this.http.get<ApiResponse<{users: User[], total: number}>>(`${this.apiUrl}/users/role/${role}?page=${page}&limit=${limit}`);
+  }
+
+  /**
+   * Obtener estadísticas de usuarios (solo para administradores)
+   */
+  getUserStats(): Observable<ApiResponse<any>> {
+    return this.http.get<ApiResponse<any>>(`${this.apiUrl}/users/stats`);
+  }
+
+  /**
+   * Obtener usuarios eliminados (solo para administradores)
+   */
+  getDeletedUsers(page: number = 1, limit: number = 10): Observable<ApiResponse<{users: User[], total: number}>> {
+    return this.http.get<ApiResponse<{users: User[], total: number}>>(`${this.apiUrl}/users/deleted/list?page=${page}&limit=${limit}`);
+  }
+
+  /**
+   * Obtener todos los usuarios incluyendo eliminados (solo para administradores)
+   */
+  getAllUsersIncludingDeleted(page: number = 1, limit: number = 10, includeDeleted: boolean = false): Observable<ApiResponse<{users: User[], total: number}>> {
+    return this.http.get<ApiResponse<{users: User[], total: number}>>(`${this.apiUrl}/users/all/including-deleted?page=${page}&limit=${limit}&includeDeleted=${includeDeleted}`);
+  }
+
+  /**
+   * Obtener estadísticas de auditoría (solo para administradores)
+   */
+  getAuditStats(): Observable<ApiResponse<any>> {
+    return this.http.get<ApiResponse<any>>(`${this.apiUrl}/users/audit-stats`);
+  }
 }

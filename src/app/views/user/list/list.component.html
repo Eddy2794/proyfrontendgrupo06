@@ -1,0 +1,280 @@
+<c-row>
+  <c-col xs="12">
+    <c-card class="mb-4">
+      <c-card-header class="d-flex justify-content-between align-items-center">
+        <div>
+          <strong>Gestión de Usuarios</strong>
+          <small class="text-body-secondary ms-2">Administrar usuarios del sistema</small>
+        </div>
+        <button 
+          cButton 
+          color="primary" 
+          size="sm"
+          (click)="createUser()"
+          cTooltip="Agregar nuevo usuario">
+          <svg cIcon name="cilPlus" class="me-1"></svg>
+          Nuevo Usuario
+        </button>
+      </c-card-header>
+      
+      <c-card-body>
+        <!-- Barra de búsqueda y filtros -->
+        <c-row class="mb-3">
+          <c-col md="4">
+            <c-input-group>
+              <span cInputGroupText>
+                <svg cIcon name="cilSearch"></svg>
+              </span>
+              <input 
+                cFormControl 
+                placeholder="Buscar por nombre, username, email..."
+                [value]="searchTerm"
+                (input)="onSearch($any($event.target).value)"
+                type="text">
+            </c-input-group>
+          </c-col>
+          <c-col md="2">
+            <select 
+              class="form-select"
+              [value]="selectedStatus || ''"
+              (change)="onStatusFilter($any($event.target).value || undefined)"
+              aria-label="Filtrar por estado">
+              <option value="">Todos los estados</option>
+              <option *ngFor="let state of userStates" [value]="state">{{ state }}</option>
+            </select>
+          </c-col>
+          <c-col md="2">
+            <select 
+              class="form-select"
+              [value]="selectedRole || ''"
+              (change)="onRoleFilter($any($event.target).value || undefined)"
+              aria-label="Filtrar por rol">
+              <option value="">Todos los roles</option>
+              <option *ngFor="let role of userRoles" [value]="role">{{ role }}</option>
+            </select>
+          </c-col>
+          <c-col md="2">
+            <button 
+              cButton 
+              color="secondary" 
+              variant="outline"
+              size="sm"
+              (click)="clearFilters()"
+              cTooltip="Limpiar filtros">
+              <svg cIcon name="cilReload" class="me-1"></svg>
+              Limpiar
+            </button>
+          </c-col>
+          <c-col md="2" class="text-end">
+            <small class="text-body-secondary">
+              {{ users.length }} de {{ totalItems }} usuarios
+            </small>
+          </c-col>
+        </c-row>
+
+        <!-- Mensaje de error -->
+        <c-alert 
+          *ngIf="error" 
+          color="danger" 
+          [dismissible]="true"
+          (dismissed)="error = null">
+          {{ error }}
+        </c-alert>
+
+        <!-- Spinner de carga -->
+        <div *ngIf="loading" class="text-center py-4">
+          <c-spinner color="primary"></c-spinner>
+          <p class="mt-2 text-body-secondary">Cargando usuarios...</p>
+        </div>
+
+        <!-- Tabla de usuarios -->
+        <div *ngIf="!loading" class="table-responsive">
+          <table cTable [hover]="true" [striped]="true">
+            <thead>
+              <tr>
+                <th scope="col">Usuario</th>
+                <th scope="col">Información Personal</th>
+                <th scope="col">Contacto</th>
+                <th scope="col">Rol</th>
+                <th scope="col">Estado</th>
+                <th scope="col">Email Verificado</th>
+                <th scope="col">Último Login</th>
+                <th scope="col" class="text-center">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let user of users; trackBy: trackByUserId">
+                <!-- Usuario -->
+                <td>
+                  <div class="d-flex align-items-center">
+                    <div class="avatar avatar-sm me-2">
+                      <img [src]="getUserAvatar(user)" [alt]="getFullName(user.persona)" class="avatar-img">
+                    </div>
+                    <div>
+                      <div class="fw-semibold">{{ user.username }}</div>
+                      <small class="text-body-secondary">ID: {{ user._id }}</small>
+                    </div>
+                  </div>
+                </td>
+
+                <!-- Información Personal -->
+                <td>
+                  <div>
+                    <div class="fw-semibold">{{ getFullName(user.persona) }}</div>
+                    <small class="text-body-secondary">{{ getPersonaDocument(user.persona) }}</small>
+                  </div>
+                </td>
+
+                <!-- Contacto -->
+                <td>
+                  <div>
+                    <div class="small">{{ getPersonaEmail(user.persona) }}</div>
+                    <small class="text-body-secondary" *ngIf="typeof user.persona === 'object' && user.persona.telefono">
+                      {{ user.persona.telefono }}
+                    </small>
+                  </div>
+                </td>
+
+                <!-- Rol -->
+                <td>
+                  <select 
+                    class="form-select form-select-sm"
+                    [value]="user.rol"
+                    (change)="changeUserRole(user, $any($event.target).value)"
+                    cTooltip="Cambiar rol del usuario">
+                    <option *ngFor="let role of userRoles" [value]="role">{{ role }}</option>
+                  </select>
+                </td>
+
+                <!-- Estado -->
+                <td>
+                  <c-badge 
+                    [color]="getStatusBadgeColor(user.estado)"
+                    class="me-1">
+                    {{ user.estado }}
+                  </c-badge>
+                  <br>
+                  <select 
+                    class="form-select form-select-sm mt-1"
+                    [value]="user.estado"
+                    (change)="changeUserStatus(user, $any($event.target).value)"
+                    cTooltip="Cambiar estado del usuario">
+                    <option *ngFor="let state of userStates" [value]="state">{{ state }}</option>
+                  </select>
+                </td>
+
+                <!-- Email Verificado -->
+                <td class="text-center">
+                  <c-badge 
+                    [color]="user.emailVerificado ? 'success' : 'warning'"
+                    class="me-1">
+                    {{ user.emailVerificado ? 'Verificado' : 'Pendiente' }}
+                  </c-badge>
+                  <br>
+                  <button 
+                    *ngIf="!user.emailVerificado"
+                    cButton 
+                    size="sm" 
+                    variant="outline" 
+                    color="success"
+                    class="mt-1"
+                    (click)="verifyUserEmail(user)"
+                    cTooltip="Verificar email manualmente">
+                    <svg cIcon name="cilShieldAlt" size="sm"></svg>
+                  </button>
+                </td>
+
+                <!-- Último Login -->
+                <td>
+                  <small>{{ formatDate(user.ultimoLogin) || 'Nunca' }}</small>
+                </td>
+
+                <!-- Acciones -->
+                <td class="text-center">
+                  <div class="btn-group" role="group">
+                    <button 
+                      cButton 
+                      size="sm" 
+                      variant="outline" 
+                      color="info"
+                      (click)="editUser(user)"
+                      cTooltip="Editar usuario">
+                      <svg cIcon name="cilPencil" size="sm"></svg>
+                    </button>
+                    
+                    <button 
+                      cButton 
+                      size="sm" 
+                      variant="outline" 
+                      color="warning"
+                      (click)="resetUserPassword(user)"
+                      cTooltip="Resetear contraseña">
+                      <svg cIcon name="cilLockLocked" size="sm"></svg>
+                    </button>
+                    
+                    <button 
+                      cButton 
+                      size="sm" 
+                      variant="outline" 
+                      color="danger"
+                      (click)="confirmDeleteUser(user)"
+                      cTooltip="Eliminar usuario">
+                      <svg cIcon name="cilTrash" size="sm"></svg>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+
+              <!-- Mensaje cuando no hay usuarios -->
+              <tr *ngIf="users.length === 0">
+                <td colspan="8" class="text-center py-4">
+                  <div class="text-body-secondary">
+                    <svg cIcon name="cilUser" size="xl" class="mb-2"></svg>
+                    <p class="mb-0">No se encontraron usuarios</p>
+                    <small>{{ searchTerm ? 'Intenta con otros términos de búsqueda' : 'Comienza agregando un nuevo usuario' }}</small>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Paginación -->
+        <nav aria-label="Paginación de usuarios" *ngIf="totalPages > 1">
+          <c-pagination 
+            aria-label="Navegación de páginas"
+            class="justify-content-center mt-3">
+            
+            <c-page-item [disabled]="currentPage === 1">
+              <a cPageLink 
+                 (click)="onPageChange(currentPage - 1)"
+                 [class.disabled]="currentPage === 1"
+                 style="cursor: pointer;">
+                Anterior
+              </a>
+            </c-page-item>
+
+            <c-page-item 
+              *ngFor="let page of [].constructor(totalPages); let i = index"
+              [active]="currentPage === i + 1">
+              <a cPageLink 
+                 (click)="onPageChange(i + 1)"
+                 style="cursor: pointer;">
+                {{ i + 1 }}
+              </a>
+            </c-page-item>
+
+            <c-page-item [disabled]="currentPage === totalPages">
+              <a cPageLink 
+                 (click)="onPageChange(currentPage + 1)"
+                 [class.disabled]="currentPage === totalPages"
+                 style="cursor: pointer;">
+                Siguiente
+              </a>
+            </c-page-item>
+          </c-pagination>
+        </nav>
+      </c-card-body>
+    </c-card>
+  </c-col>
+</c-row>
