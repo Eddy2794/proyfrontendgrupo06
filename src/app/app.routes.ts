@@ -2,6 +2,7 @@ import { Routes } from '@angular/router';
 import { AuthGuard } from './services/auth.guard';
 import { TorneoFormComponent } from './views/torneo-form/torneo-form.component';
 import { CategoriaFormComponent } from './views/categoria-form/categoria-form.component';
+import { TorneoCategoriaFormComponent} from './views/torneo-categoria-form/torneo-categoria-form.component'
 
 export const routes: Routes = [
   {
@@ -98,7 +99,19 @@ export const routes: Routes = [
         data: {
           title: 'Gestión de Categoría'
         }
+      },
+      {
+        path: 'torneos-categorias',
+        loadChildren: () => import('./views/torneo-categoria/routes').then((m) => m.routes)
+      },
+      {
+        path: 'torneo-categoria-form/:id',
+        component: TorneoCategoriaFormComponent,
+        data: {
+          title: 'Nuevo torneo'
+        }
       }
+
     ]
   },
   {
