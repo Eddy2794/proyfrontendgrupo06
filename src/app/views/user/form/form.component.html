@@ -1,0 +1,476 @@
+<c-row>
+  <c-col xs="12">
+    <c-card class="mb-4">
+      <c-card-header class="d-flex justify-content-between align-items-center">
+        <div>
+          <strong>{{ formTitle }}</strong>
+          <small class="text-body-secondary ms-2">{{ isEditMode ? 'Modificar datos del usuario' : 'Completar datos del nuevo usuario' }}</small>
+        </div>
+        <button 
+          cButton 
+          color="secondary" 
+          variant="outline"
+          size="sm"
+          (click)="onCancel()">
+          <svg cIcon name="cilArrowLeft" class="me-1"></svg>
+          Volver
+        </button>
+      </c-card-header>
+      
+      <c-card-body>
+        <!-- Mensaje de error -->
+        <c-alert 
+          *ngIf="error" 
+          color="danger" 
+          [dismissible]="true"
+          (dismissed)="error = null">
+          {{ error }}
+        </c-alert>
+
+        <!-- Spinner de carga -->
+        <div *ngIf="loading" class="text-center py-4">
+          <c-spinner color="primary"></c-spinner>
+          <p class="mt-2 text-body-secondary">Cargando datos del usuario...</p>
+        </div>
+
+        <!-- Formulario -->
+        <form *ngIf="!loading" [formGroup]="userForm" (ngSubmit)="onSubmit()" novalidate>
+          
+          <!-- Sección: Datos de Acceso -->
+          <div class="mb-4">
+            <h5 class="border-bottom pb-2 mb-3">
+              <svg cIcon name="cilUser" class="me-2"></svg>
+              Datos de Acceso
+            </h5>
+            
+            <c-row>
+              <c-col md="6">
+                <div class="mb-3">
+                  <label cLabel for="username" class="form-label">
+                    Nombre de Usuario <span class="text-danger">*</span>
+                  </label>
+                  <input 
+                    cFormControl 
+                    id="username"
+                    formControlName="username"
+                    type="text"
+                    placeholder="Ingrese el nombre de usuario"
+                    [class.is-invalid]="hasError('username')"
+                    autocomplete="username">
+                  <c-form-feedback 
+                    *ngIf="hasError('username')" 
+                    [valid]="false">
+                    {{ getErrorMessage('username') }}
+                  </c-form-feedback>
+                </div>
+              </c-col>
+              
+              <c-col md="3">
+                <div class="mb-3">
+                  <label cLabel for="rol" class="form-label">
+                    Rol <span class="text-danger">*</span>
+                  </label>
+                  <select 
+                    cSelect 
+                    id="rol"
+                    formControlName="rol"
+                    [class.is-invalid]="hasError('rol')">
+                    <option *ngFor="let role of userRoles" [value]="role">{{ role }}</option>
+                  </select>
+                  <c-form-feedback 
+                    *ngIf="hasError('rol')" 
+                    [valid]="false">
+                    {{ getErrorMessage('rol') }}
+                  </c-form-feedback>
+                </div>
+              </c-col>
+              
+              <c-col md="3">
+                <div class="mb-3">
+                  <label cLabel for="estado" class="form-label">
+                    Estado <span class="text-danger">*</span>
+                  </label>
+                  <select 
+                    cSelect 
+                    id="estado"
+                    formControlName="estado"
+                    [class.is-invalid]="hasError('estado')">
+                    <option *ngFor="let state of userStates" [value]="state">{{ state }}</option>
+                  </select>
+                  <c-form-feedback 
+                    *ngIf="hasError('estado')" 
+                    [valid]="false">
+                    {{ getErrorMessage('estado') }}
+                  </c-form-feedback>
+                </div>
+              </c-col>
+            </c-row>
+
+            <!-- Contraseñas (solo en creación o si se quiere cambiar) -->
+            <c-row *ngIf="!isEditMode">
+              <c-col md="6">
+                <div class="mb-3">
+                  <label cLabel for="password" class="form-label">
+                    Contraseña <span class="text-danger">*</span>
+                  </label>
+                  <input 
+                    cFormControl 
+                    id="password"
+                    formControlName="password"
+                    type="password"
+                    placeholder="Ingrese la contraseña"
+                    [class.is-invalid]="hasError('password')"
+                    autocomplete="new-password">
+                  <c-form-feedback 
+                    *ngIf="hasError('password')" 
+                    [valid]="false">
+                    {{ getErrorMessage('password') }}
+                  </c-form-feedback>
+                  <div class="form-text">
+                    La contraseña debe tener al menos 6 caracteres.
+                  </div>
+                </div>
+              </c-col>
+              
+              <c-col md="6">
+                <div class="mb-3">
+                  <label cLabel for="confirmPassword" class="form-label">
+                    Confirmar Contraseña <span class="text-danger">*</span>
+                  </label>
+                  <input 
+                    cFormControl 
+                    id="confirmPassword"
+                    formControlName="confirmPassword"
+                    type="password"
+                    placeholder="Confirme la contraseña"
+                    [class.is-invalid]="hasError('confirmPassword') || passwordMismatch"
+                    autocomplete="new-password">
+                  <c-form-feedback 
+                    *ngIf="hasError('confirmPassword')" 
+                    [valid]="false">
+                    {{ getErrorMessage('confirmPassword') }}
+                  </c-form-feedback>
+                  <c-form-feedback 
+                    *ngIf="passwordMismatch && !hasError('confirmPassword')" 
+                    [valid]="false">
+                    Las contraseñas no coinciden
+                  </c-form-feedback>
+                </div>
+              </c-col>
+            </c-row>
+
+            <!-- Email verificado -->
+            <c-row>
+              <c-col md="12">
+                <c-form-check class="mb-3">
+                  <input 
+                    cFormCheckInput 
+                    id="emailVerificado"
+                    formControlName="emailVerificado"
+                    type="checkbox">
+                  <label cFormCheckLabel for="emailVerificado">
+                    Email verificado
+                  </label>
+                  <div class="form-text">
+                    Marcar si el email del usuario ya ha sido verificado.
+                  </div>
+                </c-form-check>
+              </c-col>
+            </c-row>
+          </div>
+
+          <!-- Sección: Información Personal -->
+          <div class="mb-4" formGroupName="persona">
+            <h5 class="border-bottom pb-2 mb-3">
+              <svg cIcon name="cilPeople" class="me-2"></svg>
+              Información Personal
+            </h5>
+            
+            <c-row>
+              <c-col md="6">
+                <div class="mb-3">
+                  <label cLabel for="nombres" class="form-label">
+                    Nombres <span class="text-danger">*</span>
+                  </label>
+                  <input 
+                    cFormControl 
+                    id="nombres"
+                    formControlName="nombres"
+                    type="text"
+                    placeholder="Ingrese los nombres"
+                    [class.is-invalid]="hasError('persona.nombres')">
+                  <c-form-feedback 
+                    *ngIf="hasError('persona.nombres')" 
+                    [valid]="false">
+                    {{ getErrorMessage('persona.nombres') }}
+                  </c-form-feedback>
+                </div>
+              </c-col>
+              
+              <c-col md="6">
+                <div class="mb-3">
+                  <label cLabel for="apellidos" class="form-label">
+                    Apellidos <span class="text-danger">*</span>
+                  </label>
+                  <input 
+                    cFormControl 
+                    id="apellidos"
+                    formControlName="apellidos"
+                    type="text"
+                    placeholder="Ingrese los apellidos"
+                    [class.is-invalid]="hasError('persona.apellidos')">
+                  <c-form-feedback 
+                    *ngIf="hasError('persona.apellidos')" 
+                    [valid]="false">
+                    {{ getErrorMessage('persona.apellidos') }}
+                  </c-form-feedback>
+                </div>
+              </c-col>
+            </c-row>
+
+            <c-row>
+              <c-col md="4">
+                <div class="mb-3">
+                  <label cLabel for="tipoDocumento" class="form-label">
+                    Tipo de Documento <span class="text-danger">*</span>
+                  </label>
+                  <select 
+                    cSelect 
+                    id="tipoDocumento"
+                    formControlName="tipoDocumento"
+                    [class.is-invalid]="hasError('persona.tipoDocumento')">
+                    <option *ngFor="let tipo of tiposDocumento" [value]="tipo">{{ tipo }}</option>
+                  </select>
+                  <c-form-feedback 
+                    *ngIf="hasError('persona.tipoDocumento')" 
+                    [valid]="false">
+                    {{ getErrorMessage('persona.tipoDocumento') }}
+                  </c-form-feedback>
+                </div>
+              </c-col>
+              
+              <c-col md="4">
+                <div class="mb-3">
+                  <label cLabel for="numeroDocumento" class="form-label">
+                    Número de Documento <span class="text-danger">*</span>
+                  </label>
+                  <input 
+                    cFormControl 
+                    id="numeroDocumento"
+                    formControlName="numeroDocumento"
+                    type="text"
+                    placeholder="Entre 7 y 8 dígitos (ej: 1234567)"
+                    maxlength="8"
+                    [class.is-invalid]="hasError('persona.numeroDocumento')">
+                  <c-form-feedback 
+                    *ngIf="hasError('persona.numeroDocumento')" 
+                    [valid]="false">
+                    {{ getErrorMessage('persona.numeroDocumento') }}
+                  </c-form-feedback>
+                  <small class="text-muted">Debe contener entre 7 y 8 dígitos numéricos</small>
+                </div>
+              </c-col>
+              
+              <c-col md="4">
+                <div class="mb-3">
+                  <label cLabel for="genero" class="form-label">
+                    Género <span class="text-danger">*</span>
+                  </label>
+                  <select 
+                    cSelect 
+                    id="genero"
+                    formControlName="genero"
+                    [class.is-invalid]="hasError('persona.genero')">
+                    <option *ngFor="let g of generos" [value]="g">{{ g }}</option>
+                  </select>
+                  <c-form-feedback 
+                    *ngIf="hasError('persona.genero')" 
+                    [valid]="false">
+                    {{ getErrorMessage('persona.genero') }}
+                  </c-form-feedback>
+                </div>
+              </c-col>
+            </c-row>
+
+            <c-row>
+              <c-col md="4">
+                <div class="mb-3">
+                  <label cLabel for="fechaNacimiento" class="form-label">
+                    Fecha de Nacimiento <span class="text-danger">*</span>
+                  </label>
+                  <input 
+                    cFormControl 
+                    id="fechaNacimiento"
+                    formControlName="fechaNacimiento"
+                    type="date"
+                    [class.is-invalid]="hasError('persona.fechaNacimiento')">
+                  <c-form-feedback 
+                    *ngIf="hasError('persona.fechaNacimiento')" 
+                    [valid]="false">
+                    {{ getErrorMessage('persona.fechaNacimiento') }}
+                  </c-form-feedback>
+                </div>
+              </c-col>
+              
+              <c-col md="4">
+                <div class="mb-3">
+                  <label cLabel for="email" class="form-label">
+                    Email <span class="text-danger">*</span>
+                  </label>
+                  <input 
+                    cFormControl 
+                    id="email"
+                    formControlName="email"
+                    type="email"
+                    placeholder="email@ejemplo.com"
+                    [class.is-invalid]="hasError('persona.email')">
+                  <c-form-feedback 
+                    *ngIf="hasError('persona.email')" 
+                    [valid]="false">
+                    {{ getErrorMessage('persona.email') }}
+                  </c-form-feedback>
+                </div>
+              </c-col>
+              
+              <c-col md="4">
+                <div class="mb-3">
+                  <label cLabel for="telefono" class="form-label">
+                    Teléfono
+                  </label>
+                  <input 
+                    cFormControl 
+                    id="telefono"
+                    formControlName="telefono"
+                    type="tel"
+                    placeholder="+54 11 1234-5678"
+                    [class.is-invalid]="hasError('persona.telefono')">
+                  <c-form-feedback 
+                    *ngIf="hasError('persona.telefono')" 
+                    [valid]="false">
+                    {{ getErrorMessage('persona.telefono') }}
+                  </c-form-feedback>
+                </div>
+              </c-col>
+            </c-row>
+          </div>
+
+          <!-- Sección: Dirección (Opcional) -->
+          <div class="mb-4" formGroupName="persona">
+            <div formGroupName="direccion">
+              <h5 class="border-bottom pb-2 mb-3">
+                <svg cIcon name="cilLocationPin" class="me-2"></svg>
+                Dirección <small class="text-body-secondary">(Opcional)</small>
+              </h5>
+              
+              <c-row>
+                <c-col md="8">
+                  <div class="mb-3">
+                    <label cLabel for="calle" class="form-label">
+                      Calle y Número
+                    </label>
+                    <input 
+                      cFormControl 
+                      id="calle"
+                      formControlName="calle"
+                      type="text"
+                      placeholder="Av. Corrientes 1234">
+                  </div>
+                </c-col>
+                
+                <c-col md="4">
+                  <div class="mb-3">
+                    <label cLabel for="codigoPostal" class="form-label">
+                      Código Postal
+                    </label>
+                    <input 
+                      cFormControl 
+                      id="codigoPostal"
+                      formControlName="codigoPostal"
+                      type="text"
+                      placeholder="1000">
+                  </div>
+                </c-col>
+              </c-row>
+
+              <c-row>
+                <c-col md="4">
+                  <div class="mb-3">
+                    <label cLabel for="ciudad" class="form-label">
+                      Ciudad
+                    </label>
+                    <input 
+                      cFormControl 
+                      id="ciudad"
+                      formControlName="ciudad"
+                      type="text"
+                      placeholder="Buenos Aires">
+                  </div>
+                </c-col>
+                
+                <c-col md="4">
+                  <div class="mb-3">
+                    <label cLabel for="departamento" class="form-label">
+                      Provincia/Departamento
+                    </label>
+                    <input 
+                      cFormControl 
+                      id="departamento"
+                      formControlName="departamento"
+                      type="text"
+                      placeholder="Buenos Aires">
+                  </div>
+                </c-col>
+                
+                <c-col md="4">
+                  <div class="mb-3">
+                    <label cLabel for="pais" class="form-label">
+                      País
+                    </label>
+                    <input 
+                      cFormControl 
+                      id="pais"
+                      formControlName="pais"
+                      type="text"
+                      placeholder="Argentina">
+                  </div>
+                </c-col>
+              </c-row>
+            </div>
+          </div>
+
+          <!-- Botones de acción -->
+          <div class="d-flex justify-content-end gap-2 pt-3 border-top">
+            <button 
+              type="button"
+              cButton 
+              color="secondary" 
+              [disabled]="submitting"
+              (click)="onCancel()">
+              <svg cIcon name="cilX" class="me-1"></svg>
+              Cancelar
+            </button>
+            
+            <button 
+              type="submit"
+              cButton 
+              color="primary" 
+              [disabled]="userForm.invalid || submitting">
+              <c-spinner 
+                *ngIf="submitting" 
+                size="sm" 
+                class="me-1">
+              </c-spinner>
+              <svg 
+                *ngIf="!submitting" 
+                cIcon 
+                [name]="isEditMode ? 'cilPencil' : 'cilPlus'" 
+                class="me-1">
+              </svg>
+              {{ submitButtonText }}
+            </button>
+          </div>
+        </form>
+      </c-card-body>
+    </c-card>
+  </c-col>
+</c-row>

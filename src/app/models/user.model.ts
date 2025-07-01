@@ -1,49 +1,49 @@
 import { Persona } from './persona.model';
 
 // Tipos constantes basados en el backend
-export type UserRole = 'USER' | 'ADMIN' | 'MODERATOR';
+export type UserRole = 'USER' | 'ADMIN' | 'SUPER_ADMIN' | 'TUTOR' | 'MODERATOR';
 export type UserState = 'ACTIVO' | 'INACTIVO' | 'SUSPENDIDO' | 'PENDIENTE_VERIFICACION';
 
-// Interfaz para el historial de autenticación
+// Interfaz para configuraciones del usuario (adaptada al backend)
+export interface UserSettings {
+  notificacionesEmail?: boolean;
+  notificacionesPush?: boolean;
+  perfilPublico?: boolean;
+  temaOscuro?: boolean;
+}
+
+// Interfaz para historial de autenticación
 export interface AuthHistory {
   fechaLogin: Date | string;
-  ip?: string;
-  userAgent?: string;
   exitoso: boolean;
-  razon?: string;
+  metodo: 'credentials' | 'google-oauth' | 'google-oauth-register' | 'dev-credentials';
+  userAgent?: string;
+  ip?: string;
 }
 
-// Interfaz para configuraciones del usuario
-export interface UserSettings {
-  notificaciones?: {
-    email?: boolean;
-    push?: boolean;
-  };
-  privacidad?: {
-    perfilPublico?: boolean;
-  };
-  tema?: 'light' | 'dark' | 'auto';
-  idioma?: string;
-}
-
-// Interfaz principal para Usuario
+// Interfaz principal para Usuario (adaptada al backend)
 export interface User {
   _id?: string;
-  persona: string | Persona; // Puede ser ID (string) o objeto Persona completo
+  persona: string | Persona; // ID de referencia a persona o objeto Persona completo
   username: string;
   password?: string; // Solo para formularios, no se devuelve del backend
   rol?: UserRole;
   estado?: UserState;
+  configuraciones?: UserSettings;
   ultimoLogin?: Date | string;
-  fechaRegistro?: Date | string;
-  intentosLoginFallidos?: number;
-  cuentaBloqueadaHasta?: Date | string;
+  intentosLogin?: number;
+  bloqueadoHasta?: Date | string;
+  tokenVerificacion?: string;
   emailVerificado?: boolean;
   imagenPerfil?: string; // Imagen en base64
-  configuraciones?: UserSettings;
+  tokenRecuperacion?: string;
+  tokenRecuperacionExpira?: Date | string;
   historialAuth?: AuthHistory[];
   createdAt?: Date | string;
   updatedAt?: Date | string;
+  deletedAt?: Date | string; // Para soft delete
+  deletedBy?: string; // Usuario que realizó la eliminación
+  isDeleted?: boolean; // Flag de soft delete
 }
 
 // Clase para el modelo Usuario con validaciones y métodos auxiliares
@@ -55,9 +55,8 @@ export class UserModel implements User {
   rol?: UserRole;
   estado?: UserState;
   ultimoLogin?: Date | string;
-  fechaRegistro?: Date | string;
-  intentosLoginFallidos?: number;
-  cuentaBloqueadaHasta?: Date | string;
+  intentosLogin?: number;
+  bloqueadoHasta?: Date | string;
   emailVerificado?: boolean;
   imagenPerfil?: string;
   configuraciones?: UserSettings;
@@ -73,16 +72,15 @@ export class UserModel implements User {
     this.rol = data.rol || 'USER';
     this.estado = data.estado || 'ACTIVO';
     this.ultimoLogin = data.ultimoLogin;
-    this.fechaRegistro = data.fechaRegistro;
-    this.intentosLoginFallidos = data.intentosLoginFallidos || 0;
-    this.cuentaBloqueadaHasta = data.cuentaBloqueadaHasta;
+    this.intentosLogin = data.intentosLogin || 0;
+    this.bloqueadoHasta = data.bloqueadoHasta;
     this.emailVerificado = data.emailVerificado || false;
     this.imagenPerfil = data.imagenPerfil;
     this.configuraciones = data.configuraciones || {
-      notificaciones: { email: true, push: true },
-      privacidad: { perfilPublico: false },
-      tema: 'auto',
-      idioma: 'es'
+      notificacionesEmail: true,
+      notificacionesPush: false,
+      perfilPublico: false,
+      temaOscuro: false
     };
     this.historialAuth = data.historialAuth || [];
     this.createdAt = data.createdAt;
@@ -106,8 +104,8 @@ export class UserModel implements User {
 
   // Getter para verificar si la cuenta está bloqueada
   get cuentaBloqueada(): boolean {
-    if (!this.cuentaBloqueadaHasta) return false;
-    return new Date(this.cuentaBloqueadaHasta) > new Date();
+    if (!this.bloqueadoHasta) return false;
+    return new Date(this.bloqueadoHasta) > new Date();
   }
 
   // Getter para obtener los datos de persona si está disponible
@@ -143,7 +141,7 @@ export class UserModel implements User {
 
   // Método para obtener la configuración del tema
   get tema(): 'light' | 'dark' | 'auto' {
-    return this.configuraciones?.tema || 'auto';
+    return this.configuraciones?.temaOscuro ? 'dark' : 'light';
   }
 
   // Método para convertir a objeto plano para envío al backend
@@ -155,9 +153,8 @@ export class UserModel implements User {
       rol: this.rol,
       estado: this.estado,
       ultimoLogin: this.ultimoLogin,
-      fechaRegistro: this.fechaRegistro,
-      intentosLoginFallidos: this.intentosLoginFallidos,
-      cuentaBloqueadaHasta: this.cuentaBloqueadaHasta,
+      intentosLogin: this.intentosLogin,
+      bloqueadoHasta: this.bloqueadoHasta,
       configuraciones: this.configuraciones,
       historialAuth: this.historialAuth,
       createdAt: this.createdAt,

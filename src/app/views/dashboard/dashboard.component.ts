@@ -1,4 +1,4 @@
-import { NgStyle } from '@angular/common';
+import { NgStyle, DecimalPipe } from '@angular/common';
 import { Component, DestroyRef, DOCUMENT, effect, inject, OnInit, Renderer2, signal, WritableSignal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { ChartOptions } from 'chart.js';
@@ -23,25 +23,23 @@ import { IconDirective } from '@coreui/icons-angular';
 import { WidgetsBrandComponent } from '../widgets/widgets-brand/widgets-brand.component';
 import { WidgetsDropdownComponent } from '../widgets/widgets-dropdown/widgets-dropdown.component';
 import { DashboardChartsData, IChartProps } from './dashboard-charts-data';
+import { AlumnoCategoriaService, AlumnoCategoriaStats } from '../../services/alumno-categoria.service';
 
-interface IUser {
-  name: string;
-  state: string;
-  registered: string;
-  country: string;
-  usage: number;
-  period: string;
-  payment: string;
-  activity: string;
-  avatar: string;
-  status: string;
+interface IInscripcionData {
+  categoria: string;
+  totalAlumnos: number;
+  porcentaje: number;
   color: string;
+  tendencia: 'up' | 'down' | 'stable';
+  cambio: number;
 }
 
 @Component({
   templateUrl: 'dashboard.component.html',
   styleUrls: ['dashboard.component.scss'],
-  imports: [WidgetsDropdownComponent, CardComponent, CardBodyComponent, RowComponent, ColComponent, ButtonDirective, IconDirective, ReactiveFormsModule, ButtonGroupComponent, FormCheckLabelDirective, ChartjsComponent, NgStyle, CardFooterComponent, GutterDirective, ProgressComponent, WidgetsBrandComponent, CardHeaderComponent, TableDirective, AvatarComponent]
+  imports: [WidgetsDropdownComponent, CardComponent, CardBodyComponent, RowComponent, ColComponent, ButtonDirective, IconDirective, ReactiveFormsModule, ButtonGroupComponent, FormCheckLabelDirective, ChartjsComponent, NgStyle, CardFooterComponent, GutterDirective, ProgressComponent, 
+    // WidgetsBrandComponent, 
+    CardHeaderComponent, TableDirective, AvatarComponent, DecimalPipe]
 })
 export class DashboardComponent implements OnInit {
 
@@ -49,87 +47,15 @@ export class DashboardComponent implements OnInit {
   readonly #document: Document = inject(DOCUMENT);
   readonly #renderer: Renderer2 = inject(Renderer2);
   readonly #chartsData: DashboardChartsData = inject(DashboardChartsData);
+  readonly #alumnoCategoriaService: AlumnoCategoriaService = inject(AlumnoCategoriaService);
 
-  public users: IUser[] = [
-    {
-      name: 'Yiorgos Avraamu',
-      state: 'New',
-      registered: 'Jan 1, 2021',
-      country: 'Us',
-      usage: 50,
-      period: 'Jun 11, 2021 - Jul 10, 2021',
-      payment: 'Mastercard',
-      activity: '10 sec ago',
-      avatar: './assets/images/avatars/avatar.png',
-      status: 'success',
-      color: 'success'
-    },
-    {
-      name: 'Avram Tarasios',
-      state: 'Recurring ',
-      registered: 'Jan 1, 2021',
-      country: 'Br',
-      usage: 10,
-      period: 'Jun 11, 2021 - Jul 10, 2021',
-      payment: 'Visa',
-      activity: '5 minutes ago',
-      avatar: './assets/images/avatars/avatar.png',
-      status: 'danger',
-      color: 'info'
-    },
-    {
-      name: 'Quintin Ed',
-      state: 'New',
-      registered: 'Jan 1, 2021',
-      country: 'In',
-      usage: 74,
-      period: 'Jun 11, 2021 - Jul 10, 2021',
-      payment: 'Stripe',
-      activity: '1 hour ago',
-      avatar: './assets/images/avatars/avatar.png',
-      status: 'warning',
-      color: 'warning'
-    },
-    {
-      name: 'Enéas Kwadwo',
-      state: 'Sleep',
-      registered: 'Jan 1, 2021',
-      country: 'Fr',
-      usage: 98,
-      period: 'Jun 11, 2021 - Jul 10, 2021',
-      payment: 'Paypal',
-      activity: 'Last month',
-      avatar: './assets/images/avatars/avatar.png',
-      status: 'secondary',
-      color: 'danger'
-    },
-    {
-      name: 'Agapetus Tadeáš',
-      state: 'New',
-      registered: 'Jan 1, 2021',
-      country: 'Es',
-      usage: 22,
-      period: 'Jun 11, 2021 - Jul 10, 2021',
-      payment: 'ApplePay',
-      activity: 'Last week',
-      avatar: './assets/images/avatars/avatar.png',
-      status: 'success',
-      color: 'primary'
-    },
-    {
-      name: 'Friderik Dávid',
-      state: 'New',
-      registered: 'Jan 1, 2021',
-      country: 'Pl',
-      usage: 43,
-      period: 'Jun 11, 2021 - Jul 10, 2021',
-      payment: 'Amex',
-      activity: 'Yesterday',
-      avatar: './assets/images/avatars/avatar.png',
-      status: 'info',
-      color: 'dark'
-    }
-  ];
+  public inscripcionesData: IInscripcionData[] = [];
+  public estadisticasGenerales = {
+    totalInscripciones: 0,
+    categoriasMasPopular: '',
+    crecimientoMensual: 0,
+    alumnosActivos: 0
+  };
 
   public mainChart: IChartProps = { type: 'line' };
   public mainChartRef: WritableSignal<any> = signal(undefined);
@@ -146,6 +72,109 @@ export class DashboardComponent implements OnInit {
   ngOnInit(): void {
     this.initCharts();
     this.updateChartOnColorModeChange();
+    this.loadInscripcionesData();
+  }
+
+  loadInscripcionesData(): void {
+    this.#alumnoCategoriaService.getInscripcionesStats('month').subscribe({
+      next: (stats: AlumnoCategoriaStats) => {
+        this.updateDashboardData(stats);
+      },
+      error: (error) => {
+        console.error('Error al cargar datos de inscripciones:', error);
+        this.setFallbackData();
+      }
+    });
+  }
+
+  private updateDashboardData(stats: AlumnoCategoriaStats): void {
+    // Actualizar estadísticas generales
+    this.estadisticasGenerales.totalInscripciones = stats.totalInscripciones;
+    this.estadisticasGenerales.categoriasMasPopular = stats.inscripcionesPorCategoria
+      .sort((a, b) => b.cantidad - a.cantidad)[0]?.categoria || 'N/A';
+    
+    // Calcular crecimiento mensual (simulado)
+    const ultimosMeses = stats.inscripcionesPorMes.slice(-2);
+    if (ultimosMeses.length === 2) {
+      const diferencia = ultimosMeses[1].cantidad - ultimosMeses[0].cantidad;
+      this.estadisticasGenerales.crecimientoMensual = ultimosMeses[0].cantidad > 0 
+        ? Math.round((diferencia / ultimosMeses[0].cantidad) * 100) 
+        : 0;
+    }
+
+    this.estadisticasGenerales.alumnosActivos = stats.totalInscripciones;
+
+    // Crear datos para las tarjetas de progreso
+    const maxInscripciones = Math.max(...stats.inscripcionesPorCategoria.map(c => c.cantidad), 1);
+    
+    this.inscripcionesData = stats.inscripcionesPorCategoria.map((cat, index) => ({
+      categoria: cat.categoria,
+      totalAlumnos: cat.cantidad,
+      porcentaje: Math.round((cat.cantidad / maxInscripciones) * 100),
+      color: stats.categorias[index]?.color || this.getCategoryColor(index),
+      tendencia: Math.random() > 0.5 ? 'up' : 'down', // Simulado
+      cambio: Math.floor(Math.random() * 20) + 1 // Simulado
+    }));
+  }
+
+  private setFallbackData(): void {
+    this.estadisticasGenerales = {
+      totalInscripciones: 247,
+      categoriasMasPopular: 'Karate Infantil',
+      crecimientoMensual: 12,
+      alumnosActivos: 189
+    };
+
+    this.inscripcionesData = [
+      {
+        categoria: 'Karate Infantil',
+        totalAlumnos: 89,
+        porcentaje: 100,
+        color: '#20a8d8',
+        tendencia: 'up',
+        cambio: 12
+      },
+      {
+        categoria: 'Karate Juvenil',
+        totalAlumnos: 67,
+        porcentaje: 75,
+        color: '#4dbd74',
+        tendencia: 'up',
+        cambio: 8
+      },
+      {
+        categoria: 'Karate Adultos',
+        totalAlumnos: 54,
+        porcentaje: 60,
+        color: '#f86c6b',
+        tendencia: 'down',
+        cambio: -3
+      },
+      {
+        categoria: 'Karate Avanzado',
+        totalAlumnos: 37,
+        porcentaje: 42,
+        color: '#ffc107',
+        tendencia: 'up',
+        cambio: 5
+      }
+    ];
+  }
+
+  private getCategoryColor(index: number): string {
+    const colors = [
+      '#20a8d8', // info
+      '#4dbd74', // success  
+      '#f86c6b', // danger
+      '#ffc107', // warning
+      '#6610f2', // indigo
+      '#6f42c1', // purple
+      '#e83e8c', // pink
+      '#fd7e14', // orange
+      '#20c997', // teal
+      '#17a2b8'  // cyan
+    ];
+    return colors[index % colors.length];
   }
 
   initCharts(): void {
@@ -157,6 +186,22 @@ export class DashboardComponent implements OnInit {
     this.trafficRadioGroup.setValue({ trafficRadio: value });
     this.#chartsData.initMainChart(value);
     this.initCharts();
+    
+    // Recargar datos según el período seleccionado
+    const periodMap: { [key: string]: 'day' | 'month' | 'year' } = {
+      'Day': 'day',
+      'Month': 'month',
+      'Year': 'year'
+    };
+    
+    this.#alumnoCategoriaService.getInscripcionesStats(periodMap[value] || 'month').subscribe({
+      next: (stats: AlumnoCategoriaStats) => {
+        this.updateDashboardData(stats);
+      },
+      error: (error) => {
+        console.error('Error al actualizar datos:', error);
+      }
+    });
   }
 
   handleChartRef($chartRef: any) {

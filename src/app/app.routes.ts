@@ -69,8 +69,16 @@ export const routes: Routes = [
         loadChildren: () => import('./views/profesor/routes').then((m) => m.routes)
       },
       {
+        path: 'profesor-categoria',
+        loadChildren: () => import('./views/profesor-categoria/routes').then((m) => m.routes)
+      },
+      {
         path: 'torneos',
         loadChildren: () => import('./views/torneo/routes').then((m) => m.routes)
+      },
+      {
+        path: 'user',
+        loadChildren: () => import('./views/user/routes').then((m) => m.routes)
       },
       {
         path: 'torneo-form/:id',

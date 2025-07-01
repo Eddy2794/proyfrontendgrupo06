@@ -45,12 +45,8 @@ export class AuthService {
   private _tokenValidationPromise: Promise<boolean> | null = null;
 
   constructor(private http: HttpClient, private router: Router, private notificationService: NotificationService) {
-    // No inicializar automáticamente para evitar dependencias circulares
-    // La inicialización se hará de forma lazy cuando sea necesaria
-    const storedToken = localStorage.getItem('token');
-    if (storedToken) {
-      this.tokenSubject.next(storedToken);
-    }
+    // Inicializar automáticamente para restaurar estado desde localStorage
+    this.initializeAuth();
   }
 
   /**
@@ -58,8 +54,33 @@ export class AuthService {
    */
   private initializeAuth(): void {
     const storedToken = localStorage.getItem('token');
+    const storedUser = localStorage.getItem('currentUser');
+    const storedPersona = localStorage.getItem('currentPersona');
+    
     if (storedToken && !this.tokenSubject.value) {
       this.tokenSubject.next(storedToken);
+      
+      // Restaurar datos del usuario desde localStorage si están disponibles
+      if (storedUser) {
+        try {
+          const user = JSON.parse(storedUser);
+          this.userSubject.next(user);
+          console.log('Usuario restaurado desde localStorage:', user);
+        } catch (error) {
+          console.error('Error parseando usuario desde localStorage:', error);
+        }
+      }
+      
+      if (storedPersona) {
+        try {
+          const persona = JSON.parse(storedPersona);
+          this.personaSubject.next(persona);
+          console.log('Persona restaurada desde localStorage:', persona);
+        } catch (error) {
+          console.error('Error parseando persona desde localStorage:', error);
+        }
+      }
+      
       // Verificar validez del token en segundo plano sin bloquear
       setTimeout(() => {
         this.validateTokenWithBackend().catch(() => {
@@ -201,6 +222,18 @@ export class AuthService {
     this._isAuthenticated = true;
     this._tokenValidationPromise = null;
     
+    // Persistir datos del usuario en localStorage para evitar pérdida en refreshes
+    if (user) {
+      localStorage.setItem('currentUser', JSON.stringify(user));
+      this.userSubject.next(user);
+      
+      // Si el usuario tiene una persona asociada, también la actualizamos
+      if (user.persona && typeof user.persona !== 'string') {
+        localStorage.setItem('currentPersona', JSON.stringify(user.persona));
+        this.personaSubject.next(user.persona as Persona);
+      }
+    }
+    
     // Actualizar estado de autenticación
     const authState = new AuthStateModel();
     authState.isAuthenticated = true;
@@ -212,12 +245,8 @@ export class AuthService {
     };
     
     if (user) {
-      this.userSubject.next(user);
       authState.user = user;
-      
-      // Si el usuario tiene una persona asociada, también la actualizamos
       if (user.persona && typeof user.persona !== 'string') {
-        this.personaSubject.next(user.persona as Persona);
         authState.persona = user.persona as Persona;
       }
     }
@@ -247,6 +276,8 @@ export class AuthService {
    */
   private clearAuth(): void {
     localStorage.removeItem('token');
+    localStorage.removeItem('currentUser');
+    localStorage.removeItem('currentPersona');
     this.tokenSubject.next(null);
     this.userSubject.next(null);
     this.personaSubject.next(null);
@@ -478,11 +509,25 @@ export class AuthService {
    */
   updateCurrentUser(user: User): void {
     console.log('Actualizando usuario actual en auth service:', user);
+    
+    // Persistir en localStorage
+    localStorage.setItem('currentUser', JSON.stringify(user));
     this.userSubject.next(user);
     
     // También actualizar persona si está incluida
     if (user.persona && typeof user.persona === 'object') {
+      localStorage.setItem('currentPersona', JSON.stringify(user.persona));
       this.personaSubject.next(user.persona as Persona);
+    }
+    
+    // Actualizar el estado de autenticación
+    const currentAuthState = this.authStateSubject.value;
+    if (currentAuthState) {
+      currentAuthState.user = user;
+      if (user.persona && typeof user.persona === 'object') {
+        currentAuthState.persona = user.persona as Persona;
+      }
+      this.authStateSubject.next(currentAuthState);
     }
   }
 
@@ -496,5 +541,15 @@ export class AuthService {
         this.updateCurrentUser(user);
       })
     );
+  }
+
+  /**
+   * Forzar inicialización de autenticación (método público)
+   */
+  public initializeAuthIfNeeded(): void {
+    if (!this.tokenSubject.value && localStorage.getItem('token')) {
+      console.log('Forzando inicialización de autenticación...');
+      this.initializeAuth();
+    }
   }
 }
