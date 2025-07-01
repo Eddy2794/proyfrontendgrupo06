@@ -6,9 +6,10 @@ console.log('📂 Directorio actual:', __dirname);
 
 // Posibles rutas donde puede estar el index.html
 const possiblePaths = [
+  path.join(__dirname, 'dist/coreui-free-angular-admin-template/browser/index.html'),
   path.join(__dirname, 'dist/coreui-free-angular-admin-template/index.html'),
-  path.join(__dirname, 'dist/index.html'),
-  path.join(__dirname, 'dist/coreui-free-angular-admin-template/browser/index.html')
+  path.join(__dirname, 'dist/browser/index.html'),
+  path.join(__dirname, 'dist/index.html')
 ];
 
 let indexFound = false;
@@ -28,21 +29,24 @@ for (const indexPath of possiblePaths) {
 const distPath = path.join(__dirname, 'dist');
 if (fs.existsSync(distPath)) {
   console.log('📁 Contenido de dist:');
-  const distContents = fs.readdirSync(distPath, { withFileTypes: true });
-  distContents.forEach(item => {
-    console.log(`  ${item.isDirectory() ? '📁' : '📄'} ${item.name}`);
-    if (item.isDirectory()) {
-      const subPath = path.join(distPath, item.name);
-      try {
-        const subContents = fs.readdirSync(subPath);
-        subContents.forEach(subItem => {
-          console.log(`    📄 ${subItem}`);
-        });
-      } catch (err) {
-        console.log(`    ❌ Error leyendo subdirectorio: ${err.message}`);
-      }
+  
+  function listDirectory(dirPath, prefix = '') {
+    try {
+      const items = fs.readdirSync(dirPath, { withFileTypes: true });
+      items.forEach(item => {
+        const itemPath = path.join(dirPath, item.name);
+        console.log(`${prefix}${item.isDirectory() ? '📁' : '📄'} ${item.name}`);
+        
+        if (item.isDirectory() && prefix.length < 8) { // Limitar la profundidad
+          listDirectory(itemPath, prefix + '  ');
+        }
+      });
+    } catch (err) {
+      console.log(`${prefix}❌ Error leyendo directorio: ${err.message}`);
     }
-  });
+  }
+  
+  listDirectory(distPath);
 } else {
   console.log('❌ El directorio dist no existe');
 }

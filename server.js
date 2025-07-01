@@ -6,9 +6,95 @@ const url = require('url');
 // Configurar el puerto
 const port = process.env.PORT || 3000;
 
-// Ruta a los archivos estáticos
-const distPath = path.join(__dirname, 'dist/coreui-free-angular-admin-template');
-const indexPath = path.join(distPath, 'index.html');
+// Buscar la ruta correcta a los archivos estáticos
+// Angular 17+ con @angular/build:application puede generar archivos en diferentes ubicaciones
+const possibleDistPaths = [
+  path.join(__dirname, 'dist/coreui-free-angular-admin-template/browser'),
+  path.join(__dirname, 'dist/coreui-free-angular-admin-template'),
+  path.join(__dirname, 'dist/browser'),
+  path.join(__dirname, 'dist'),
+  path.join(__dirname, 'build'),
+  __dirname
+];
+
+let distPath = '';
+let indexPath = '';
+
+// Encontrar la ruta correcta
+for (const testPath of possibleDistPaths) {
+  const testIndexPath = path.join(testPath, 'index.html');
+  if (fs.existsSync(testIndexPath)) {
+    distPath = testPath;
+    indexPath = testIndexPath;
+    console.log(`✅ Found dist directory at: ${distPath}`);
+    console.log(`✅ Found index.html at: ${indexPath}`);
+    break;
+  }
+}
+
+if (!distPath) {
+  console.error('❌ Could not find dist directory or index.html in any of these locations:');
+  possibleDistPaths.forEach(p => {
+    console.error(`   - ${p}/index.html`);
+    // Verificar si el directorio existe
+    if (fs.existsSync(p)) {
+      console.error(`     📁 Directory exists, listing contents:`);
+      try {
+        const contents = fs.readdirSync(p);
+        contents.forEach(item => {
+          const itemPath = path.join(p, item);
+          const isDir = fs.statSync(itemPath).isDirectory();
+          console.error(`       ${isDir ? '📁' : '📄'} ${item}`);
+        });
+      } catch (err) {
+        console.error(`     ❌ Error reading directory: ${err.message}`);
+      }
+    } else {
+      console.error(`     ❌ Directory does not exist`);
+    }
+  });
+  
+  // Listar contenido del directorio actual para debug
+  console.log('📁 Current directory contents:');
+  try {
+    const currentDirContents = fs.readdirSync(__dirname);
+    currentDirContents.forEach(item => {
+      const itemPath = path.join(__dirname, item);
+      const isDir = fs.statSync(itemPath).isDirectory();
+      console.log(`  ${isDir ? '📁' : '📄'} ${item}`);
+      
+      if (isDir && (item === 'dist' || item === 'build')) {
+        try {
+          const subContents = fs.readdirSync(itemPath);
+          console.log(`    📁 ${item}/ contents:`);
+          subContents.forEach(subItem => {
+            const subItemPath = path.join(itemPath, subItem);
+            const isSubDir = fs.statSync(subItemPath).isDirectory();
+            console.log(`      ${isSubDir ? '📁' : '📄'} ${subItem}`);
+            
+            // Si es un subdirectorio, también listar su contenido
+            if (isSubDir) {
+              try {
+                const subSubContents = fs.readdirSync(subItemPath);
+                subSubContents.forEach(subSubItem => {
+                  console.log(`        📄 ${subSubItem}`);
+                });
+              } catch (err) {
+                console.log(`        ❌ Error reading subdirectory: ${err.message}`);
+              }
+            }
+          });
+        } catch (err) {
+          console.log(`    ❌ Error reading subdirectory: ${err.message}`);
+        }
+      }
+    });
+  } catch (err) {
+    console.error('Error listing directory contents:', err);
+  }
+  
+  process.exit(1);
+}
 
 // MIME types básicos
 const mimeTypes = {
