@@ -1,0 +1,112 @@
+<!-- Alertas de éxito y error -->
+<c-alert *ngIf="successMessage" color="success" dismissible>
+  {{ successMessage }}
+</c-alert>
+
+<c-alert *ngIf="errorMessage" color="danger" dismissible>
+  {{ errorMessage }}
+</c-alert>
+
+<!-- Filtros de búsqueda con mejor estilo CoreUI -->
+<div class="mb-4">
+  <c-row class="g-3">
+    <c-col [md]="6" [sm]="12">
+      <div class="d-flex flex-column">
+        <label for="filtroProfesor" class="form-label fw-bold mb-1">Profesor</label>
+        <select
+          id="filtroProfesor"
+          class="form-select"
+          [(ngModel)]="filtroProfesorId"
+          (change)="filtrarProfesor()"
+          name="filtroProfesorId"
+        >
+          <option value="todos">Todos los profesores</option>
+          <option *ngFor="let prof of profesores" [value]="prof._id">
+            {{ prof.persona.apellidos }}, {{ prof.persona.nombres }}
+          </option>
+        </select>
+      </div>
+    </c-col>
+    <c-col [md]="6" [sm]="12">
+      <div class="d-flex flex-column">
+        <label for="filtroCategoria" class="form-label fw-bold mb-1">Categoría</label>
+        <select
+          id="filtroCategoria"
+          class="form-select"
+          [(ngModel)]="filtroCategoriaId"
+          (change)="filtrarCategoria()"
+          name="filtroCategoriaId"
+        >
+          <option value="todos">Todas las categorías</option>
+          <option *ngFor="let cat of categorias" [value]="cat._id">
+            {{ cat.nombre }}
+          </option>
+        </select>
+      </div>
+    </c-col>
+  </c-row>
+</div>
+
+<!-- Tabla de Categorías de Profesores -->
+<c-row class="mt-5">
+  <c-col [xs]="12">
+    <c-card>
+      <c-card-header>
+        <div class="d-flex justify-content-between align-items-center">
+          <h4>
+            <svg cIcon name="cilList" size="sm"></svg>
+            Lista de Categorías de Profesores
+          </h4>
+          <button cButton color="primary" (click)="onNewProfesorCategoria()">
+            <svg cIcon name="cilPlus" size="sm" class="me-2"></svg>
+            Nueva Categoría
+          </button>
+        </div>
+      </c-card-header>
+      <c-card-body>
+        <div class="table-responsive">
+          <table cTable [hover]="true" [striped]="true">
+            <thead>
+              <tr>
+                <th scope="col">#</th>
+                <th scope="col">Profesor</th>
+                <th scope="col">Título</th>
+                <th scope="col">Categoría</th>
+                <th scope="col">Fecha Asignación</th>
+                <th scope="col">Estado</th>
+                <th scope="col">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let profCategoria of profesorCategorias; let i = index">
+                <th scope="row">{{ i + 1 }}</th>
+                <td>{{ profCategoria.profesor.persona.apellidos}}, {{ profCategoria.profesor.persona.nombres}}</td>
+                <td>{{ profCategoria.profesor.titulo }}</td>
+                <td>{{ profCategoria.categoria.nombre }}</td>
+                <td>{{ profCategoria.fecha_asignacion | date:'dd-MM-yyyy' }}</td>
+                <td>
+                  <span class="badge" [ngClass]="profCategoria.activo ? 'bg-success' : 'bg-danger'">
+                    {{ profCategoria.activo ? 'Activo' : 'Inactivo' }}
+                  </span>
+                </td>
+                <td>
+                  <button cButton color="primary" size="sm" class="me-1" (click)="onEditProfesorCategoria(profCategoria)">
+                    <svg cIcon name="cilPencil" size="sm"></svg>
+                    Editar
+                  </button>
+                  <button cButton color="danger" size="sm" (click)="deleteProfesorCategoria(profCategoria._id)">
+                    <svg cIcon name="cilTrash" size="sm"></svg>
+                    Eliminar
+                  </button>
+                </td>
+              </tr>
+              <tr *ngIf="profesorCategorias.length === 0">
+                <td colspan="6" class="text-center">No hay categorías registradas</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </c-card-body>
+    </c-card>
+  </c-col>
+</c-row>

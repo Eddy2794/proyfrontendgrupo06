@@ -1,0 +1,131 @@
+<c-container>
+  <!-- Alertas de éxito y error -->
+  <c-alert *ngIf="successMessage" color="success" dismissible>
+    {{ successMessage }}
+  </c-alert>
+
+  <c-alert *ngIf="errorMessage" color="danger" dismissible>
+    {{ errorMessage }}
+  </c-alert>
+
+  <c-row class="justify-content-center">
+    <!-- Formulario -->
+    <c-col lg="10" xl="8">
+      <c-card>
+        <c-card-header>
+          <div class="d-flex justify-content-between align-items-center">
+            <h4>
+              <svg cIcon name="cilUser" size="sm"></svg>
+              {{ isEditing ? 'Editar Categoría de Profesor' : 'Asignar Categoría a Profesor' }}
+            </h4>
+            <button cButton color="secondary" (click)="goToList()">
+              <svg cIcon name="cilList" size="sm" class="me-2"></svg>
+              Ver Lista
+            </button>
+          </div>
+        </c-card-header>
+        <c-card-body>
+          <form #profesorCategoriaFormNg="ngForm" (ngSubmit)="onSubmit()" [gutter]="3" [validated]="profesorCategoriaFormValidated"
+            novalidate cForm cRow class="needs-validation">
+            
+            <!-- SECCIÓN: SELECCIÓN DE PROFESOR -->
+            <c-col [xs]="12">
+              <h5 class="mb-3 text-primary">
+                <svg cIcon name="cilUser" size="sm" class="me-2"></svg>
+                Selección de Profesor
+              </h5>
+            </c-col>
+
+            <!-- Profesor -->
+            <c-col [xs]="12" [md]="6">
+              <label cLabel for="profesor">Profesor</label>
+              <select cSelect id="profesor" name="profesor" required [(ngModel)]="profesorCategoria.profesor"
+                #profesor="ngModel" (blur)="markAsTouched(profesor)">
+                <option value="">Seleccione un profesor...</option>
+                <option *ngFor="let prof of profesores" [value]="prof._id">
+                  {{ prof.persona?.apellidos }}, {{ prof.persona?.nombres }}
+                </option>
+              </select>
+              <c-form-feedback *ngIf="profesor.valid && (profesor.touched || profesor.dirty)" [valid]="true">
+                ¡Se ve bien!
+              </c-form-feedback>
+              <c-form-feedback *ngIf="profesor.invalid && (profesor.touched || profesor.dirty || profesorCategoriaFormValidated)"
+                [valid]="false">El profesor es requerido.</c-form-feedback>
+            </c-col>
+
+            <!-- Categoría -->
+            <c-col [xs]="12" [md]="6">
+              <label cLabel for="categoria">Categoría</label>
+              <select cSelect id="categoria" name="categoria" required [(ngModel)]="profesorCategoria.categoria"
+                #categoria="ngModel" (blur)="markAsTouched(categoria)">
+                <option value="">Seleccione una categoría...</option>
+                <option *ngFor="let cat of categorias" [value]="cat._id">{{ cat.nombre }}</option>
+              </select>
+              <c-form-feedback *ngIf="categoria.valid && (categoria.touched || categoria.dirty)" [valid]="true">
+                ¡Se ve bien!
+              </c-form-feedback>
+              <c-form-feedback *ngIf="categoria.invalid && (categoria.touched || categoria.dirty || profesorCategoriaFormValidated)"
+                [valid]="false">La categoría es requerida.</c-form-feedback>
+            </c-col>
+
+            <!-- SECCIÓN: ESTADO -->
+            <c-col [xs]="12">
+              <h5 class="mb-3 text-primary mt-4">
+                <svg cIcon name="cilCheckCircle" size="sm" class="me-2"></svg>
+                Estado
+              </h5>
+            </c-col>
+
+            <!-- Estado Activo -->
+            <c-col [xs]="12" [md]="6">
+              <div class="form-check form-switch mt-2">
+                <input class="form-check-input" type="checkbox" id="activo" name="activo"
+                  [(ngModel)]="profesorCategoria.activo" #activo="ngModel">
+                <label class="form-check-label" for="activo">
+                  {{ profesorCategoria.activo ? 'Activo' : 'Inactivo' }}
+                </label>
+              </div>
+              <small class="form-text text-muted">
+                Indica si la categoría está actualmente activa
+              </small>
+            </c-col>
+
+            <!-- SECCIÓN: OBSERVACIONES -->
+            <c-col [xs]="12">
+              <h5 class="mb-3 text-primary mt-4">
+                <svg cIcon name="cilNote" size="sm" class="me-2"></svg>
+                Observaciones
+              </h5>
+            </c-col>
+
+            <!-- Observaciones -->
+            <c-col [xs]="12">
+              <label cLabel for="observaciones">Observaciones</label>
+              <textarea cFormControl id="observaciones" name="observaciones" rows="4"
+                [(ngModel)]="profesorCategoria.observaciones" #observaciones="ngModel"
+                placeholder="Ingrese observaciones adicionales sobre la asignación de categoría..."></textarea>
+              <small class="form-text text-muted">
+                Campo opcional para notas adicionales sobre la asignación
+              </small>
+            </c-col>
+
+            <!-- Botones -->
+            <c-col [xs]="12" class="text-center">
+              <button cButton class="me-1" color="primary" type="submit" [disabled]="isSubmitting">
+                {{ isEditing ? 'Actualizar' : 'Asignar Categoría' }}
+              </button>
+              <button cButton class="me-1" color="danger" type="button" [disabled]="!isEditing || isSubmitting" 
+                (click)="editingId && deleteProfesorCategoria()" *ngIf="isEditing">
+                <svg cIcon name="cilTrash" size="sm"></svg>
+                Eliminar
+              </button>
+              <button (click)="onReset()" cButton color="secondary" type="reset" [disabled]="isSubmitting">
+                {{ isEditing ? 'Cancelar' : 'Limpiar' }}
+              </button>
+            </c-col>
+          </form>
+        </c-card-body>
+      </c-card>
+    </c-col>
+  </c-row>
+</c-container>
