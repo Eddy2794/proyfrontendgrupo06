@@ -1,30 +1,31 @@
 <c-row class="g-4">
+  <!-- Card 1: Alumnos Activos -->
   <c-col sm="6" xl="3">
     <c-widget-stat-a
       color="primary"
-      [title]="'Users'"
+      [title]="'Alumnos Activos'"
     >
       <ng-template cTemplateId="widgetValueTemplate" ngPreserveWhitespaces>
-        26K
-        <span class="fw-normal" style="font-size: 12px;">
-          (-12.4% <svg cIcon name="cilArrowBottom" size="sm"></svg>)
+        <span *ngIf="isLoading">Cargando...</span>
+        <span *ngIf="hasError">Sin Datos...</span>
+        <span *ngIf="!isLoading && !hasError && alumnosData.total !== null">
+          {{ alumnosData.total }}
+          <span class="fw-normal" style="font-size: 12px;" *ngIf="alumnosData.percentage !== null">
+            ({{ alumnosData.percentage >= 0 ? '+' : '' }}{{ alumnosData.percentage }}% 
+            <svg cIcon [name]="alumnosData.trend === 'up' ? 'cilArrowTop' : 'cilArrowBottom'" size="sm"></svg>)
+          </span>
         </span>
+        <span *ngIf="!isLoading && !hasError && alumnosData.total === null">Sin datos</span>
       </ng-template>
       <ng-template cTemplateId="widgetActionTemplate">
         <c-dropdown alignment="end" variant="btn-group">
-          <button [caret]="false" cButton cDropdownToggle class="p-0 text-white" color="transparent" aria-label="Open dropdown">
+          <button [caret]="false" cButton cDropdownToggle class="p-0 text-white" color="transparent" aria-label="Opciones">
             <svg cIcon name="cilOptions"></svg>
           </button>
           <ul cDropdownMenu>
-            <li><a [routerLink]="[]" cDropdownItem>Action</a></li>
-            <li><a [routerLink]="[]" cDropdownItem>Another action</a></li>
-            <li><a [routerLink]="[]" cDropdownItem>Something else here</a></li>
-            <li>
-              <hr cDropdownDivider>
-            </li>
-            <li>
-              <button cDropdownItem>Separated link</button>
-            </li>
+            <li><a [routerLink]="['/alumno/list']" cDropdownItem>Ver Alumnos</a></li>
+            <li><a [routerLink]="['/alumno/form']" cDropdownItem>Agregar Alumno</a></li>
+            <li><a [routerLink]="[]" cDropdownItem>Estadísticas</a></li>
           </ul>
         </c-dropdown>
       </ng-template>
@@ -33,27 +34,33 @@
       </ng-template>
     </c-widget-stat-a>
   </c-col>
+
+  <!-- Card 2: Cuotas Pendientes -->
   <c-col sm="6" xl="3">
     <c-widget-stat-a
-      [title]="'Income'"
+      [title]="'Cuotas Pendientes'"
       color="info"
     >
       <ng-template cTemplateId="widgetValueTemplate" ngPreserveWhitespaces>
-        <span>$6.200</span>
-        <span class="fw-normal" style="font-size: 12px;">
-          (40.9%<svg cIcon name="cilArrowTop" size="sm"></svg>)
+        <span *ngIf="isLoading">Cargando...</span>
+        <span *ngIf="hasError">Sin Datos...</span>
+        <span *ngIf="!isLoading && !hasError && cuotasData.pendientes !== null">
+          {{ cuotasData.pendientes }}
+          <span class="fw-normal" style="font-size: 12px;" *ngIf="cuotasData.percentage !== null">
+            ({{ cuotasData.percentage }}% pagadas <svg cIcon [name]="cuotasData.trend === 'up' ? 'cilArrowTop' : 'cilArrowBottom'" size="sm"></svg>)
+          </span>
         </span>
+        <span *ngIf="!isLoading && !hasError && cuotasData.pendientes === null">Sin datos</span>
       </ng-template>
       <ng-template cTemplateId="widgetActionTemplate">
         <c-dropdown alignment="end" variant="btn-group">
-          <button [caret]="false" cButton cDropdownToggle class="p-0 text-white" color="transparent" aria-label="Open dropdown">
+          <button [caret]="false" cButton cDropdownToggle class="p-0 text-white" color="transparent" aria-label="Opciones">
             <svg cIcon name="cilOptions"></svg>
           </button>
           <ul cDropdownMenu>
-            <li><a [routerLink]="[]" cDropdownItem>Action</a></li>
-            <li><a [routerLink]="[]" cDropdownItem>Another action</a></li>
-            <li><a [routerLink]="[]" cDropdownItem>Something else here</a></li>
-            <li><a [disabled]="true" [routerLink]="[]" cDropdownItem>Disabled</a></li>
+            <li><a [routerLink]="['/cuota/list']" cDropdownItem>Ver Cuotas</a></li>
+            <li><a [routerLink]="[]" cDropdownItem>Generar Cuotas</a></li>
+            <li><a [routerLink]="[]" cDropdownItem>Reportes</a></li>
           </ul>
         </c-dropdown>
       </ng-template>
@@ -62,27 +69,33 @@
       </ng-template>
     </c-widget-stat-a>
   </c-col>
+
+  <!-- Card 3: Próximos Torneos -->
   <c-col sm="6" xl="3">
     <c-widget-stat-a
-      [title]="'Conversion Rate'"
+      [title]="'Próximos Torneos'"
       color="warning"
     >
       <ng-template cTemplateId="widgetValueTemplate" ngPreserveWhitespaces>
-        <span>2.49</span>
-        <span class="fw-normal" style="font-size: 12px;">
-          (84.7% <svg cIcon name="cilArrowTop" size="sm"></svg>)
+        <span *ngIf="isLoading">Cargando...</span>
+        <span *ngIf="hasError">Sin Datos...</span>
+        <span *ngIf="!isLoading && !hasError && torneosData.proximos !== null">
+          {{ torneosData.proximos }}
+          <span class="fw-normal" style="font-size: 12px;">
+            próximos eventos
+          </span>
         </span>
+        <span *ngIf="!isLoading && !hasError && torneosData.proximos === null">Sin datos</span>
       </ng-template>
       <ng-template cTemplateId="widgetActionTemplate">
         <c-dropdown alignment="end" variant="btn-group">
-          <button [caret]="false" cButton cDropdownToggle class="p-0 text-white" color="transparent" aria-label="Open dropdown">
+          <button [caret]="false" cButton cDropdownToggle class="p-0 text-white" color="transparent" aria-label="Opciones">
             <svg cIcon name="cilOptions"></svg>
           </button>
           <ul cDropdownMenu>
-            <li><a [routerLink]="[]" cDropdownItem>Action</a></li>
-            <li><a [routerLink]="[]" cDropdownItem>Another action</a></li>
-            <li><a [routerLink]="[]" cDropdownItem>Something else here</a></li>
-            <li><a [disabled]="true" [routerLink]="[]" cDropdownItem>Disabled</a></li>
+            <li><a [routerLink]="['/torneo/list']" cDropdownItem>Ver Torneos</a></li>
+            <li><a [routerLink]="['/torneo/form']" cDropdownItem>Crear Torneo</a></li>
+            <li><a [routerLink]="[]" cDropdownItem>Calendarios</a></li>
           </ul>
         </c-dropdown>
       </ng-template>
@@ -91,27 +104,34 @@
       </ng-template>
     </c-widget-stat-a>
   </c-col>
+
+  <!-- Card 4: Profesores Activos -->
   <c-col sm="6" xl="3">
     <c-widget-stat-a
-      [title]="'Sessions'"
+      [title]="'Profesores Activos'"
       color="danger"
     >
       <ng-template cTemplateId="widgetValueTemplate" ngPreserveWhitespaces>
-        <span>44K</span>
-        <span class="fw-normal" style="font-size: 12px;">
-          (-23.6% <svg cIcon name="cilArrowBottom" size="sm"></svg>)
+        <span *ngIf="isLoading">Cargando...</span>
+        <span *ngIf="hasError">Sin Datos...</span>
+        <span *ngIf="!isLoading && !hasError && profesoresData.activos !== null">
+          {{ profesoresData.activos }}
+          <span class="fw-normal" style="font-size: 12px;" *ngIf="profesoresData.percentage !== null">
+            ({{ profesoresData.percentage >= 0 ? '+' : '' }}{{ profesoresData.percentage }}% 
+            <svg cIcon [name]="profesoresData.trend === 'up' ? 'cilArrowTop' : 'cilArrowBottom'" size="sm"></svg>)
+          </span>
         </span>
+        <span *ngIf="!isLoading && !hasError && profesoresData.activos === null">Sin datos</span>
       </ng-template>
       <ng-template cTemplateId="widgetActionTemplate">
         <c-dropdown alignment="end" variant="btn-group">
-          <button [caret]="false" cButton cDropdownToggle class="p-0 text-white" color="transparent" aria-label="Open dropdown">
+          <button [caret]="false" cButton cDropdownToggle class="p-0 text-white" color="transparent" aria-label="Opciones">
             <svg cIcon name="cilOptions"></svg>
           </button>
           <ul cDropdownMenu>
-            <li><a [routerLink]="[]" cDropdownItem>Action</a></li>
-            <li><a [routerLink]="[]" cDropdownItem>Another action</a></li>
-            <li><a [routerLink]="[]" cDropdownItem>Something else here</a></li>
-            <li><a [disabled]="true" [routerLink]="[]" cDropdownItem>Disabled</a></li>
+            <li><a [routerLink]="['/profesor/list']" cDropdownItem>Ver Profesores</a></li>
+            <li><a [routerLink]="['/profesor/form']" cDropdownItem>Agregar Profesor</a></li>
+            <li><a [routerLink]="[]" cDropdownItem>Horarios</a></li>
           </ul>
         </c-dropdown>
       </ng-template>
