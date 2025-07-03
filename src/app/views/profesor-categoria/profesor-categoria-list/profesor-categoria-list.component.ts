@@ -14,9 +14,11 @@ import {
 } from '@coreui/angular';
 import { IconDirective } from '@coreui/icons-angular';
 import { NgIf, NgFor, NgClass } from '@angular/common';
-//import { CategoriaService } from '../../../services/categoria.service';
+import { CategoriaService } from '../../../services/categoria.service';
 import { FormsModule } from '@angular/forms';
 import { DatePipe } from '@angular/common';
+import { ProfesorModel } from '../../../models/profesor-model';
+import { ProfesorCategoria } from '../../../models/profesor-categoria';
 
 @Component({
   selector: 'app-profesor-categoria-list',
@@ -42,8 +44,8 @@ import { DatePipe } from '@angular/common';
 })
 export class ProfesorCategoriaListComponent implements OnInit {
  
-  profesorCategorias: any[] = [];
-  profesores: any[] = [];
+  profesorCategorias: ProfesorCategoria[] = [];
+  profesores:ProfesorModel[] = [];
   successMessage = '';
   errorMessage = '';
   filtroProfesorId: string = '';
@@ -53,21 +55,23 @@ export class ProfesorCategoriaListComponent implements OnInit {
   constructor(
     private profesorCategoriaService: ProfesorCategoriaService,
     private profesorService: ProfesorService,
- //   private categoriaService: CategoriaService,
+    private categoriaService: CategoriaService,
     private router: Router
   ) {}
 
   ngOnInit() {
     this.getProfesorCategorias();
     this.getProfesores();
- //   this.getCategorias();
+    this.getCategorias();
   }
 
   getProfesorCategorias() {
     this.profesorCategoriaService.getProfesorCategorias().subscribe({
       next: (response: any) => {
         console.log("response desde el list", response.data.profesoresCategorias);
-        this.profesorCategorias = response.data.profesoresCategorias;
+        this.profesorCategorias = response.data.profesoresCategorias
+          .filter((item: any) => item && item.profesor)
+          .map((item: any) => ProfesorCategoria.fromJSON(item));
         console.log(this.profesorCategorias);
       },
       error: (error) => {
@@ -80,7 +84,7 @@ export class ProfesorCategoriaListComponent implements OnInit {
   getProfesores() {
     this.profesorService.getProfesores().subscribe({
       next: (response: any) => {
-        this.profesores = response.data;
+        this.profesores = response.data.map((profesor: any) => ProfesorModel.fromJSON(profesor));
       },
       error: (error) => {
         console.error('Error al cargar profesores:', error);
@@ -88,32 +92,25 @@ export class ProfesorCategoriaListComponent implements OnInit {
     });
   }
 
-  /*getCategorias() {
+  getCategorias() {
     this.categoriaService.getCategorias().subscribe({
       next: (response: any) => {
         console.log(response);
         this.categorias = response.data.categorias;
       }
     });
-  }*/
+  }
   
-  onEditProfesorCategoria(profesorCategoria: any) {
-    console.log('onEditProfesorCategoria llamado con:', profesorCategoria);
-    // Navegar al formulario con los datos de la categoría para editar
+  updateProfesorCategoria(profesorCategoria: any) {
     this.router.navigate(['/profesor-categoria'], { 
       queryParams: { 
         edit: 'true',
         id: profesorCategoria._id
-      },
-      state: { 
-        profesorCategoria: profesorCategoria,
-        isEditing: true 
-      } 
+      }
     });
   }
 
-  onNewProfesorCategoria() {
-    // Navegar al formulario para crear una nueva categoría
+  addProfesorCategoria() {
     this.router.navigate(['/profesor-categoria']);
   }
   
@@ -142,9 +139,11 @@ export class ProfesorCategoriaListComponent implements OnInit {
     }
     this.profesorCategoriaService.getProfesoresCategoriasByProfesorId(this.filtroProfesorId).subscribe({
       next: (response: any) => {
-        console.log(response);
-        console.log(response.data.profesores);
-        this.profesorCategorias = response.data.categorias;
+        if (response.data.categorias) {
+          this.profesorCategorias = response.data.categorias.map((profesorCategoria: any) => ProfesorCategoria.fromJSON(profesorCategoria));
+        } else {
+          this.profesorCategorias = [];
+        }
       },
       error: (error) => {
         console.error('Error al filtrar profesor:', error);
@@ -161,7 +160,11 @@ export class ProfesorCategoriaListComponent implements OnInit {
     }
     this.profesorCategoriaService.getProfesoresCategoriasByCategoriaId(this.filtroCategoriaId).subscribe({
       next: (response: any) => {
-        this.profesorCategorias = response.data.profesores;
+        if (response.data.profesores) {
+          this.profesorCategorias = response.data.profesores.map((profesorCategoria: any) => ProfesorCategoria.fromJSON(profesorCategoria));
+        } else {
+          this.profesorCategorias = [];
+        }
       },
       error: (error) => {
         console.error('Error al filtrar categoría:', error);
