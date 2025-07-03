@@ -8,10 +8,38 @@ import { CategoriaAuxiliarService } from '../../services/categoria-auxiliar.serv
 import { TorneoService } from '../../services/torneo.service';
 import { Torneo } from '../../models/torneo';
 import { CategoriaAuxiliar } from '../../models/categoria-auxiliar';
-
+import {
+  AlertComponent,
+  CardComponent,
+  CardBodyComponent,
+  CardHeaderComponent,
+  FormDirective,
+  RowDirective,
+  ColComponent,
+  RowComponent,
+  FormLabelDirective,
+  FormControlDirective,
+  FormFeedbackComponent,
+  ButtonDirective
+} from '@coreui/angular';
+import { ViewChild } from '@angular/core';
+import { NgForm } from '@angular/forms';
 @Component({
   selector: 'app-torneo-categoria-form',
-  imports: [FormsModule, CommonModule],
+  imports: [FormsModule, CommonModule,
+    CardComponent,
+    CardBodyComponent,
+    CardHeaderComponent,
+    FormDirective,
+    RowDirective,
+    ColComponent,
+    RowComponent,
+    FormLabelDirective,
+    FormControlDirective,
+    FormFeedbackComponent,
+    ButtonDirective,
+    AlertComponent
+  ],
   templateUrl: './torneo-categoria-form.component.html',
   styleUrl: './torneo-categoria-form.component.scss'
 })
@@ -21,6 +49,13 @@ export class TorneoCategoriaFormComponent implements OnInit {
   torneos!: Array<Torneo>;
   categorias!: Array<CategoriaAuxiliar>;
   torneoCategoria!: TorneoCategoria;
+  mensajeExito: string = '';
+  mensajeError: string = '';
+  mostrarExito: boolean = false;
+  mostrarError: boolean = false;
+  tituloForm: string = "";
+  formValidado = false;
+  @ViewChild('formTorneoCategoria') formTorneoCategoria!: NgForm;
   constructor(private activatedRoute: ActivatedRoute,
     private router: Router,
     private torneoCategoriaService: TorneoCategoriaService,
@@ -31,6 +66,13 @@ export class TorneoCategoriaFormComponent implements OnInit {
     this.cargarTorneos();
   }
 
+  ocultarAlerta() {
+    setTimeout(() => {
+      this.mostrarExito = false;
+      this.mostrarError = false;
+    }, 2000);
+  }
+
   formatearFechaParaInput(fecha: string | Date): string {
     return new Date(fecha).toISOString().substring(0, 10);
   }
@@ -39,10 +81,12 @@ export class TorneoCategoriaFormComponent implements OnInit {
       console.log(params['id']);
       if (params['id'] == "0") {
         this.accion = "new";
+        this.tituloForm = "Completar los datos de la nueva asignación"
         this.iniciarVariable();
       }
       else {
         this.accion = "update";
+        this.tituloForm = "Modificar los datos de la asignacion"
         this.cargarTorneoCategoria(params['id']);
       }
     });
@@ -90,30 +134,47 @@ export class TorneoCategoriaFormComponent implements OnInit {
 
 
   actualizarTorneoCategoria() {
+    this.formValidado = true;
+    if (this.formTorneoCategoria.invalid) return;
     this.torneoCategoriaService.updateTorneo(this.torneoCategoria).subscribe({
       next: result => {
         if (result.success == true) {
-          alert("La asignacion se modificó correctamente");
-          this.router.navigate(['torneos-categorias']);
+          this.mensajeExito = "La asignacion se modificó correctamente";
+          this.mostrarExito = true;
+          this.ocultarAlerta();
+          setTimeout(() => {
+            this.router.navigate(['torneos-categorias']);
+          }, 2000);
+
         }
       },
       error: error => {
-        alert("Ocurrio un error al actualizar");
+        this.mensajeError = "Ocurrió un error al actualizar";
+        this.mostrarError = true;
+        this.ocultarAlerta();
         console.log(error);
       }
     })
   }
 
   agregarTorneoCategoria() {
+    this.formValidado = true;
+    if (this.formTorneoCategoria.invalid) return;
     this.torneoCategoriaService.addTorneo(this.torneoCategoria).subscribe({
       next: result => {
         if (result.success == true) {
-          alert("La asignacion se modificó correctamente");
-          this.router.navigate(['torneos-categorias']);
+          this.mensajeExito = "La asignacion se agregó correctamente";
+          this.mostrarExito = true;
+          this.ocultarAlerta();
+          setTimeout(() => {
+            this.router.navigate(['torneos-categorias']);
+          }, 2000);
         }
       },
       error: error => {
-        alert("Ocurrio un error al agregar");
+        this.mensajeError = "Ocurrió un error al agregar";
+        this.mostrarError = true;
+        this.ocultarAlerta();
         console.log(error);
       }
     })
