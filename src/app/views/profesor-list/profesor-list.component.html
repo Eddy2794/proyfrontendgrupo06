@@ -19,7 +19,7 @@
             <svg cIcon name="cilList" size="sm"></svg>
             Lista de Profesores
           </h4>
-          <button cButton color="primary" (click)="onNewProfesor()">
+          <button cButton color="primary" (click)="addProfesor()">
             <svg cIcon name="cilPlus" size="sm" class="me-2"></svg>
             Nuevo Profesor
           </button>
@@ -46,7 +46,7 @@
                 <td>{{ profesor.persona?.email || profesor.email }}</td>
                 <td>{{ profesor.persona?.telefono || 'No disponible' }}</td>
                 <td>
-                  <button cButton color="primary" size="sm" class="me-1" (click)="onEditProfesor(profesor)">
+                  <button cButton color="primary" size="sm" class="me-1" (click)="editProfesor(profesor)">
                     <svg cIcon name="cilPencil" size="sm"></svg>
                     Actualizar
                   </button>
