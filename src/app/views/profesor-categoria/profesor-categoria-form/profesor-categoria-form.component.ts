@@ -14,7 +14,6 @@ import {
   AlertComponent,
   FormDirective,
   FormControlDirective,
-  FormFeedbackComponent,
   FormLabelDirective,
   FormSelectDirective,
   GutterDirective,
@@ -22,7 +21,10 @@ import {
 } from '@coreui/angular';
 import { IconDirective } from '@coreui/icons-angular';
 import { NgIf, NgFor } from '@angular/common';
-//import { CategoriaService } from '../../../services/categoria.service';
+import { ProfesorModel } from '../../../models/profesor-model';
+import { CategoriaAuxiliar } from '../../../models/categoria-auxiliar';
+import { ProfesorCategoria } from '../../../models/profesor-categoria';
+import { CategoriaService } from '../../../services/categoria.service';
 
 @Component({
   selector: 'app-profesor-categoria-form',
@@ -39,7 +41,6 @@ import { NgIf, NgFor } from '@angular/common';
     AlertComponent,
     FormDirective,
     FormControlDirective,
-    FormFeedbackComponent,
     FormLabelDirective,
     FormSelectDirective,
     GutterDirective,
@@ -54,17 +55,9 @@ import { NgIf, NgFor } from '@angular/common';
 export class ProfesorCategoriaFormComponent implements OnInit {
   
   profesorCategoriaFormValidated = false;
-  profesores: any[] = [];
-  categorias: any[] = [];
-  profesorCategoria: any = {
-    profesor: '',
-    categoria: '',
-    fecha_asignacion: '',
-    activo: true,
-    observaciones: '',
-    _id: '',
-    fechaAsignacion: new Date().toISOString().split('T')[0]
-  };
+  profesores: ProfesorModel[] = [];
+  categorias: CategoriaAuxiliar[] = [];
+  profesorCategoria!: ProfesorCategoria;
   isSubmitting = false;
   successMessage = '';
   errorMessage = '';
@@ -75,41 +68,29 @@ export class ProfesorCategoriaFormComponent implements OnInit {
   constructor(
     private profesorCategoriaService: ProfesorCategoriaService, 
     private profesorService: ProfesorService,
- //   private categoriaService: CategoriaService,
+    private categoriaService: CategoriaService,
     private router: Router,
     private route: ActivatedRoute
-  ) {}
+  ) {
+    this.profesorCategoria = new ProfesorCategoria();
+  }
 
   ngOnInit() {
     this.getProfesores();
-    //this.getCategorias();
-    
-    // Verificar si hay datos de navegación para editar
-    const state = history.state;
-    console.log('Estado de navegación:', state);
-    
-    if (state && state.profesorCategoria && state.isEditing) {
-      console.log('Cargando categoría para editar desde state:', state.profesorCategoria);
-      this.loadProfesorCategoriaForEdit(state.profesorCategoria);
-    } else {
-      // Verificar si hay parámetros de ruta para editar
-      this.route.queryParams.subscribe(params => {
-        console.log('Parámetros de ruta:', params);
-        if (params['edit'] === 'true' && params['id']) {
-          console.log('Cargando categoría desde parámetros de ruta, ID:', params['id']);
-          this.loadProfesorCategoriaById(params['id']);
-        } else {
-          console.log('No hay datos de categoría para editar');
-        }
-      });
-    }
+    this.getCategorias();
+    this.route.queryParams.subscribe(params => {
+      if (params['edit'] === 'true' && params['id']) {
+        this.getProfesorCategoriaById(params['id']);
+      } else {
+        console.log('No hay datos de categoría para editar');
+      }
+    });
   }
 
   getProfesores() {
     this.profesorService.getProfesores().subscribe({
       next: (response: any) => {
-        this.profesores = response.data;
-        console.log('Profesores cargados:', this.profesores);
+        this.profesores = response.data.map((profesor: any) => ProfesorModel.fromJSON(profesor));
       },
       error: (error) => {
         this.errorMessage = 'Error al cargar los profesores';
@@ -117,49 +98,33 @@ export class ProfesorCategoriaFormComponent implements OnInit {
       }
     });
   }
-
-  /*getCategorias() {
+  
+  getCategorias() {
     this.categoriaService.getCategorias().subscribe({
       next: (response: any) => {
-        console.log("categorias desde el form", response);
         this.categorias = response.data.categorias;
-        console.log('Categorías cargadas:', this.categorias);
       },
       error: (error) => {
         this.errorMessage = 'Error al cargar las categorias';
       }
     });
-  }*/
-
-  loadProfesorCategoriaForEdit(profesorCategoria: any) {
-    console.log('Iniciando loadProfesorCategoriaForEdit con:', profesorCategoria);
-    this.isEditing = true;
-    this.editingId = profesorCategoria._id;
-    console.log('categoría que llega para editar ', profesorCategoria);
-    
-    // Mapear los datos del backend a la estructura del formulario
-    this.profesorCategoria = {
-      profesor: typeof profesorCategoria.profesor === 'object' && profesorCategoria.profesor !== null
-        ? profesorCategoria.profesor._id
-        : profesorCategoria.profesor || '',
-      categoria: typeof profesorCategoria.categoria === 'object' && profesorCategoria.categoria !== null
-        ? profesorCategoria.categoria._id
-        : profesorCategoria.categoria || '',
-      fecha_asignacion: profesorCategoria.fecha_asignacion ? new Date(profesorCategoria.fecha_asignacion).toISOString().split('T')[0] : '',
-      activo: profesorCategoria.activo !== undefined ? profesorCategoria.activo : true,
-      observaciones: profesorCategoria.observaciones || '',
-      _id: profesorCategoria._id || '',
-      fechaAsignacion: new Date().toISOString().split('T')[0]
-    };
-    console.log('Categoría mapeada:', this.profesorCategoria);
   }
 
-  loadProfesorCategoriaById(id: string) {
-    console.log('Cargando categoría por ID:', id);
+  mapearProfesorCategoriaForm(profesorCategoria: any) {
+    this.isEditing = true;
+    this.editingId = profesorCategoria._id;
+    // Mapear los datos del backend a la estructura del formulario
+    this.profesorCategoria = ProfesorCategoria.fromJSON(profesorCategoria);
+    // Asegurar que los objetos de profesor y categoria sean los mismos que los de los arrays
+    const { profesor, categoria } = this.profesorCategoria;
+    this.profesorCategoria.profesor = this.profesores.find(p => p._id === profesor._id) || profesor;
+    this.profesorCategoria.categoria = this.categorias.find(c => c._id === categoria._id) || categoria;
+  }
+
+  getProfesorCategoriaById(id: string) {
     this.profesorCategoriaService.getProfesorCategoria(id).subscribe({
       next: (response: any) => {
-        console.log('Categoría cargada desde servicio:', response);
-        this.loadProfesorCategoriaForEdit(response.data || response);
+        this.mapearProfesorCategoriaForm(response.data || response);
       },
       error: (error) => {
         console.error('Error al cargar categoría:', error);
@@ -175,9 +140,6 @@ export class ProfesorCategoriaFormComponent implements OnInit {
     this.isSubmitting = true;
     this.successMessage = '';
     this.errorMessage = '';
-    
-    // Asigna la fecha de hoy en formato ISO (yyyy-mm-dd)
-    this.profesorCategoria.fecha_asignacion = new Date().toISOString().split('T')[0];
 
     if (this.isEditing && this.editingId) {
       this.updateProfesorCategoria();
@@ -187,17 +149,18 @@ export class ProfesorCategoriaFormComponent implements OnInit {
   }
 
   createProfesorCategoria() {
-    const { _id, ...profesorCategoriaSinId } = this.profesorCategoria;
-    console.log("profesorCategoriaSinId: ", profesorCategoriaSinId);
-    
-    this.profesorCategoriaService.createProfesorCategoria(profesorCategoriaSinId).subscribe({
+    const payload = {
+      ...this.profesorCategoria,
+      profesor: this.profesorCategoria.profesor._id,
+      categoria: this.profesorCategoria.categoria._id
+    };
+    this.profesorCategoriaService.createProfesorCategoria(payload).subscribe({
       next: (response: any) => {
         this.successMessage = 'Categoría asignada exitosamente';
-        this.onReset();
         this.isSubmitting = false;
-        // Navegar a la lista después de crear
         setTimeout(() => {
-          this.router.navigate(['/profesor-categoria/lista']);
+          this.onReset();
+          this.irALista();
         }, 1500);
       },
       error: (error) => {
@@ -210,17 +173,18 @@ export class ProfesorCategoriaFormComponent implements OnInit {
 
   updateProfesorCategoria() {
     console.log('updateProfesorCategoria', this.editingId, this.profesorCategoria);
-  
-    this.profesorCategoriaService.updateProfesorCategoria(this.editingId!, this.profesorCategoria).subscribe({
+    const payload = {
+      ...this.profesorCategoria,
+      profesor: this.profesorCategoria.profesor._id,
+      categoria: this.profesorCategoria.categoria._id
+    };
+    this.profesorCategoriaService.updateProfesorCategoria(this.editingId!, payload).subscribe({
       next: (response: any) => {
         this.successMessage = 'Categoría actualizada exitosamente';
-        this.onReset();
         this.isSubmitting = false;
-        this.isEditing = false;
-        this.editingId = null;
-        // Navegar a la lista después de actualizar
         setTimeout(() => {
-          this.router.navigate(['/profesor-categoria/lista']);
+          this.onReset();
+          this.irALista();
         }, 1500);
       },
       error: (error) => {
@@ -236,10 +200,7 @@ export class ProfesorCategoriaFormComponent implements OnInit {
       this.profesorCategoriaService.deleteProfesorCategoria(this.editingId!).subscribe({
         next: (response: any) => {
           this.successMessage = 'Categoría eliminada exitosamente';
-          // Navegar a la lista después de eliminar
-          setTimeout(() => {
-            this.router.navigate(['/profesor-categoria/lista']);
-          }, 1500);
+          this.irALista();
         },
         error: (error) => {
           this.errorMessage = 'Error al eliminar la categoría';
@@ -253,35 +214,19 @@ export class ProfesorCategoriaFormComponent implements OnInit {
     this.isEditing = false;
     this.editingId = null;
     this.onReset();
-    // Navegar de vuelta a la lista
-    this.router.navigate(['/profesor-categoria/lista']);
+    this.irALista();
   }
 
   onReset() {
-    this.profesorCategoria = {
-      profesor: '',
-      categoria: '',
-      fecha_asignacion: '',
-      activo: true,
-      observaciones: '',
-      _id: '',
-      fechaAsignacion: new Date().toISOString().split('T')[0]
-    };
+    this.profesorCategoria = new ProfesorCategoria();
     this.profesorCategoriaFormValidated = false;
     this.isEditing = false;
     this.editingId = null;
     this.successMessage = '';
     this.errorMessage = '';
   }
-
-  markAsTouched(control: any) {
-    if (control && control.control) {
-      control.control.markAsTouched();
-    }
-  }
-
   // Método para navegar a la lista
-  goToList() {
-    this.router.navigate(['/profesor-categoria/lista']);
+  irALista() {
+      this.router.navigate(['/profesor-categoria/lista']);
   }
 }

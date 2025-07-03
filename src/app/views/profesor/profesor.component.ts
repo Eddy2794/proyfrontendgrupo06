@@ -91,7 +91,6 @@ export class ProfesorComponent implements OnInit {
     
     // Mapear los datos del backend a la estructura del formulario
     this.profesor = ProfesorModel.fromJSON(profesor);
-    console.log('profesor desde el mapearProfesorForm', this.profesor);
   }
 
   getProfesorById(id: string) {
@@ -125,9 +124,9 @@ export class ProfesorComponent implements OnInit {
     this.profesorService.createProfesor(profesor).subscribe({
       next: (response: any) => {
         this.successMessage = 'Profesor creado exitosamente';
-        this.onReset();
         this.isSubmitting = false;
         setTimeout(() => {
+          this.onReset();
           this.irALista();
         }, 1500);
       },
@@ -144,9 +143,9 @@ export class ProfesorComponent implements OnInit {
     this.profesorService.updateProfesor(id, profesor).subscribe({
       next: (response: any) => {
         this.successMessage = 'Profesor actualizado exitosamente';
-        this.onReset();
         this.isSubmitting = false;
         setTimeout(() => {
+          this.onReset();
           this.irALista();
         }, 1500);
       },
@@ -178,8 +177,8 @@ export class ProfesorComponent implements OnInit {
   cancelEdit() {
     this.isEditing = false;
     this.editingId = null;
-    this.onReset();
     setTimeout(() => {
+      this.onReset();
       this.irALista();
     }, 1500);
   }

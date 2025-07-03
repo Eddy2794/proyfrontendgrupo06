@@ -13,6 +13,7 @@ import {
 } from '@coreui/angular';
 import { IconDirective } from '@coreui/icons-angular';
 import { NgIf, NgFor } from '@angular/common';
+import { ProfesorModel } from '../../models/profesor-model';
 
 @Component({
   selector: 'app-profesor-list',
@@ -35,7 +36,7 @@ import { NgIf, NgFor } from '@angular/common';
 })
 export class ProfesorListComponent implements OnInit {
  
-  profesores: any[] = [];
+  profesores: ProfesorModel[] = [];
   successMessage = '';
   errorMessage = '';
   
@@ -51,7 +52,7 @@ export class ProfesorListComponent implements OnInit {
   getProfesores() {
     this.profesorService.getProfesores().subscribe({
       next: (response: any) => {
-        this.profesores = response.data;
+        this.profesores = response.data.map((prof: any) => ProfesorModel.fromJSON(prof));
         console.log('profesores', this.profesores);
       },
       error: (error) => {

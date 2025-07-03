@@ -22,7 +22,7 @@
         >
           <option value="todos">Todos los profesores</option>
           <option *ngFor="let prof of profesores" [value]="prof._id">
-            {{ prof.persona.apellidos }}, {{ prof.persona.nombres }}
+            {{ prof.personaData.apellidos }}, {{ prof.personaData.nombres }}
           </option>
         </select>
       </div>
@@ -57,7 +57,7 @@
             <svg cIcon name="cilList" size="sm"></svg>
             Lista de Categorías de Profesores
           </h4>
-          <button cButton color="primary" (click)="onNewProfesorCategoria()">
+          <button cButton color="primary" (click)="addProfesorCategoria()">
             <svg cIcon name="cilPlus" size="sm" class="me-2"></svg>
             Nueva Categoría
           </button>
@@ -80,7 +80,7 @@
             <tbody>
               <tr *ngFor="let profCategoria of profesorCategorias; let i = index">
                 <th scope="row">{{ i + 1 }}</th>
-                <td>{{ profCategoria.profesor.persona.apellidos}}, {{ profCategoria.profesor.persona.nombres}}</td>
+                <td>{{ profCategoria.profesor.personaData.apellidos}}, {{ profCategoria.profesor.personaData.nombres}}</td>
                 <td>{{ profCategoria.profesor.titulo }}</td>
                 <td>{{ profCategoria.categoria.nombre }}</td>
                 <td>{{ profCategoria.fecha_asignacion | date:'dd-MM-yyyy' }}</td>
@@ -90,7 +90,7 @@
                   </span>
                 </td>
                 <td>
-                  <button cButton color="primary" size="sm" class="me-1" (click)="onEditProfesorCategoria(profCategoria)">
+                  <button cButton color="primary" size="sm" class="me-1" (click)="updateProfesorCategoria(profCategoria)">
                     <svg cIcon name="cilPencil" size="sm"></svg>
                     Editar
                   </button>

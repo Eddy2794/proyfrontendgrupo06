@@ -305,14 +305,24 @@ export const navItems: INavData[] = [
   //   }
   // },
   {
-    name: 'Profesor',
-    url: '/profesor',
-    iconComponent: { name: 'cil-user' }
+    title: true,
+    name: 'Profesores'
   },
   {
-    name: 'Categorías Profesor',
-    url: '/profesor-categoria',
-    iconComponent: { name: 'cil-tag' }
+    name: 'Profesores',
+    iconComponent: { name: 'cil-people' },
+    children: [
+      {
+        name: 'Profesor',
+        url: '/profesor',
+        iconComponent: { name: 'cil-user-follow' }
+      },
+      {
+        name: 'Categorías Profesor',
+        url: '/profesor-categoria',
+        iconComponent: { name: 'cil-tags' }
+      },
+    ]
   },
   {
     title: true,
