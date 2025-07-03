@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { TorneoService } from '../../services/torneo.service';
 import { Torneo } from '../../models/torneo';
 import { CommonModule } from '@angular/common';
@@ -20,6 +20,8 @@ import {
   ModalHeaderComponent,
   ModalTitleDirective
 } from '@coreui/angular';
+import { type ChartData } from 'chart.js';
+import { ChartjsComponent } from '@coreui/angular-chartjs';
 @Component({
   selector: 'app-torneo',
   imports: [FormsModule, CommonModule,
@@ -36,21 +38,71 @@ import {
     ModalComponent,
     ModalFooterComponent,
     ModalHeaderComponent,
-    ModalTitleDirective
+    ModalTitleDirective,
+    ChartjsComponent
   ],
   templateUrl: './torneo.component.html',
   styleUrl: './torneo.component.scss'
 })
-export class TorneoComponent {
+export class TorneoComponent implements OnInit {
   torneos: Torneo[] = [];
   mensajeExito: string = '';
   mensajeError: string = '';
   mostrarExito: boolean = false;
   mostrarError: boolean = false;
+
+  data: ChartData = {
+    labels: [],
+    datasets: [
+      {
+        label: 'Torneos por mes',
+        backgroundColor: '#f87979',
+        data: []
+      }
+    ]
+  };
   constructor(private torneoService: TorneoService, private router: Router) {
     this.getTorneos();
   }
 
+  ngOnInit(): void {
+    this.torneoService.getTorneos().subscribe({
+      next: result => {
+        const torneos = result.data;
+        const conteoPorMes = new Array(12).fill(0); // enero a diciembre
+
+        torneos.forEach((torneo: any) => {
+          let fecha: Date | null = null;
+
+          if (typeof torneo.fecha_inicio === 'string') {
+            fecha = new Date(torneo.fecha_inicio);
+          } else if (torneo.fecha_inicio?.$date) {
+            fecha = new Date(torneo.fecha_inicio.$date);
+          }
+
+          if (fecha && !isNaN(fecha.getTime())) {
+            const mes = fecha.getMonth(); // 0 = enero
+            conteoPorMes[mes]++;
+          }
+        });
+
+        this.data = {
+          labels: [
+            'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+            'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+          ],
+          datasets: [{
+            label: 'Torneos por mes',
+            backgroundColor: '#f87979',
+            data: conteoPorMes
+          }]
+        };
+      },
+      error: err => {
+        console.error('Error al cargar torneos', err);
+      }
+    });
+  }
   ocultarAlerta() {
     setTimeout(() => {
       this.mostrarExito = false;

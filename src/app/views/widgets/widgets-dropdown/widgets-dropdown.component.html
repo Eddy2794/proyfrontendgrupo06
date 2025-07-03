@@ -23,9 +23,8 @@
             <svg cIcon name="cilOptions"></svg>
           </button>
           <ul cDropdownMenu>
-            <li><a [routerLink]="['/alumno/list']" cDropdownItem>Ver Alumnos</a></li>
-            <li><a [routerLink]="['/alumno/form']" cDropdownItem>Agregar Alumno</a></li>
-            <li><a [routerLink]="[]" cDropdownItem>Estadísticas</a></li>
+            <li><a [routerLink]="['/alumno']" cDropdownItem>Ver Alumnos</a></li>
+            <li><a [routerLink]="['/alumno/alumno-form/0']" cDropdownItem>Agregar Alumno</a></li>
           </ul>
         </c-dropdown>
       </ng-template>
@@ -93,9 +92,8 @@
             <svg cIcon name="cilOptions"></svg>
           </button>
           <ul cDropdownMenu>
-            <li><a [routerLink]="['/torneo/list']" cDropdownItem>Ver Torneos</a></li>
-            <li><a [routerLink]="['/torneo/form']" cDropdownItem>Crear Torneo</a></li>
-            <li><a [routerLink]="[]" cDropdownItem>Calendarios</a></li>
+            <li><a [routerLink]="['/torneos']" cDropdownItem>Ver Torneos</a></li>
+            <li><a [routerLink]="['/torneo-form/0']" cDropdownItem>Crear Torneo</a></li>
           </ul>
         </c-dropdown>
       </ng-template>
@@ -129,9 +127,8 @@
             <svg cIcon name="cilOptions"></svg>
           </button>
           <ul cDropdownMenu>
-            <li><a [routerLink]="['/profesor/list']" cDropdownItem>Ver Profesores</a></li>
-            <li><a [routerLink]="['/profesor/form']" cDropdownItem>Agregar Profesor</a></li>
-            <li><a [routerLink]="[]" cDropdownItem>Horarios</a></li>
+            <li><a [routerLink]="['/profesor/lista']" cDropdownItem>Ver Profesores</a></li>
+            <li><a [routerLink]="['/profesor']" cDropdownItem>Agregar Profesor</a></li>
           </ul>
         </c-dropdown>
       </ng-template>

@@ -19,12 +19,12 @@ import {
 } from '@coreui/angular';
 import { ChartjsComponent } from '@coreui/angular-chartjs';
 import { IconDirective } from '@coreui/icons-angular';
-
+import { type ChartData } from 'chart.js';
 import { WidgetsBrandComponent } from '../widgets/widgets-brand/widgets-brand.component';
 import { WidgetsDropdownComponent } from '../widgets/widgets-dropdown/widgets-dropdown.component';
 import { DashboardChartsData, IChartProps } from './dashboard-charts-data';
 import { AlumnoCategoriaService, AlumnoCategoriaStats } from '../../services/alumno-categoria.service';
-
+import { TorneoService } from '../../services/torneo.service';
 interface IInscripcionData {
   categoria: string;
   totalAlumnos: number;
@@ -37,7 +37,7 @@ interface IInscripcionData {
 @Component({
   templateUrl: 'dashboard.component.html',
   styleUrls: ['dashboard.component.scss'],
-  imports: [WidgetsDropdownComponent, CardComponent, CardBodyComponent, RowComponent, ColComponent, ButtonDirective, IconDirective, ReactiveFormsModule, ButtonGroupComponent, FormCheckLabelDirective, ChartjsComponent, NgStyle, CardFooterComponent, GutterDirective, ProgressComponent, 
+  imports: [WidgetsDropdownComponent, CardComponent, CardBodyComponent, RowComponent, ColComponent, ButtonDirective, IconDirective, ReactiveFormsModule, ButtonGroupComponent, FormCheckLabelDirective, ChartjsComponent, NgStyle, CardFooterComponent, GutterDirective, ProgressComponent,
     // WidgetsBrandComponent, 
     CardHeaderComponent, TableDirective, AvatarComponent, DecimalPipe]
 })
@@ -56,7 +56,16 @@ export class DashboardComponent implements OnInit {
     crecimientoMensual: 0,
     alumnosActivos: 0
   };
-
+  data: ChartData = {
+    labels: [],
+    datasets: [
+      {
+        label: 'Torneos por mes',
+        backgroundColor: '#f87979',
+        data: []
+      }
+    ]
+  };
   public mainChart: IChartProps = { type: 'line' };
   public mainChartRef: WritableSignal<any> = signal(undefined);
   #mainChartRefEffect = effect(() => {
@@ -69,12 +78,51 @@ export class DashboardComponent implements OnInit {
     trafficRadio: new FormControl('Month')
   });
 
+  constructor(private torneoService: TorneoService) { }
   ngOnInit(): void {
     this.initCharts();
     this.updateChartOnColorModeChange();
     this.loadInscripcionesData();
+    this.cargarTorneosData();
   }
+  cargarTorneosData() {
+    this.torneoService.getTorneos().subscribe({
+      next: result => {
+        const torneos = result.data;
+        const conteoPorMes = new Array(12).fill(0); // enero a diciembre
 
+        torneos.forEach((torneo: any) => {
+          let fecha: Date | null = null;
+
+          if (typeof torneo.fecha_inicio === 'string') {
+            fecha = new Date(torneo.fecha_inicio);
+          } else if (torneo.fecha_inicio?.$date) {
+            fecha = new Date(torneo.fecha_inicio.$date);
+          }
+
+          if (fecha && !isNaN(fecha.getTime())) {
+            const mes = fecha.getMonth(); // 0 = enero
+            conteoPorMes[mes]++;
+          }
+        });
+
+        this.data = {
+          labels: [
+            'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+            'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+          ],
+          datasets: [{
+            label: 'Torneos por mes',
+            backgroundColor: '#f87979',
+            data: conteoPorMes
+          }]
+        };
+      },
+      error: err => {
+        console.error('Error al cargar torneos', err);
+      }
+    });
+  }
   loadInscripcionesData(): void {
     this.#alumnoCategoriaService.getInscripcionesStats('month').subscribe({
       next: (stats: AlumnoCategoriaStats) => {
@@ -92,13 +140,13 @@ export class DashboardComponent implements OnInit {
     this.estadisticasGenerales.totalInscripciones = stats.totalInscripciones;
     this.estadisticasGenerales.categoriasMasPopular = stats.inscripcionesPorCategoria
       .sort((a: any, b: any) => b.cantidad - a.cantidad)[0]?.categoria || 'N/A';
-    
+
     // Calcular crecimiento mensual (simulado)
     const ultimosMeses = stats.inscripcionesPorMes.slice(-2);
     if (ultimosMeses.length === 2) {
       const diferencia = ultimosMeses[1].cantidad - ultimosMeses[0].cantidad;
-      this.estadisticasGenerales.crecimientoMensual = ultimosMeses[0].cantidad > 0 
-        ? Math.round((diferencia / ultimosMeses[0].cantidad) * 100) 
+      this.estadisticasGenerales.crecimientoMensual = ultimosMeses[0].cantidad > 0
+        ? Math.round((diferencia / ultimosMeses[0].cantidad) * 100)
         : 0;
     }
 
@@ -106,7 +154,7 @@ export class DashboardComponent implements OnInit {
 
     // Crear datos para las tarjetas de progreso
     const maxInscripciones = Math.max(...stats.inscripcionesPorCategoria.map((c: any) => c.cantidad), 1);
-    
+
     this.inscripcionesData = stats.inscripcionesPorCategoria.map((cat: any, index: number) => ({
       categoria: cat.categoria,
       totalAlumnos: cat.cantidad,
@@ -186,14 +234,14 @@ export class DashboardComponent implements OnInit {
     this.trafficRadioGroup.setValue({ trafficRadio: value });
     this.#chartsData.initMainChart(value);
     this.initCharts();
-    
+
     // Recargar datos según el período seleccionado
     const periodMap: { [key: string]: 'day' | 'month' | 'year' } = {
       'Day': 'day',
       'Month': 'month',
       'Year': 'year'
     };
-    
+
     this.#alumnoCategoriaService.getInscripcionesStats(periodMap[value] || 'month').subscribe({
       next: (stats: AlumnoCategoriaStats) => {
         this.updateDashboardData(stats);
