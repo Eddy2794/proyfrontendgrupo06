@@ -1,35 +1,59 @@
-<h1 class="my-2">Inscripciones categorias en torneo</h1>
+<c-row>
+    <c-col xs="12">
+        <c-card class="mb-4">
+            <c-card-header class="d-flex justify-content-between align-items-center">
+                <div>
+                    <strong>Inscripciones categorias en torneo</strong>
+                </div>
+                <div>
+                    <button class=" btn btn-primary" (click)="agregar()">Nueva asignacion</button>
+                </div>
+            </c-card-header>
+            <c-card-body>
+                <c-alert *ngIf="mostrarExito" color="success">{{ mensajeExito }}</c-alert>
+                <c-alert *ngIf="mostrarError" color="danger">{{ mensajeError }}</c-alert>
+                <table cTable responsive="xxl">
+                    <thead>
+                        <tr>
+                            <th scope="col">Torneo</th>
+                            <th scope="col">Descripcion</th>
+                            <th scope="col">Observacion</th>
+                            <th scope="col">Lugar</th>
+                            <th scope="col">Inicio</th>
+                            <th scope="col">Categoria</th>
+                            <th scope="col">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr *ngFor="let t of torneosCategorias">
+                            <td>{{ t.torneo.nombre }}</td>
+                            <td>{{ t.torneo.descripcion }}</td>
+                            <td>{{ t.observaciones }}</td>
+                            <td>{{ t.torneo.lugar }}</td>
+                            <td>{{ t.torneo.fecha_inicio | date:'dd/MM/yyyy' }}</td>
+                            <td>{{ t.categoria.nombre }}</td>
+                            <td>
+                                <button class="btn btn-primary mb-1" (click)="modificar(t)">Modificar</button>
+                                <button (click)="toggleLiveDemo(t)" cButton>Eliminar</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </c-card-body>
+        </c-card>
+    </c-col>
+</c-row>
 
-<div class="row mb-2">
-    <div class="col-12">
-        <button class=" btn btn-primary" (click)="agregar()">Nueva asignacion</button>
-    </div>
-</div>
-
-<table class="table">
-    <thead>
-        <tr>
-            <th scope="col">Nombre del torneo</th>
-            <th scope="col">Descripcion del torneo</th>
-            <th scope="col">Observacion de la inscripcion</th>
-            <th scope="col">Lugar del torneo</th>
-            <th scope="col">Fecha de inicio del torneo</th>
-            <th scope="col">Categoria que disputa el torneo</th>
-            <th scope="col">Acciones</th>
-        </tr>
-    </thead>
-    <tbody>
-        <tr *ngFor="let t of torneosCategorias">
-            <td>{{ t.torneo.nombre }}</td>
-            <td>{{ t.torneo.descripcion }}</td>
-            <td>{{ t.observaciones }}</td>
-            <td>{{ t.torneo.lugar }}</td>
-            <td>{{ t.torneo.fecha_inicio | date:'dd/MM/yyyy' }}</td>
-            <td>{{ t.categoria.nombre }}</td>
-            <td>
-                <button class="btn btn-primary mb-1" (click)="modificar(t)">Modificar</button>
-                <button class="btn btn-primary" (click)="eliminarTorneoCategoria(t._id)">Eliminar</button>
-            </td>
-        </tr>
-    </tbody>
-</table>
+<c-modal id="liveDemoModal" [visible]="visible" (visibleChange)="handleLiveDemoChange($event)">
+    <c-modal-header>
+        <h5 cModalTitle>Eliminar Asignacion del torneo</h5>
+        <button (click)="toggleLiveDemo()" cButtonClose></button>
+    </c-modal-header>
+    <c-modal-body>Debe confirmar para poder eliminar la asignacion</c-modal-body>
+    <c-modal-footer>
+        <button (click)="toggleLiveDemo()" cButton color="secondary">
+            Cancelar
+        </button>
+        <button (click)="eliminarTorneoCategoria()" class="btn btn-primary">Eliminar</button>
+    </c-modal-footer>
+</c-modal>

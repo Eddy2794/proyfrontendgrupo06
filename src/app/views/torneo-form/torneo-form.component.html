@@ -1,37 +1,78 @@
-<h1 class="my-2">Crear nuevo torneo</h1>
-<form>
-    <div class="mb-3">
-        <label for="idnombre" class="form-label">Nombre</label>
-        <input name="nombre" type="text" class="form-control" id="idnombre" [(ngModel)]="torneo.nombre">
-    </div>
-    <div class="mb-3">
-        <label for="idDescripcion" class="form-label">Descripcion</label>
-        <input name="descripcion" type="text" class="form-control" id="idDescripcion" [(ngModel)]="torneo.descripcion">
-    </div>
-    <div class="mb-3">
-        <label for="idlugar" class="form-label">Lugar</label>
-        <input name="lugar" type="text" class="form-control" id="idlugar" [(ngModel)]="torneo.lugar">
-    </div>
-    <div class="mb-3">
-        <label for="idDireccion" class="form-label">Direccion</label>
-        <input name="direccion" type="text" class="form-control" id="idDireccion" [(ngModel)]="torneo.direccion">
-    </div>
-    <div class="mb-3">
-        <label for="idOrganizador" class="form-label">Organizador</label>
-        <input name="organizador" type="text" class="form-control" id="idOrganizador" [(ngModel)]="torneo.organizador">
-    </div>
-    <div class="mb-3">
-        <label for="idinscripcion" class="form-label">Costo de inscripcion</label>
-        <input name="costo_inscripcion" type="number" class="form-control" id="idinscripcion"
-            [(ngModel)]="torneo.costo_inscripcion">
-    </div>
-    <div class="mb-3">
-        <label for="idinicio" class="form-label">Fecha de inicio</label>
-        <input name="fecha_inicio" type="date" class="form-control" id="idinicio" [(ngModel)]="torneo.fecha_inicio">
-    </div>
+<c-row>
+    <c-col xs="12">
+        <c-card class="mb-4">
+            <c-card-header class="d-flex justify-content-between align-items-center">
+                <div>
+                    <strong>{{tituloForm}}</strong>
+                </div>
+            </c-card-header>
+            <c-card-body>
+                <c-alert *ngIf="mostrarExito" color="success">{{ mensajeExito }}</c-alert>
+                <c-alert *ngIf="mostrarError" color="danger">{{ mensajeError }}</c-alert>
+                <form #formTorneo="ngForm" [validated]="formValidado"
+                    (ngSubmit)="accion === 'new' ? agregarTorneo() : actualizarTorneo()" novalidate cForm cRow
+                    class="needs-validation">
 
-    <button type="button" class="btn btn-primary me-2" *ngIf="accion == 'new'"
-        (click)="agregarTorneo()">Guardar</button>
-    <button type="button" class="btn btn-primary me-2" *ngIf="accion == 'update'"
-        (click)="actualizarTorneo()">Actualizar</button>
-</form>
+                    <c-col [md]="6">
+                        <label cLabel for="idnombre">Nombre<span class="text-danger">*</span></label>
+                        <input id="idnombre" name="nombre" cFormControl [(ngModel)]="torneo.nombre" type="text"
+                            required />
+                        <c-form-feedback [valid]="false">Campo obligatorio, coloque un nombre válido</c-form-feedback>
+                    </c-col>
+
+                    <c-col [md]="6">
+                        <label cLabel for="idDescripcion">Descripción<span class="text-danger">*</span></label>
+                        <input id="idDescripcion" name="descripcion" cFormControl [(ngModel)]="torneo.descripcion"
+                            type="text" required />
+                        <c-form-feedback [valid]="false">Campo obligatorio, coloque una descripción
+                            válida</c-form-feedback>
+                    </c-col>
+
+                    <c-col [md]="6">
+                        <label cLabel for="idlugar">Lugar<span class="text-danger">*</span></label>
+                        <input id="idlugar" name="lugar" cFormControl [(ngModel)]="torneo.lugar" type="text" required />
+                        <c-form-feedback [valid]="false">Campo obligatorio, coloque una lugar válido</c-form-feedback>
+                    </c-col>
+
+                    <c-col [md]="6">
+                        <label cLabel for="idDireccion">Dirección<span class="text-danger">*</span></label>
+                        <input id="idDireccion" name="direccion" cFormControl [(ngModel)]="torneo.direccion" type="text"
+                            required />
+                        <c-form-feedback [valid]="false">Campo obligatorio, coloque una dirección
+                            válida</c-form-feedback>
+                    </c-col>
+
+                    <c-col [md]="6">
+                        <label cLabel for="idOrganizador">Organizador<span class="text-danger">*</span></label>
+                        <input id="idOrganizador" name="organizador" cFormControl [(ngModel)]="torneo.organizador"
+                            type="text" required />
+                        <c-form-feedback [valid]="false">Campo obligatorio, coloque un organizador
+                            válido</c-form-feedback>
+                    </c-col>
+
+                    <c-col [md]="6">
+                        <label cLabel for="idinscripcion">Costo de inscripción<span class="text-danger">*</span></label>
+                        <input id="idinscripcion" name="costo_inscripcion" cFormControl
+                            [(ngModel)]="torneo.costo_inscripcion" type="number" step="0.01" min="0" required />
+                        <c-form-feedback [valid]="false">Campo obligatorio, debe ser un número válido positivo o
+                            cero</c-form-feedback>
+                    </c-col>
+
+                    <c-col [md]="6">
+                        <label cLabel for="idinicio">Fecha de inicio<span class="text-danger">*</span></label>
+                        <input id="idinicio" name="fecha_inicio" cFormControl [(ngModel)]="torneo.fecha_inicio"
+                            type="date" [min]="fechaMinima" required />
+                        <c-form-feedback [valid]="false">Campo obligatorio, debe seleccionar una fecha válida a partir
+                            de hoy</c-form-feedback>
+                    </c-col>
+
+                    <c-col [md]="12">
+                        <button cButton color="primary" type="submit" class="mt-2">
+                            {{ accion === 'new' ? 'Guardar' : 'Actualizar' }}
+                        </button>
+                    </c-col>
+                </form>
+            </c-card-body>
+        </c-card>
+    </c-col>
+</c-row>
