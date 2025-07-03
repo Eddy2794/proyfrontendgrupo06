@@ -13,7 +13,6 @@ import {
   AlertComponent,
   FormDirective,
   FormControlDirective,
-  FormFeedbackComponent,
   FormLabelDirective,
   FormSelectDirective,
   GutterDirective,
@@ -21,6 +20,8 @@ import {
 } from '@coreui/angular';
 import { IconDirective } from '@coreui/icons-angular';
 import { NgIf, NgFor } from '@angular/common';
+import { ProfesorModel } from '../../models/profesor-model';
+import { GENEROS, TIPOS_DOCUMENTO } from '../../models/persona.model';
   
 @Component({
   standalone: true,
@@ -37,7 +38,6 @@ import { NgIf, NgFor } from '@angular/common';
     AlertComponent,
     FormDirective,
     FormControlDirective,
-    FormFeedbackComponent,
     FormLabelDirective,
     FormSelectDirective,
     GutterDirective,
@@ -52,32 +52,7 @@ import { NgIf, NgFor } from '@angular/common';
 export class ProfesorComponent implements OnInit {
  
   profesorFormValidated = false;
-  profesor = {
-    personaData: {
-      _id: '',
-      nombres: '',
-      apellidos: '',
-      telefono: '',
-      tipoDocumento: '',
-      numeroDocumento: '',
-      fechaNacimiento: '',
-      genero: '',
-      email: '',
-      direccion: {
-        calle: '',
-        ciudad: '',
-        departamento: '',
-        codigoPostal: '',
-        pais: ''
-      }
-    },
-    titulo: '',
-    experiencia_anios: 0,
-    fecha_contratacion: '',
-    salario: 0,
-    activo_laboral: false,
-    _id: ''
-  };
+  profesor!: ProfesorModel;
   isSubmitting = false;
   successMessage = '';
   errorMessage = '';
@@ -87,104 +62,42 @@ export class ProfesorComponent implements OnInit {
   emailValid = true;
   
   // Opciones para los selects
-  tiposDocumento = [
-    { value: 'DNI', label: 'DNI' },
-    { value: 'PASAPORTE', label: 'Pasaporte' },
-    { value: 'CEDULA', label: 'Cédula' },
-    { value: 'CARNET_EXTRANJERIA', label: 'Carnet de extranjería' }
-  ];
-
-  generos = [
-    { value: 'MASCULINO', label: 'Masculino' },
-    { value: 'FEMENINO', label: 'Femenino' },
-    { value: 'OTRO', label: 'Otro' },
-    { value: 'PREFIERE_NO_DECIR', label: 'Prefiere no decir' }
-  ];
-
-  paises = [
-    { value: 'ARGENTINA', label: 'Argentina' },
-    { value: 'CHILE', label: 'Chile' },
-    { value: 'URUGUAY', label: 'Uruguay' },
-    { value: 'PARAGUAY', label: 'Paraguay' },
-    { value: 'BRASIL', label: 'Brasil' },
-    { value: 'BOLIVIA', label: 'Bolivia' },
-    { value: 'PERU', label: 'Perú' },
-    { value: 'ECUADOR', label: 'Ecuador' },
-    { value: 'COLOMBIA', label: 'Colombia' },
-    { value: 'VENEZUELA', label: 'Venezuela' },
-    { value: 'OTRO', label: 'Otro' }
-  ];
+  tiposDocumento = TIPOS_DOCUMENTO;
+  generos = GENEROS;
   
   constructor(
     private profesorService: ProfesorService,
     private router: Router,
     private route: ActivatedRoute
-  ) {}
+  ) {
+    this.profesor = new ProfesorModel();
+    this.initializeDireccion();
+  }
 
   ngOnInit() {
-    // Verificar si hay datos de navegación para editar un profesor
-    const state = history.state;
-    console.log('Estado de navegación:', state);
-    
-    if (state && state.profesor && state.isEditing) {
-      console.log('Cargando profesor para editar desde state:', state.profesor);
-      this.loadProfesorForEdit(state.profesor);
-    } else {
-      // Verificar si hay parámetros de ruta para editar
-      this.route.queryParams.subscribe(params => {
-        console.log('Parámetros de ruta:', params);
-        if (params['edit'] === 'true' && params['id']) {
-          console.log('Cargando profesor desde parámetros de ruta, ID:', params['id']);
-          this.loadProfesorById(params['id']);
-        } else {
-          console.log('No hay datos de profesor para editar');
-        }
-      });
-    }
+    // Verificar si hay parámetros de ruta para editar
+    this.route.queryParams.subscribe(params => {
+      if (params['edit'] === 'true' && params['id']) {
+        this.getProfesorById(params['id']);
+      } else {
+        console.log('No hay datos de profesor para editar');
+      }
+    });
   }
 
-  loadProfesorForEdit(profesor: any) {
-    console.log('Iniciando loadProfesorForEdit con:', profesor);
+  mapearProfesorForm(profesor: any) {
     this.isEditing = true;
     this.editingId = profesor._id;
-    console.log('profesor que llega para editar ', profesor);
     
     // Mapear los datos del backend a la estructura del formulario
-    this.profesor = {
-      personaData: {
-        _id: profesor.persona?._id || '',
-        nombres: profesor.persona?.nombres || '',
-        apellidos: profesor.persona?.apellidos || '',
-        telefono: profesor.persona?.telefono || '',
-        tipoDocumento: profesor.persona?.tipoDocumento || '',
-        numeroDocumento: profesor.persona?.numeroDocumento || '',
-        fechaNacimiento: profesor.persona?.fechaNacimiento ? new Date(profesor.persona.fechaNacimiento).toISOString().split('T')[0] : '',
-        genero: profesor.persona?.genero || '',
-        email: profesor.persona?.email || '',
-        direccion: {
-          calle: profesor.persona?.direccion?.calle || '',
-          ciudad: profesor.persona?.direccion?.ciudad || '',
-          departamento: profesor.persona?.direccion?.departamento || '',
-          codigoPostal: profesor.persona?.direccion?.codigoPostal || '',
-          pais: profesor.persona?.direccion?.pais || ''
-        }
-      },
-      titulo: profesor.titulo || '',
-      experiencia_anios: profesor.experiencia_anios || 0,
-      fecha_contratacion: profesor.fecha_contratacion ? new Date(profesor.fecha_contratacion).toISOString().split('T')[0] : '',
-      salario: profesor.salario || 0,
-      activo_laboral: profesor.activo_laboral || true,
-      _id: profesor._id || ''
-    };
-    console.log('Profesor mapeado:', this.profesor);
+    this.profesor = ProfesorModel.fromJSON(profesor);
+    console.log('profesor desde el mapearProfesorForm', this.profesor);
   }
 
-  loadProfesorById(id: string) {
-    console.log('Cargando profesor por ID:', id);
+  getProfesorById(id: string) {
     this.profesorService.getProfesor(id).subscribe({
       next: (response: any) => {
-        console.log('Profesor cargado desde servicio:', response);
-        this.loadProfesorForEdit(response.data || response);
+        this.mapearProfesorForm(response.data || response);
       },
       error: (error) => {
         console.error('Error al cargar profesor:', error);
@@ -209,22 +122,13 @@ export class ProfesorComponent implements OnInit {
   }
 
   createProfesor(profesor: any) {
-    const { _id, personaData, ...profesorSinId } = profesor;
-    const { _id: personaId, ...personaDataSinId } = personaData;
-    
-    const profesorEnviar = {
-      ...profesorSinId,
-      personaData: personaDataSinId
-    };
-    
-    this.profesorService.createProfesor(profesorEnviar).subscribe({
+    this.profesorService.createProfesor(profesor).subscribe({
       next: (response: any) => {
         this.successMessage = 'Profesor creado exitosamente';
         this.onReset();
         this.isSubmitting = false;
-        // Navegar a la lista después de crear
         setTimeout(() => {
-          this.router.navigate(['/profesor/lista']);
+          this.irALista();
         }, 1500);
       },
       error: (error) => {
@@ -236,19 +140,14 @@ export class ProfesorComponent implements OnInit {
   }
   
   updateProfesor(id: string, profesor: any) {
-    console.log('updateProfesor', id, profesor);
-  
-    console.log('profesorEnviar', profesor);
+    
     this.profesorService.updateProfesor(id, profesor).subscribe({
       next: (response: any) => {
         this.successMessage = 'Profesor actualizado exitosamente';
         this.onReset();
         this.isSubmitting = false;
-        this.isEditing = false;
-        this.editingId = null;
-        // Navegar a la lista después de actualizar
         setTimeout(() => {
-          this.router.navigate(['/profesor/lista']);
+          this.irALista();
         }, 1500);
       },
       error: (error) => {
@@ -264,9 +163,8 @@ export class ProfesorComponent implements OnInit {
       this.profesorService.deleteProfesor(id).subscribe({
         next: (response: any) => {
           this.successMessage = 'Profesor eliminado exitosamente';
-          // Navegar a la lista después de eliminar
           setTimeout(() => {
-            this.router.navigate(['/profesor/lista']);
+            this.irALista();
           }, 1500);
         },
         error: (error) => {
@@ -281,37 +179,14 @@ export class ProfesorComponent implements OnInit {
     this.isEditing = false;
     this.editingId = null;
     this.onReset();
-    // Navegar de vuelta a la lista
-    this.router.navigate(['/profesor/lista']);
+    setTimeout(() => {
+      this.irALista();
+    }, 1500);
   }
 
   onReset() {
-    this.profesor = {
-      personaData: {
-        _id: '',
-        nombres: '',
-        apellidos: '',
-        telefono: '',
-        tipoDocumento: '',
-        numeroDocumento: '',
-        fechaNacimiento: '',
-        genero: '',
-        email: '',
-        direccion: {
-          calle: '',
-          ciudad: '',
-          departamento: '',
-          codigoPostal: '',
-          pais: ''
-        }
-      },
-      titulo: '',
-      experiencia_anios: 0,
-      fecha_contratacion: '',
-      salario: 0,
-      activo_laboral: false,
-      _id: ''
-    };
+    this.profesor = new ProfesorModel();
+    this.initializeDireccion()
     this.profesorFormValidated = false;
     this.isEditing = false;
     this.editingId = null;
@@ -319,14 +194,27 @@ export class ProfesorComponent implements OnInit {
     this.errorMessage = '';
   }
 
-  markAsTouched(control: any) {
-    if (control && control.control) {
-      control.control.markAsTouched();
+  // Método para navegar a la lista
+  irALista() {
+      this.router.navigate(['/profesor/lista']);                       
+  }
+
+  private initializeDireccion() {
+    if (!this.profesor.personaData.direccion) {
+      this.profesor.personaData.direccion = {
+        calle: '',
+        ciudad: '',
+        departamento: '',
+        codigoPostal: '',
+        pais: ''
+      };
     }
   }
 
-  // Método para navegar a la lista
-  goToList() {
-    this.router.navigate(['/profesor/lista']);
+  // Método para manejar cambios en campos de dirección
+  onDireccionChange(field: string, value: string) {
+    this.initializeDireccion();
+    // Actualizar el campo específico
+    (this.profesor.personaData.direccion as any)[field] = value;
   }
 }
