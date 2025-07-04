@@ -2,7 +2,17 @@
 
 // Import styles with default layout.
 @use "@coreui/coreui/scss/coreui" as * with (
-  $enable-deprecation-messages: false
+  $enable-deprecation-messages: false,
+
+  // Paleta inspirada en el diseño de 9 DE JULIO
+  $primary: #2E7D32,
+  $secondary: #A5D6A7,
+  $success: #66BB6A,
+  $info: #4DB6AC,
+  $warning: #FFB74D,
+  $danger: #EF5350,
+  $light: #F1F8E9,
+  $dark: #1B5E20
 );
 
 // Import Chart.js custom tooltips styles

@@ -13,7 +13,67 @@ export const navItems: INavData[] = [
   },
   {
     title: true,
-    name: 'Pagos'
+    name: 'Gestión Académica'
+  },
+  {
+    name: 'Alumnos',
+    iconComponent: { name: 'cil-people' },
+    children: [
+      {
+        name: 'Lista de Alumnos',
+        url: '/alumno',
+        iconComponent: { name: 'cil-user' }
+      },
+      {
+        name: 'Alumno-Categoría',
+        url: '/alumno-categoria',
+        iconComponent: { name: 'cil-list' }
+      },
+      {
+        name: 'Cuotas',
+        url: '/cuota',
+        iconComponent: { name: 'cil-dollar' }
+      }
+    ]
+  },
+  {
+    name: 'Profesores',
+    iconComponent: { name: 'cil-people' },
+    children: [
+      {
+        name: 'Lista de Profesores',
+        url: '/profesor',
+        iconComponent: { name: 'cil-user-follow' }
+      },
+      {
+        name: 'Categorías Profesor',
+        url: '/profesor-categoria',
+        iconComponent: { name: 'cil-tags' }
+      }
+    ]
+  },
+  {
+    name: 'Categorías',
+    url: '/categorias',
+    iconComponent: { name: 'cil-tags' }
+  },
+  {
+    title: true,
+    name: 'Competencias'
+  },
+  {
+    name: 'Torneos',
+    url: '/torneos',
+    iconComponent: { name: 'cil-trophy' }
+  },
+  {
+    name: 'Torneos Categorías',
+    url: '/torneos-categorias',
+    iconComponent: { name: 'cil-list' }
+  },
+  {
+    title: true,
+    name: 'Finanzas'
   },
   {
     name: 'Pagos',
@@ -32,61 +92,7 @@ export const navItems: INavData[] = [
       }
     ]
   },
-  // {
-  //   title: true,
-  //   name: 'Theme'
-  // },
-  // {
-  //   name: 'Colors',
-  //   url: '/theme/colors',
-  //   iconComponent: { name: 'cil-drop' }
-  // },
-  // {
-  //   name: 'Typography',
-  //   url: '/theme/typography',
-  //   linkProps: { fragment: 'headings' },
-  //   iconComponent: { name: 'cil-pencil' }
-  // },
-  {
-    name: 'Torneos',
-    url: '/torneos',
-    iconComponent: { name: 'cil-list' }
-  },
-  {
-    name:'Torneos Categorias',
-    url: '/torneos-categorias',
-    iconComponent: {name: 'cil-list'}
-  },
-  {
-    name: 'Categorías',
-    url: '/categorias',
-    iconComponent: { name: 'cil-tags' }
-  },
-  {
-    title: true,
-    name: 'Alumnos'
-  },
-  {
-    name: 'Alumnos',
-    iconComponent: { name: 'cil-user' },
-    children: [
-      {
-        name: 'Alumnos',
-        url: '/alumno',
-        iconComponent: { name: 'cil-plus' }
-      },
-      {
-        name: 'Alumno-Categoría',
-        url: '/alumno-categoria',
-        iconComponent: { name: 'cil-list' }
-      },
-      {
-        name: 'Cuotas',
-        url: '/cuota',
-        iconComponent: { name: 'cil-dollar' }
-      }
-    ]
-  },
+
   // {
   //   name: 'Components',
   //   title: true
@@ -311,42 +317,22 @@ export const navItems: INavData[] = [
   // },
   {
     title: true,
-    name: 'Profesores'
-  },
-  {
-    name: 'Profesores',
-    iconComponent: { name: 'cil-people' },
-    children: [
-      {
-        name: 'Profesor',
-        url: '/profesor',
-        iconComponent: { name: 'cil-user-follow' }
-      },
-      {
-        name: 'Categorías Profesor',
-        url: '/profesor-categoria',
-        iconComponent: { name: 'cil-tags' }
-      },
-    ]
-  },
-  {
-    title: true,
     name: 'Administración'
   },
   {
     name: 'Gestión de Usuarios',
     url: '/user',
-    iconComponent: { name: 'cil-people' },
+    iconComponent: { name: 'cil-settings' },
     children: [
       {
         name: 'Lista de Usuarios',
         url: '/user/list',
-        icon: 'nav-icon-bullet'
+        iconComponent: { name: 'cil-list' }
       },
       {
         name: 'Crear Usuario',
         url: '/user/form',
-        icon: 'nav-icon-bullet'
+        iconComponent: { name: 'cil-user-plus' }
       }
     ]
   },

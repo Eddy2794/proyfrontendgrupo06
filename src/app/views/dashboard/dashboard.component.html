@@ -1,3 +1,35 @@
+<!-- Sección de Bienvenida -->
+<c-card class="mb-4" style="background: linear-gradient(135deg, var(--cui-primary) 0%, var(--cui-secondary) 100%); border: none; color: white;">
+  <c-card-body class="text-center py-5">
+    <c-row class="align-items-center justify-content-center">
+      <c-col xs="12" md="8" lg="6">
+        <div class="mb-4">
+          <img src="assets/brand/9dejulio.svg" alt="9 DE JULIO" style="width: 120px; height: auto;">
+        </div>
+        <h1 class="display-4 fw-bold mb-3">¡Bienvenido a 9 de Julio!</h1>
+        <h4 class="mb-3 opacity-75">Escuela de Fútbol</h4>
+        <p class="lead mb-4 opacity-75">
+          Donde los sueños futbolísticos se hacen realidad. Formamos campeones dentro y fuera de la cancha.
+        </p>
+        <div class="d-flex justify-content-center gap-3 flex-wrap">
+          <div class="text-center">
+            <div class="h3 fw-bold mb-1">{{ estadisticasGenerales.totalInscripciones }}</div>
+            <small class="opacity-75">Alumnos Inscritos</small>
+          </div>
+          <div class="text-center">
+            <div class="h3 fw-bold mb-1">{{ estadisticasGenerales.alumnosActivos }}</div>
+            <small class="opacity-75">Alumnos Activos</small>
+          </div>
+          <div class="text-center">
+            <div class="h3 fw-bold mb-1">{{ inscripcionesData.length }}</div>
+            <small class="opacity-75">Categorías</small>
+          </div>
+        </div>
+      </c-col>
+    </c-row>
+  </c-card-body>
+</c-card>
+
 <app-widgets-dropdown />
 <c-card class="my-4">
   <c-card-body>
