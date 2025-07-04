@@ -1,7 +1,7 @@
 export interface Pago {
   _id?: string;
   usuario: string;
-  categoriaEscuela: string;
+  categoria: string;
   tipoPeriodo: 'mensual' | 'anual';
   monto: number;
   montoDescuento?: number;
@@ -36,7 +36,7 @@ export interface HistorialEstado {
 }
 
 export interface CreatePaymentPreferenceRequest {
-  categoriaEscuelaId: string;
+  categoriaId: string;
   tipoPeriodo: 'mensual' | 'anual';
   redirectUrls?: {
     success?: string;

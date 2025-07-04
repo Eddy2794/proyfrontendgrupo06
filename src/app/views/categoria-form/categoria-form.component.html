@@ -167,7 +167,7 @@
                   </div>
                   
                   <div class="card-body">
-                    <div *ngIf="categoria.horarios.length === 0" class="alert alert-info d-flex align-items-center">
+                    <div *ngIf="(categoria?.horarios?.length || 0) === 0" class="alert alert-info d-flex align-items-center">
                       <svg cIcon name="cil-info" class="me-2" size="lg"></svg>
                       <div>
                         <strong>No hay horarios configurados</strong><br>
@@ -175,7 +175,7 @@
                       </div>
                     </div>
 
-                    <div *ngFor="let horario of categoria.horarios; let i = index" 
+                    <div *ngFor="let horario of categoria?.horarios; let i = index" 
                          class="card mb-3 border-start border-warning border-3">
                       <div class="card-body">
                         <div class="row align-items-end">
