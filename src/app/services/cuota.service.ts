@@ -1,14 +1,16 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { Cuota, CuotaModel } from '../models/cuota.model';
+import { environment } from '../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class CuotaService {
 
-  private apiUrl = 'http://localhost:3000/api/cuotas'; 
+  private apiUrl = `${environment.apiUrl}/cuotas`; 
 
   constructor(private http: HttpClient) { }
 
@@ -152,9 +154,50 @@ export class CuotaService {
 
   // Obtener estadísticas de cuotas por mes
   getCuotasPorMes(): Observable<any> {
-    const httpOptions = {
-      headers: new HttpHeaders()
+    // Obtener todas las cuotas y procesarlas localmente
+    return this.getCuotas().pipe(
+      map((response: any) => this.processCuotasPorMes(response))
+    );
+  }
+
+  /**
+   * Procesar datos de cuotas para obtener estadísticas por mes
+   */
+  private processCuotasPorMes(response: any): any {
+    const cuotas = response.data || [];
+    
+    return {
+      success: true,
+      data: {
+        cuotasPorMes: this.groupByMonth(cuotas, 'fecha_vencimiento')
+      }
     };
-    return this.http.get<any>(this.apiUrl + '/stats/por-mes', httpOptions);
+  }
+
+  /**
+   * Agrupar datos por mes
+   */
+  private groupByMonth(items: any[], dateField: string): Array<{mes: string, cantidad: number}> {
+    const monthNames = [
+      'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+      'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+    ];
+    
+    const currentYear = new Date().getFullYear();
+    const monthCounts = new Array(12).fill(0);
+    
+    items.forEach(item => {
+      if (item[dateField]) {
+        const date = new Date(item[dateField]);
+        if (date.getFullYear() === currentYear) {
+          monthCounts[date.getMonth()]++;
+        }
+      }
+    });
+    
+    return monthNames.map((mes, index) => ({
+      mes,
+      cantidad: monthCounts[index]
+    }));
   }
 }

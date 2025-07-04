@@ -15,6 +15,7 @@ import { PagoService } from '../../../services/pago.service';
 import { CategoriaEscuelaService } from '../../../services/categoria-escuela.service';
 import { MercadoPagoService } from '../../../services/mercadopago.service';
 import { NotificationService } from '../../../services/notification.service';
+import { ConfigService } from '../../../services/config.service';
 import { CategoriaEscuela, CreatePaymentPreferenceRequest, PaymentPreferenceResponse } from '../../../models';
 import { environment } from '../../../../environments/environment';
 
@@ -239,6 +240,7 @@ export class RealizarPagoComponent implements OnInit, AfterViewInit {
   private categoriaService = inject(CategoriaEscuelaService);
   private mercadopagoService = inject(MercadoPagoService);
   private notificationService = inject(NotificationService);
+  private configService = inject(ConfigService);
 
   @ViewChild('mercadopagoButton', { static: false }) mercadopagoButton!: ElementRef;
 
@@ -328,11 +330,7 @@ export class RealizarPagoComponent implements OnInit, AfterViewInit {
       const request: CreatePaymentPreferenceRequest = {
         categoriaEscuelaId: this.paymentForm.get('categoriaEscuelaId')?.value,
         tipoPeriodo: this.paymentForm.get('tipoPeriodo')?.value,
-        redirectUrls: {
-          success: `${window.location.origin}/pagos/historial?status=success`,
-          failure: `${window.location.origin}/pagos/historial?status=failure`,
-          pending: `${window.location.origin}/pagos/historial?status=pending`
-        }
+        redirectUrls: this.configService.getRedirectUrls()
       };
 
       this.pagoService.createPaymentPreference(request).subscribe({
