@@ -6,14 +6,14 @@ export class ProfesorCategoria {
     profesor: ProfesorModel;    
     categoria: CategoriaAuxiliar;
     fecha_asignacion: Date;
-    activo: boolean;
+    estado: string;
     observaciones: string;
 
     constructor(data: Partial<ProfesorCategoria> = {}) {
         this.profesor = new ProfesorModel() || data.profesor;
         this.categoria = new CategoriaAuxiliar() || data.categoria;
         this.fecha_asignacion = data.fecha_asignacion || new Date();
-        this.activo = data.activo || true;
+        this.estado = data.estado || 'ACTIVO';
         this.observaciones = data.observaciones || '';
     }
 
@@ -23,7 +23,7 @@ export class ProfesorCategoria {
             profesor: this.profesor,
             categoria: this.categoria,
             fecha_asignacion: this.fecha_asignacion,
-            activo: this.activo,
+            estado: this.estado,
             observaciones: this.observaciones
         };
     }
@@ -34,7 +34,7 @@ export class ProfesorCategoria {
         profesorCategoria.profesor = ProfesorModel.fromJSON(data.profesor) || data.profesor_id;
         profesorCategoria.categoria = this.mapearCategoria(data.categoria) || data.categoria_id;
         profesorCategoria.fecha_asignacion = data.fecha_asignacion;
-        profesorCategoria.activo = data.activo;
+        profesorCategoria.estado = data.estado;
         profesorCategoria.observaciones = data.observaciones;
         return profesorCategoria;
     }
@@ -45,8 +45,8 @@ export class ProfesorCategoria {
         categoriaAuxiliar.nombre = categoria.nombre;
         categoriaAuxiliar.descripcion = categoria.descripcion;
         categoriaAuxiliar.nivel = categoria.nivel;
-        categoriaAuxiliar.edad_min = categoria.edad_min;
-        categoriaAuxiliar.edad_max = categoria.edad_max;
+        categoriaAuxiliar.edadMinima = categoria.edadMinima;
+    categoriaAuxiliar.edadMaxima = categoria.edadMaxima;
         return categoriaAuxiliar;
     }
-}   
+}
