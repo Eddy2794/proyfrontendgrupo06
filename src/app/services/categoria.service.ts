@@ -128,16 +128,16 @@ export class CategoriaService {
       throw new Error('ID de categoría requerido para actualización');
     }
     
-    // Convertir campos legacy a nuevos campos
+    // Datos ya normalizados - no se necesita compatibilidad
     const updateData: UpdateCategoriaRequest = {
       nombre: categoria.nombre,
       descripcion: categoria.descripcion,
-      edadMinima: categoria.edadMinima || categoria.edad_min,
-      edadMaxima: categoria.edadMaxima || categoria.edad_max,
-      estado: categoria.estado || (categoria.activa ? 'ACTIVA' : 'INACTIVA'),
-      cupoMaximo: categoria.cupoMaximo || categoria.max_alumnos,
+      edadMinima: categoria.edadMinima,
+      edadMaxima: categoria.edadMaxima,
+      estado: categoria.estado,
+      cupoMaximo: categoria.cupoMaximo,
       precio: {
-        cuotaMensual: categoria.precio?.cuotaMensual || categoria.cuota_mensual || 0
+        cuotaMensual: categoria.precio.cuotaMensual
       }
     };
     

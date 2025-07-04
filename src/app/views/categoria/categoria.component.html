@@ -106,6 +106,7 @@
                 <th scope="col">Nivel</th>
                 <th scope="col">Rango de Edad</th>
                 <th scope="col">Cuota Mensual</th>
+                <th scope="col">Profesor</th>
                 <th scope="col">Ocupación</th>
                 <th scope="col">Estado</th>
                 <th scope="col" class="text-center">Acciones</th>
@@ -137,13 +138,18 @@
 
                 <!-- Cuota Mensual -->
                 <td>
-                  <span class="fw-semibold">${{ (categoria.cuota_mensual || categoria.precio?.cuotaMensual || 0) | number:'1.0-0' }}</span>
+                  <span class="fw-semibold">${{ (categoria.precio?.cuotaMensual || 0) | number:'1.0-0' }}</span>
+                </td>
+
+                <!-- Profesor -->
+                <td>
+                  <small class="text-body-secondary">{{ getNombreProfesor(categoria._id) }}</small>
                 </td>
 
                 <!-- Ocupación -->
                 <td>
                   <div class="d-flex align-items-center">
-                    <small class="me-2">{{ (categoria.alumnos_actuales || categoria.alumnosActuales || 0) }}/{{ (categoria.max_alumnos || categoria.cupoMaximo || 0) }}</small>
+                    <small class="me-2">{{ (categoria.alumnosActuales || 0) }}/{{ (categoria.cupoMaximo || 0) }}</small>
                     <div class="progress" style="width: 60px; height: 8px;">
                       <div 
                         class="progress-bar" 
@@ -185,6 +191,16 @@
                       size="sm" 
                       variant="outline" 
                       color="info"
+                      (click)="abrirDetalles(categoria)"
+                      cTooltip="Ver detalles">
+                      <svg cIcon name="cilInfo" size="sm"></svg>
+                    </button>
+                    
+                    <button 
+                      cButton 
+                      size="sm" 
+                      variant="outline" 
+                      color="primary"
                       (click)="editarCategoria(categoria)"
                       cTooltip="Editar categoría">
                       <svg cIcon name="cilPencil" size="sm"></svg>
@@ -205,7 +221,7 @@
 
               <!-- Mensaje cuando no hay categorías -->
               <tr *ngIf="paginatedItems.length === 0">
-                <td colspan="7" class="text-center py-4">
+                <td colspan="8" class="text-center py-4">
                   <div class="text-body-secondary">
                     <svg cIcon name="cilFolder" size="xl" class="mb-2"></svg>
                     <p class="mb-0">No se encontraron categorías</p>
@@ -252,4 +268,194 @@
       </c-card-body>
     </c-card>
   </c-col>
-</c-row>
+  </c-row>
+
+<!-- Modal de detalles de categoría -->
+<c-modal 
+  [visible]="modalDetallesVisible" 
+  (visibleChange)="onModalDetallesChange($event)"
+  size="lg"
+  scrollable="true"
+  id="modalDetallesCategoria">
+  <c-modal-header>
+    <h5 cModalTitle>Detalles de la Categoría</h5>
+    <button (click)="cerrarDetalles()" cButtonClose></button>
+  </c-modal-header>
+  <c-modal-body>
+    <div *ngIf="loadingDetalles" class="text-center py-4">
+      <c-spinner color="primary"></c-spinner>
+      <p class="mt-2 text-body-secondary">Cargando detalles...</p>
+    </div>
+    
+    <div *ngIf="!loadingDetalles && categoriaSeleccionada">
+      <!-- Información básica -->
+      <div class="row mb-4">
+        <div class="col-md-6">
+          <h6 class="text-body-secondary mb-2">INFORMACIÓN BÁSICA</h6>
+          <div class="mb-3">
+            <strong>Nombre:</strong> {{ categoriaSeleccionada.nombre }}
+          </div>
+          <div class="mb-3">
+            <strong>Descripción:</strong> {{ categoriaSeleccionada.descripcion || 'Sin descripción' }}
+          </div>
+          <div class="mb-3">
+            <strong>Nivel:</strong> 
+            <c-badge [color]="getLevelBadgeColor(categoriaSeleccionada.nivel)">
+              {{ categoriaSeleccionada.nivel }}
+            </c-badge>
+          </div>
+          <div class="mb-3">
+            <strong>Rango de Edad:</strong> {{ formatAgeRange(categoriaSeleccionada) }}
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="mb-3">
+            <strong>Cuota Mensual:</strong> ${{ (categoriaSeleccionada.precio?.cuotaMensual || 0) | number:'1.0-0' }}
+          </div>
+          <div class="mb-3">
+            <strong>Profesor:</strong> {{ getNombreProfesor(categoriaSeleccionada._id) }}
+          </div>
+          <div class="mb-3">
+            <strong>Capacidad:</strong> {{ (categoriaSeleccionada.alumnosActuales || 0) }}/{{ (categoriaSeleccionada.cupoMaximo || 0) }} alumnos
+          </div>
+          <div class="mb-3">
+            <strong>Estado:</strong> 
+            <c-badge [color]="getBadgeClass(categoriaSeleccionada)">
+              {{ getEstadoText(categoriaSeleccionada) }}
+            </c-badge>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Horarios de entrenamiento -->
+      <div class="mb-4">
+        <h6 class="text-body-secondary mb-3">HORARIOS DE ENTRENAMIENTO</h6>
+        <div *ngIf="categoriaSeleccionada.horarios && categoriaSeleccionada.horarios.length > 0; else noHorarios">
+          <div class="row">
+            <div class="col-md-4 mb-2" *ngFor="let horario of categoriaSeleccionada.horarios">
+              <div class="border rounded p-2">
+                <strong>{{ horario.dia }}</strong><br>
+                <small class="text-body-secondary">{{ horario.hora_inicio }} - {{ horario.hora_fin }}</small>
+              </div>
+            </div>
+          </div>
+        </div>
+        <ng-template #noHorarios>
+          <p class="text-body-secondary">No hay horarios configurados</p>
+        </ng-template>
+      </div>
+      
+      <!-- Alumnos inscritos -->
+      <div class="mb-4">
+        <h6 class="text-body-secondary mb-3">ALUMNOS INSCRITOS ({{ alumnosCategoria.length }})</h6>
+        <div *ngIf="alumnosCategoria.length > 0; else noAlumnos">
+          <div class="table-responsive">
+            <table class="table table-sm">
+              <thead>
+                <tr>
+                  <th>Alumno</th>
+                  <th>Fecha de Inscripción</th>
+                  <th>Estado</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let alumnoCategoria of alumnosCategoria">
+                  <td>
+                    <div>
+                      <strong>{{ alumnoCategoria.alumno_datos?.persona?.nombres }} {{ alumnoCategoria.alumno_datos?.persona?.apellidos }}</strong><br>
+                      <small class="text-body-secondary">{{ alumnoCategoria.alumno_datos?.persona?.email }}</small>
+                    </div>
+                  </td>
+                  <td>{{ (alumnoCategoria.fecha_inscripcion | date:'dd/MM/yyyy') || 'N/A' }}</td>
+                  <td>
+                    <c-badge [color]="alumnoCategoria.activo ? 'success' : 'secondary'">
+                      {{ alumnoCategoria.activo ? 'Activo' : 'Inactivo' }}
+                    </c-badge>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <ng-template #noAlumnos>
+          <p class="text-body-secondary">No hay alumnos inscritos en esta categoría</p>
+        </ng-template>
+      </div>
+      
+      <!-- Torneos participados -->
+      <div class="mb-4">
+        <h6 class="text-body-secondary mb-3">TORNEOS PARTICIPADOS ({{ torneosCategoria.length }})</h6>
+        <div *ngIf="torneosCategoria.length > 0; else noTorneos">
+          <div class="table-responsive">
+            <table class="table table-sm">
+              <thead>
+                <tr>
+                  <th>Torneo</th>
+                  <th>Fecha</th>
+                  <th>Estado</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let torneoCategoria of torneosCategoria">
+                  <td>
+                    <div>
+                      <strong>{{ torneoCategoria.torneo_datos?.nombre }}</strong><br>
+                      <small class="text-body-secondary">{{ torneoCategoria.torneo_datos?.descripcion }}</small>
+                    </div>
+                  </td>
+                  <td>{{ (torneoCategoria.torneo_datos?.fecha_inicio | date:'dd/MM/yyyy') || 'N/A' }}</td>
+                  <td>
+                    <c-badge [color]="torneoCategoria.activo ? 'success' : 'secondary'">
+                      {{ torneoCategoria.activo ? 'Participando' : 'No participando' }}
+                    </c-badge>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <ng-template #noTorneos>
+          <p class="text-body-secondary">Esta categoría no ha participado en torneos</p>
+        </ng-template>
+      </div>
+    </div>
+  </c-modal-body>
+  <c-modal-footer>
+    <button (click)="cerrarDetalles()" cButton color="secondary">
+      Cerrar
+    </button>
+  </c-modal-footer>
+</c-modal>
+
+<!-- Modal de confirmación de eliminación -->
+<c-modal 
+  [visible]="modalEliminarVisible" 
+  (visibleChange)="onModalEliminarChange($event)"
+  size="sm"
+  alignment="center"
+  id="modalEliminarCategoria">
+  <c-modal-header>
+    <h5 cModalTitle>Confirmar Eliminación</h5>
+    <button (click)="cerrarModalEliminar()" cButtonClose></button>
+  </c-modal-header>
+  <c-modal-body>
+    <div class="text-center">
+      <svg cIcon name="cilWarning" size="3xl" class="text-warning mb-3"></svg>
+      <h6>¿Está seguro que desea eliminar la categoría?</h6>
+      <p class="text-body-secondary mb-0" *ngIf="categoriaAEliminar">
+        <strong>"{{ categoriaAEliminar.nombre }}"</strong>
+      </p>
+      <p class="text-danger small mt-2">
+        Esta acción no se puede deshacer.
+      </p>
+    </div>
+  </c-modal-body>
+  <c-modal-footer>
+    <button (click)="cerrarModalEliminar()" cButton color="secondary">
+      Cancelar
+    </button>
+    <button (click)="confirmarEliminarCategoria()" cButton color="danger">
+      Eliminar
+    </button>
+  </c-modal-footer>
+</c-modal>

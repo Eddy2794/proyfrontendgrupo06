@@ -16,14 +16,24 @@ import {
   InputGroupTextDirective,
   FormSelectDirective,
   TooltipDirective,
-  ContainerComponent
-
+  ContainerComponent,
+  ModalComponent,
+  ModalHeaderComponent,
+  ModalTitleDirective,
+  ModalBodyComponent,
+  ModalFooterComponent,
+  ButtonCloseDirective
 } from '@coreui/angular';
 import { IconDirective } from '@coreui/icons-angular';
 import { ColorModeService } from '@coreui/angular';
 import { Router, RouterModule } from '@angular/router';
 import { Categoria } from '../../models/categoria';
 import { CategoriaService } from '../../services/categoria.service';
+import { ProfesorService } from '../../services/profesor.service';
+import { AlumnoCategoriaService } from '../../services/alumno-categoria.service';
+import { TorneoCategoriaService } from '../../services/torneo-categoria.service';
+import { ProfesorCategoriaService } from '../../services/profesor-categoria.service';
+// import { CategoriaDetalleModalComponent } from './categoria-detalle-modal.component'; // Removido - usando modal nativo de Core UI
 import { NotificationService } from '../../services/notification.service';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -54,7 +64,13 @@ import { debounceTime, Subject } from 'rxjs';
     FormSelectDirective,
     TooltipDirective,
     IconDirective,
-    ContainerComponent
+    ContainerComponent,
+    ModalComponent,
+    ModalHeaderComponent,
+    ModalTitleDirective,
+    ModalBodyComponent,
+    ModalFooterComponent,
+    ButtonCloseDirective
   ],
   templateUrl: './categoria.component.html',
   styleUrl: './categoria.component.scss'
@@ -84,8 +100,30 @@ export class CategoriaComponent implements OnInit {
   // Opciones para filtros
   nivelesDisponibles = ['PRINCIPIANTE', 'INTERMEDIO', 'AVANZADO', 'COMPETITIVO'];
   
+  // Modal de detalles
+  modalDetallesVisible: boolean = false;
+  categoriaSeleccionada: Categoria | null = null;
+  detallesCategoria: any = null;
+  loadingDetalles: boolean = false;
+  
+  // Modal de confirmación de eliminación
+  modalEliminarVisible: boolean = false;
+  categoriaAEliminar: Categoria | null = null;
+  
+  // Datos para el modal
+  profesores: any[] = [];
+  alumnosCategoria: any[] = [];
+  torneosCategoria: any[] = [];
+  
+  // Relaciones profesor-categoría
+  profesoresCategorias: any[] = [];
+  
   constructor(
     private categoriaService: CategoriaService,
+    private profesorService: ProfesorService,
+    private alumnoCategoriaService: AlumnoCategoriaService,
+    private torneoCategoriaService: TorneoCategoriaService,
+    private profesorCategoriaService: ProfesorCategoriaService,
     private router: Router,
     private colorModeService: ColorModeService,
     private notificationService: NotificationService
@@ -94,6 +132,8 @@ export class CategoriaComponent implements OnInit {
   ngOnInit(): void {
     this.setupSearchDebounce();
     this.loadCategorias();
+    this.cargarProfesores();
+    this.cargarProfesoresCategorias();
   }
 
   setupSearchDebounce(): void {
@@ -115,6 +155,8 @@ export class CategoriaComponent implements OnInit {
           this.categorias = result.data.categorias || [];
           this.totalItems = this.categorias.length;
           this.aplicarFiltros();
+          // Recargar relaciones profesor-categoría cuando se actualicen las categorías
+          this.cargarProfesoresCategorias();
         } else {
           this.notificationService.showError('Error', 'No se pudieron cargar las categorías');
         }
@@ -146,7 +188,7 @@ export class CategoriaComponent implements OnInit {
     if (this.filtroEstado) {
       const activa = this.filtroEstado === 'activa';
       categoriasFiltradas = categoriasFiltradas.filter(categoria => 
-        (categoria.activa !== undefined ? categoria.activa : categoria.estado === 'ACTIVA') === activa
+        categoria.estado === (activa ? 'ACTIVA' : 'INACTIVA')
       );
     }
     
@@ -218,8 +260,19 @@ export class CategoriaComponent implements OnInit {
 
   // Confirmación y eliminación
   confirmarEliminacion(categoria: Categoria): void {
-    if (confirm(`¿Está seguro que desea eliminar la categoría "${categoria.nombre}"?\n\nEsta acción no se puede deshacer.`)) {
-      this.eliminarCategoria(categoria);
+    this.categoriaAEliminar = categoria;
+    this.modalEliminarVisible = true;
+  }
+  
+  cerrarModalEliminar(): void {
+    this.modalEliminarVisible = false;
+    this.categoriaAEliminar = null;
+  }
+  
+  confirmarEliminarCategoria(): void {
+    if (this.categoriaAEliminar) {
+      this.eliminarCategoria(this.categoriaAEliminar);
+      this.cerrarModalEliminar();
     }
   }
 
@@ -272,17 +325,17 @@ export class CategoriaComponent implements OnInit {
   
   // Métodos para UI
   getBadgeClass(categoria: Categoria): string {
-    const activa = categoria.activa !== undefined ? categoria.activa : categoria.estado === 'ACTIVA';
+    const activa = categoria.estado === 'ACTIVA';
     return activa ? 'success' : 'secondary';
   }
 
   getButtonText(categoria: Categoria): string {
-    const activa = categoria.activa !== undefined ? categoria.activa : categoria.estado === 'ACTIVA';
+    const activa = categoria.estado === 'ACTIVA';
     return activa ? 'Desactivar categoría' : 'Activar categoría';
   }
 
   getButtonIcon(categoria: Categoria): string {
-    const activa = categoria.activa !== undefined ? categoria.activa : categoria.estado === 'ACTIVA';
+    const activa = categoria.estado === 'ACTIVA';
     return activa ? 'cilX' : 'cilCheck';
   }
 
@@ -298,8 +351,8 @@ export class CategoriaComponent implements OnInit {
   }
 
   formatAgeRange(categoria: Categoria): string {
-    const edadMin = categoria.edad_min !== undefined ? categoria.edad_min : categoria.edadMinima;
-    const edadMax = categoria.edad_max !== undefined ? categoria.edad_max : categoria.edadMaxima;
+    const edadMin = categoria.edadMinima;
+    const edadMax = categoria.edadMaxima;
     return `${edadMin}-${edadMax} años`;
   }
 
@@ -316,12 +369,12 @@ export class CategoriaComponent implements OnInit {
 
   getOccupancyPercentage(categoria: any): number {
     const current = categoria.alumnos_actuales || categoria.alumnosActuales || 0;
-    const max = categoria.max_alumnos || categoria.cupoMaximo || 1;
+    const max = categoria.cupoMaximo || 1;
     return max > 0 ? (current / max) * 100 : 0;
   }
 
   getEstadoActivo(categoria: any): boolean {
-    return categoria.activa !== undefined ? categoria.activa : categoria.estado === 'ACTIVA';
+    return categoria.estado === 'ACTIVA';
   }
 
   getEstadoText(categoria: any): string {
@@ -332,6 +385,117 @@ export class CategoriaComponent implements OnInit {
     if (percentage >= 90) return 'danger';
     if (percentage >= 70) return 'warning';
     return 'success';
+  }
+  
+  // Métodos para el modal de detalles
+  abrirDetalles(categoria: Categoria) {
+    this.categoriaSeleccionada = categoria;
+    this.modalDetallesVisible = true;
+    this.cargarDetallesCategoria(categoria._id!);
+  }
+  
+  cerrarDetalles() {
+    this.modalDetallesVisible = false;
+    this.categoriaSeleccionada = null;
+    this.detallesCategoria = null;
+    this.alumnosCategoria = [];
+    this.torneosCategoria = [];
+  }
+  
+  onModalDetallesChange(visible: boolean) {
+    if (!visible) {
+      this.cerrarDetalles();
+    }
+  }
+  
+  onModalEliminarChange(visible: boolean) {
+    if (!visible) {
+      this.cerrarModalEliminar();
+    }
+  }
+  
+  cargarProfesores() {
+    this.profesorService.getProfesoresActivos().subscribe({
+      next: (profesores: any) => {
+        this.profesores = profesores || [];
+      },
+      error: (error: any) => {
+        console.error('Error al cargar profesores:', error);
+      }
+    });
+  }
+  
+  cargarProfesoresCategorias() {
+    this.profesorCategoriaService.getProfesorCategorias().subscribe({
+      next: (response: any) => {
+        // Asegurar que siempre sea un array
+        if (Array.isArray(response)) {
+          this.profesoresCategorias = response;
+        } else if (response && Array.isArray(response.data)) {
+          this.profesoresCategorias = response.data;
+        } else {
+          this.profesoresCategorias = [];
+        }
+      },
+      error: (error: any) => {
+        console.error('Error al cargar relaciones profesor-categoría:', error);
+        this.profesoresCategorias = []; // Asegurar que sea un array en caso de error
+      }
+    });
+  }
+  
+  cargarDetallesCategoria(categoriaId: string) {
+    this.loadingDetalles = true;
+    
+    // Cargar alumnos de la categoría
+    this.alumnoCategoriaService.getAlumnosPorCategoria(categoriaId).subscribe({
+      next: (response: any) => {
+        this.alumnosCategoria = response.data || response || [];
+        this.loadingDetalles = false;
+      },
+      error: (error: any) => {
+        console.error('Error al cargar alumnos:', error);
+        this.alumnosCategoria = [];
+        this.loadingDetalles = false;
+      }
+    });
+    
+    // Cargar torneos de la categoría
+    this.torneoCategoriaService.getTorneosPorCategoria(categoriaId).subscribe({
+      next: (response: any) => {
+        this.torneosCategoria = response.data || response || [];
+      },
+      error: (error: any) => {
+        console.error('Error al cargar torneos:', error);
+        this.torneosCategoria = [];
+      }
+    });
+  }
+  
+  getNombreProfesor(categoriaId: string | undefined): string {
+    if (!categoriaId) return 'Sin asignar';
+    
+    // Verificar que profesoresCategorias sea un array
+    if (!Array.isArray(this.profesoresCategorias)) {
+      return 'Sin asignar';
+    }
+    
+    // Buscar la relación profesor-categoría activa para esta categoría
+    const profesorCategoria = this.profesoresCategorias.find(pc => 
+      pc.categoria?._id === categoriaId && pc.estado === 'ACTIVO'
+    );
+    
+    if (!profesorCategoria) return 'Sin asignar';
+    
+    // Obtener el profesor desde la relación
+    const profesor = profesorCategoria.profesor;
+    if (!profesor) return 'Sin asignar';
+    
+    // Construir el nombre del profesor
+    const nombres = profesor.persona?.nombres || profesor.personaData?.nombres || '';
+    const apellidos = profesor.persona?.apellidos || profesor.personaData?.apellidos || '';
+    
+    return `${nombres} ${apellidos}`.trim() || 'Profesor no encontrado';
   }
 
 }
