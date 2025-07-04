@@ -1,466 +1,255 @@
-<c-container fluid class="categoria-component">
-  <!-- Título de la sección -->
-  <c-row class="mb-4">
-    <c-col>
-      <h2 class="text-body-emphasis mb-2">Gestión de Categorías</h2>
-      <p class="text-body-secondary">Administra las categorías del club deportivo</p>
-    </c-col>
-  </c-row>
-
-  <!-- Mensajes de feedback -->
-  <c-row class="mb-3" *ngIf="successMessage || errorMessage">
-    <c-col>
-      <c-alert *ngIf="successMessage" color="success" [dismissible]="true" (alertChange)="clearMessages()">
-        <strong>¡Éxito!</strong> {{ successMessage }}
-      </c-alert>
-      <c-alert *ngIf="errorMessage" color="danger" [dismissible]="true" (alertChange)="clearMessages()">
-        <strong>Error:</strong> {{ errorMessage }}
-      </c-alert>
-    </c-col>
-  </c-row>
-
-  <!-- Sección de filtros y acciones -->
-  <c-row class="mb-4">
-    <c-col>
-      <c-card class="shadow-sm">
-        <c-card-header class="bg-transparent border-bottom">
-          <c-row class="align-items-center">
-            <c-col>
-              <h5 class="card-title mb-0 text-body-emphasis">Lista de Categorías</h5>
-              <small class="text-body-secondary">{{ categoriasFiltradas.length }} de {{ categorias.length }}
-                categorías</small>
-            </c-col>
-            <c-col xs="auto">
-              <button cButton color="primary" size="lg" (click)="agregarCategoria()" [disabled]="loading"
-                cTooltip="Crear una nueva categoría" aria-label="Agregar nueva categoría">
-                <svg cIcon name="cil-plus" class="me-2" style="font-size: 1.1rem;"></svg>
-                <span class="fw-semibold">Nueva Categoría</span>
-              </button>
-            </c-col>
-          </c-row>
-        </c-card-header>
-
-        <c-card-body class="px-4 py-3">
-          <!-- Filtros -->
-          <c-row class="g-3 mb-4">
-            <!-- Búsqueda -->
-            <c-col xs="12" lg="3">
-              <label class="form-label text-body-emphasis fw-semibold mb-2">
-                <svg cIcon name="cil-search" class="me-1"></svg>
-                Búsqueda
-              </label>
-              <c-input-group>
-                <span cInputGroupText class="bg-transparent border-end-0">
-                  <svg cIcon name="cil-search" class="text-body"></svg>
-                </span>
-                <input cFormControl type="text" placeholder="Buscar por nombre, descripción..." [(ngModel)]="searchTerm"
-                  (input)="onSearchChange()" [disabled]="loading" class="border-start-0" aria-label="Buscar categorías">
-              </c-input-group>
-            </c-col>
-
-            <!-- Filtro por estado -->
-            <c-col xs="12" sm="6" lg="2">
-              <label class="form-label text-body-emphasis fw-semibold mb-2">
-                <svg cIcon name="cil-toggle-on" class="me-1"></svg>
-                Estado
-              </label>
-              <c-input-group>
-                <span cInputGroupText class="bg-transparent border-end-0">
-                  <svg cIcon name="cil-toggle-on" class="text-body"></svg>
-                </span>
-                <select cFormSelect [(ngModel)]="filtroEstado" (change)="onFiltroEstadoChange()" [disabled]="loading"
-                  class="border-start-0" aria-label="Filtrar por estado">
-                  <option value="todas">Todos</option>
-                  <option value="activas">Activas</option>
-                  <option value="inactivas">Inactivas</option>
-                </select>
-              </c-input-group>
-            </c-col>
-
-            <!-- Filtro por nivel -->
-            <c-col xs="12" sm="6" lg="2">
-              <label class="form-label text-body-emphasis fw-semibold mb-2">
-                <svg cIcon name="cil-layers" class="me-1"></svg>
-                Nivel
-              </label>
-              <c-input-group>
-                <span cInputGroupText class="bg-transparent border-end-0">
-                  <svg cIcon name="cil-layers" class="text-body"></svg>
-                </span>
-                <select cFormSelect [(ngModel)]="filtroNivel" (change)="onFiltroNivelChange()" [disabled]="loading"
-                  class="border-start-0" aria-label="Filtrar por nivel">
-                  <option value="todos">Todos</option>
-                  <option *ngFor="let nivel of nivelesDisponibles" [value]="nivel">
-                    {{ nivel | titlecase }}
-                  </option>
-                </select>
-              </c-input-group>
-            </c-col>
-
-            <!-- Filtro por edad mínima -->
-            <c-col xs="12" sm="6" lg="2">
-              <label class="form-label text-body-emphasis fw-semibold mb-2">
-                <svg cIcon name="cil-people" class="me-1"></svg>
-                Edad Min.
-              </label>
-              <c-input-group>
-                <span cInputGroupText class="bg-transparent border-end-0">
-                  <svg cIcon name="cil-calendar" class="text-body"></svg>
-                </span>
-                <input cFormControl type="number" placeholder="Min" [(ngModel)]="filtroEdadMin"
-                  (input)="onFiltroEdadChange()" [disabled]="loading" min="3" max="99" class="border-start-0"
-                  aria-label="Edad mínima">
-              </c-input-group>
-            </c-col>
-
-            <!-- Filtro por edad máxima -->
-            <c-col xs="12" sm="6" lg="2">
-              <label class="form-label text-body-emphasis fw-semibold mb-2">
-                <svg cIcon name="cil-people" class="me-1"></svg>
-                Edad Max.
-              </label>
-              <c-input-group>
-                <span cInputGroupText class="bg-transparent border-end-0">
-                  <svg cIcon name="cil-calendar" class="text-body"></svg>
-                </span>
-                <input cFormControl type="number" placeholder="Max" [(ngModel)]="filtroEdadMax"
-                  (input)="onFiltroEdadChange()" [disabled]="loading" min="3" max="99" class="border-start-0"
-                  aria-label="Edad máxima">
-              </c-input-group>
-            </c-col>
-
-            <!-- Botón limpiar filtros -->
-            <c-col xs="12" lg="1" class="d-flex align-items-end">
-              <button cButton color="secondary" variant="outline" size="sm" class="w-100" (click)="limpiarFiltros()"
-                [disabled]="loading || (!searchTerm && filtroEstado === 'todas' && filtroNivel === 'todos' && !filtroEdadMin && !filtroEdadMax)"
-                cTooltip="Limpiar todos los filtros" aria-label="Limpiar filtros">
-                <svg cIcon name="cil-filter-x" class="me-1"></svg>
-                <span class="d-none d-lg-inline">Limpiar</span>
-              </button>
-            </c-col>
-          </c-row>
-
-          <!-- Resumen de filtros activos -->
-          <div *ngIf="getFiltrosActivos().length > 0" class="mb-3">
-            <div class="d-flex flex-wrap gap-2 align-items-center">
-              <small class="text-body-secondary fw-semibold me-2">Filtros activos:</small>
-              <c-badge *ngFor="let filtro of getFiltrosActivos()" color="primary"
-                class="d-flex align-items-center gap-1">
-                {{ filtro }}
-                <button type="button" class="btn-close btn-close-white" aria-label="Quitar filtro"
-                  style="font-size: 0.6rem;" (click)="quitarFiltro(filtro)">
-                </button>
-              </c-badge>
-            </div>
-          </div>
-        </c-card-body>
-      </c-card>
-    </c-col>
-  </c-row>
-
-  <!-- Tabla de categorías -->
-  <c-row>
-    <c-col>
-      <c-card class="shadow-sm">
-        <c-card-body class="p-0">
-          <!-- Loading spinner -->
-          <div *ngIf="loading" class="text-center py-5">
-            <c-spinner color="primary" size="sm"></c-spinner>
-            <p class="mt-3 text-body-secondary mb-0">Cargando categorías...</p>
-          </div>
-
-          <!-- Estado vacío -->
-          <div *ngIf="!loading && categorias.length === 0" class="text-center py-5">
-            <div class="mb-4">
-              <svg cIcon name="cil-folder-open" size="3xl" class="text-body-secondary"></svg>
-            </div>
-            <h5 class="text-body-emphasis mb-2">No hay categorías registradas</h5>
-            <p class="text-body-secondary mb-4">Comienza agregando tu primera categoría para gestionar el club</p>
-            <button cButton color="primary" (click)="agregarCategoria()">
-              <svg cIcon name="cil-plus" class="me-2"></svg>
-              Agregar Primera Categoría
+<c-row>
+  <c-col xs="12">
+    <c-card class="mb-4">
+      <c-card-header class="d-flex justify-content-between align-items-center">
+        <div>
+          <strong>Gestión de Categorías</strong>
+          <small class="text-body-secondary ms-2">Administrar categorías de entrenamiento</small>
+        </div>
+        <button 
+          cButton 
+          color="primary" 
+          size="sm"
+          (click)="agregarCategoria()"
+          cTooltip="Agregar nueva categoría">
+          <svg cIcon name="cilPlus" class="me-1"></svg>
+          Nueva Categoría
+        </button>
+      </c-card-header>
+      
+      <c-card-body>
+        <!-- Barra de búsqueda y filtros -->
+        <c-row class="mb-3">
+          <c-col md="4">
+            <c-input-group>
+              <span cInputGroupText>
+                <svg cIcon name="cilSearch"></svg>
+              </span>
+              <input 
+                cFormControl 
+                placeholder="Buscar por nombre o descripción..."
+                [value]="searchTerm"
+                (input)="onSearch($any($event.target).value)"
+                type="text">
+            </c-input-group>
+          </c-col>
+          <c-col md="2">
+            <select 
+              class="form-select"
+              [value]="filtroEstado || ''"
+              (change)="onFiltroEstadoChange($any($event.target).value || undefined)"
+              aria-label="Filtrar por estado">
+              <option value="">Todos los estados</option>
+              <option value="activa">Activas</option>
+              <option value="inactiva">Inactivas</option>
+            </select>
+          </c-col>
+          <c-col md="2">
+            <select 
+              class="form-select"
+              [value]="filtroNivel || ''"
+              (change)="onFiltroNivelChange($any($event.target).value || undefined)"
+              aria-label="Filtrar por nivel">
+              <option value="">Todos los niveles</option>
+              <option *ngFor="let nivel of nivelesDisponibles" [value]="nivel">{{ nivel }}</option>
+            </select>
+          </c-col>
+          <c-col md="2">
+            <button 
+              cButton 
+              color="secondary" 
+              variant="outline"
+              size="sm"
+              (click)="limpiarFiltros()"
+              cTooltip="Limpiar filtros">
+              <svg cIcon name="cilReload" class="me-1"></svg>
+              Limpiar
             </button>
-          </div>
+          </c-col>
+          <c-col md="2" class="text-end">
+            <small class="text-body-secondary">
+              {{ paginatedItems.length }} de {{ totalItems }} categorías
+            </small>
+          </c-col>
+        </c-row>
 
-          <!-- Sin resultados de filtro -->
-          <div *ngIf="!loading && categorias.length > 0 && categoriasFiltradas.length === 0" class="text-center py-5">
-            <div class="mb-4">
-              <svg cIcon name="cil-search" size="3xl" class="text-body-secondary"></svg>
-            </div>
-            <h5 class="text-body-emphasis mb-2">No se encontraron categorías</h5>
-            <p class="text-body-secondary mb-4">Intenta ajustar los filtros de búsqueda</p>
-            <button cButton color="secondary" variant="outline" (click)="limpiarFiltros()">
-              <svg cIcon name="cil-filter-x" class="me-2"></svg>
-              Limpiar Filtros
-            </button>
-          </div>
+        <!-- Mensaje de error -->
+        <c-alert 
+          *ngIf="errorMessage" 
+          color="danger" 
+          [dismissible]="true"
+          (dismissed)="clearMessages()">
+          {{ errorMessage }}
+        </c-alert>
 
-          <!-- Tabla de categorías -->
-          <div *ngIf="!loading && categoriasFiltradas.length > 0" class="table-responsive">
-            <table [hover]="true" [responsive]="true" [striped]="true" align="middle" cTable
-              class="mb-0 border table-sm" role="table" aria-label="Tabla de categorías del club deportivo">
-              <thead class="text-nowrap text-truncate" [ngClass]="isDarkTheme ? 'table-dark' : 'table-light'">
-                <tr>
-                  <th class="text-center" scope="col">
-                    <svg cIcon name="cil-tags" aria-hidden="true"></svg>
-                    <span class="visually-hidden">Avatar</span>
-                  </th>
-                  <th scope="col">Categoría</th>
-                  <th class="text-center" scope="col">Nivel</th>
-                  <th class="d-none d-md-table-cell" scope="col">Edades</th>
-                  <th class="d-none d-lg-table-cell" scope="col">Cuota</th>
-                  <th class="d-none d-md-table-cell" scope="col">Alumnos</th>
-                  <th class="text-center" scope="col">Estado</th>
-                  <th class="text-center" scope="col">Acciones</th>
-                </tr>
-              </thead>
-              <tbody>
-                @for (categoria of categoriasFiltradas; track categoria._id; let i = $index) {
-                <tr [attr.aria-rowindex]="i + 2" role="row">
-                  <td class="text-center" role="gridcell">
-                    <c-avatar [size]="'md'" [color]="categoria.activa ? 'success' : 'secondary'" [textColor]="'white'"
-                      [attr.aria-label]="'Avatar de ' + categoria.nombre">
-                      {{ categoria.nombre.charAt(0).toUpperCase() }}
-                    </c-avatar>
-                  </td>
-                  <td role="gridcell">
-                    <div>
-                      <strong class="text-body-emphasis">{{ categoria.nombre }}</strong>
-                    </div>
-                    <div class="small text-body-secondary text-nowrap" *ngIf="categoria.descripcion">
-                      <span>{{ categoria.descripcion }}</span>
-                    </div>
-                  </td>
-                  <td class="text-center" role="gridcell">
-                    <c-badge [color]="getNivelBadgeColor(categoria.nivel)" class="text-uppercase">
-                      {{ categoria.nivel }}
-                    </c-badge>
-                  </td>
-                  <td class="d-none d-md-table-cell" role="gridcell">
-                    <div class="d-flex justify-content-between">
-                      <div class="float-start">
-                        <strong>{{ categoria.edad_min }}-{{ categoria.edad_max }}</strong>
-                      </div>
-                      <div class="float-end ms-1 text-nowrap">
-                        <small class="text-body-secondary">años</small>
+        <!-- Mensaje de éxito -->
+        <c-alert 
+          *ngIf="successMessage" 
+          color="success" 
+          [dismissible]="true"
+          (dismissed)="clearMessages()">
+          {{ successMessage }}
+        </c-alert>
+
+        <!-- Spinner de carga -->
+        <div *ngIf="loading" class="text-center py-4">
+          <c-spinner color="primary"></c-spinner>
+          <p class="mt-2 text-body-secondary">Cargando categorías...</p>
+        </div>
+
+        <!-- Tabla de categorías -->
+        <div *ngIf="!loading" class="table-responsive">
+          <table cTable [hover]="true" [striped]="true">
+            <thead>
+              <tr>
+                <th scope="col">Categoría</th>
+                <th scope="col">Nivel</th>
+                <th scope="col">Rango de Edad</th>
+                <th scope="col">Cuota Mensual</th>
+                <th scope="col">Ocupación</th>
+                <th scope="col">Estado</th>
+                <th scope="col" class="text-center">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let categoria of paginatedItems; trackBy: trackByCategoria">
+                <!-- Categoría -->
+                <td>
+                  <div>
+                    <div class="fw-semibold">{{ categoria.nombre }}</div>
+                    <small class="text-body-secondary">{{ categoria.descripcion || 'Sin descripción' }}</small>
+                  </div>
+                </td>
+
+                <!-- Nivel -->
+                <td>
+                  <c-badge 
+                    [color]="getLevelBadgeColor(categoria.nivel)"
+                    class="me-1">
+                    {{ categoria.nivel }}
+                  </c-badge>
+                </td>
+
+                <!-- Rango de Edad -->
+                <td>
+                  <small>{{ formatAgeRange(categoria) }}</small>
+                </td>
+
+                <!-- Cuota Mensual -->
+                <td>
+                  <span class="fw-semibold">${{ (categoria.cuota_mensual || categoria.precio?.cuotaMensual || 0) | number:'1.0-0' }}</span>
+                </td>
+
+                <!-- Ocupación -->
+                <td>
+                  <div class="d-flex align-items-center">
+                    <small class="me-2">{{ (categoria.alumnos_actuales || categoria.alumnosActuales || 0) }}/{{ (categoria.max_alumnos || categoria.cupoMaximo || 0) }}</small>
+                    <div class="progress" style="width: 60px; height: 8px;">
+                      <div 
+                        class="progress-bar" 
+                        [class]="'bg-' + getOccupancyColor(getOccupancyPercentage(categoria))"
+                        [style.width.%]="getOccupancyPercentage(categoria)">
                       </div>
                     </div>
-                  </td>
-                  <td class="d-none d-lg-table-cell" role="gridcell">
-                    <div class="fw-semibold text-success">
-                      ${{ categoria.cuota_mensual | number:'1.2-2' }}
-                    </div>
-                    <div class="small text-body-secondary">mensual</div>
-                  </td>
-                  <td class="d-none d-md-table-cell" role="gridcell">
-                    <div class="d-flex justify-content-between">
-                      <div class="float-start">
-                        <strong>{{ (categoria.alumnos_actuales / categoria.max_alumnos * 100) | number:'1.0-0'
-                          }}%</strong>
-                      </div>
-                      <div class="float-end ms-1 text-nowrap">
-                        <small class="text-body-secondary">
-                          {{ categoria.alumnos_actuales }}/{{ categoria.max_alumnos }}
-                        </small>
-                      </div>
-                    </div>
-                    <c-progress thin [value]="(categoria.alumnos_actuales / categoria.max_alumnos) * 100"
-                      [color]="getProgressColor(categoria.alumnos_actuales, categoria.max_alumnos)"
-                      [attr.aria-label]="'Ocupación: ' + (categoria.alumnos_actuales / categoria.max_alumnos * 100 | number:'1.0-0') + '%'" />
-                  </td>
-                  <td class="text-center" role="gridcell">
-                    <c-badge [color]="getBadgeClass(categoria.activa)">
-                      {{ getBadgeText(categoria.activa) }}
-                    </c-badge>
-                  </td>
-                  <td role="gridcell">
-                    <div class="d-flex gap-1 justify-content-center">
-                      <button cButton color="primary" variant="ghost" size="sm" (click)="modificarCategoria(categoria)"
-                        cTooltip="Modificar categoría" [disabled]="loading"
-                        [attr.aria-label]="'Modificar categoría ' + categoria.nombre">
-                        <svg cIcon name="cil-pencil" class="me-1"></svg>
-                        <span class="d-none d-xl-inline">Editar</span>
-                      </button>
-                      <button cButton [color]="getButtonClass(categoria.activa)" variant="ghost" size="sm"
-                        (click)="toggleEstadoCategoria(categoria)" [cTooltip]="getButtonText(categoria.activa)"
-                        [disabled]="loading"
-                        [attr.aria-label]="getButtonText(categoria.activa) + ' categoría ' + categoria.nombre">
-                        <svg cIcon [name]="getButtonIcon(categoria.activa)" class="me-1"></svg>
-                        <span class="d-none d-xl-inline">{{ getButtonText(categoria.activa) }}</span>
-                      </button>
-                      <button cButton color="danger" variant="ghost" size="sm" (click)="eliminarCategoria(categoria)"
-                        cTooltip="Eliminar categoría" [disabled]="loading"
-                        [attr.aria-label]="'Eliminar categoría ' + categoria.nombre">
-                        <svg cIcon name="cil-trash" class="me-1"></svg>
-                        <span class="d-none d-xl-inline">Eliminar</span>
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-                }
-              </tbody>
-            </table>
-          </div>
-        </c-card-body>
-      </c-card>
-    </c-col>
-  </c-row>
+                    <small class="ms-2">{{ getOccupancyPercentage(categoria) | number:'1.0-0' }}%</small>
+                  </div>
+                </td>
 
-  <!-- Widgets de métricas de categorías -->
-  <c-card class="mb-4 shadow-sm">
-    <c-card-body>
-      <c-row>
-        <c-col sm="5">
-          <h4 class="card-title mb-0" id="categoria-metrics">Métricas de Categorías</h4>
-          <div class="small text-body-secondary">Resumen general del sistema</div>
-        </c-col>
-        <c-col class="d-none d-md-block" sm="7">
-          <button cButton class="float-end" color="primary" aria-label="Exportar datos">
-            <svg cIcon name="cil-cloud-download"></svg>
-          </button>
-          <div class="float-end me-3">
-            <c-badge color="info" class="me-2">{{ totalCategorias }} Total</c-badge>
-            <c-badge color="success">{{ categoriasActivas }} Activas</c-badge>
-          </div>
-        </c-col>
-      </c-row>
+                <!-- Estado -->
+                <td>
+                  <c-badge 
+                    [color]="getBadgeClass(categoria)"
+                    class="me-1">
+                    {{ getEstadoText(categoria) }}
+                  </c-badge>
+                  <br>
+                  <button 
+                    cButton 
+                    size="sm" 
+                    variant="outline" 
+                    [color]="getEstadoActivo(categoria) ? 'warning' : 'success'"
+                    class="mt-1 w-100"
+                    style="min-width: 100px;"
+                    (click)="cambiarEstadoCategoria(categoria, !getEstadoActivo(categoria))"
+                    [cTooltip]="getButtonText(categoria)">
+                    <svg cIcon [name]="getButtonIcon(categoria)" size="sm" class="me-1"></svg>
+                    {{ getEstadoActivo(categoria) ? 'Desactivar' : 'Activar' }}
+                  </button>
+                </td>
 
-      <!-- Gráfico principal de distribución -->
-      <div style="height: 300px; margin-top: 40px; position: relative;">
-        <c-chart [data]="barChartData" [height]="300" [options]="chartOptions" [type]="'bar'">
-          Distribución de alumnos por categoría
-        </c-chart>
-      </div>
-    </c-card-body>
+                <!-- Acciones -->
+                <td class="text-center">
+                  <div class="btn-group" role="group">
+                    <button 
+                      cButton 
+                      size="sm" 
+                      variant="outline" 
+                      color="info"
+                      (click)="editarCategoria(categoria)"
+                      cTooltip="Editar categoría">
+                      <svg cIcon name="cilPencil" size="sm"></svg>
+                    </button>
+                    
+                    <button 
+                      cButton 
+                      size="sm" 
+                      variant="outline" 
+                      color="danger"
+                      (click)="confirmarEliminacion(categoria)"
+                      cTooltip="Eliminar categoría">
+                      <svg cIcon name="cilTrash" size="sm"></svg>
+                    </button>
+                  </div>
+                </td>
+              </tr>
 
-    <!-- Footer con métricas detalladas -->
-    <c-card-footer>
-      <c-row class="text-center mb-2" [xl]="5" [lg]="4" [sm]="2" [xs]="1">
-        <c-col>
-          <div class="text-body-secondary">Ocupación Promedio</div>
-          <strong>{{ ocupacionPromedio }}% ({{ totalEstudiantes }} alumnos)</strong>
-          <c-progress class="mt-2" thin color="success" [value]="ocupacionPromedio" aria-label="Ocupación promedio" />
-        </c-col>
-        <c-col>
-          <div class="text-body-secondary">Categorías por Nivel</div>
-          <div class="fw-semibold text-truncate">{{ getCategoriesByLevel('PRINCIPIANTE') }} Principiante</div>
-          <c-progress class="mt-2" thin color="info"
-            [value]="(getCategoriesByLevel('PRINCIPIANTE') / categorias.length) * 100"
-            aria-label="Categorías principiante" />
-        </c-col>
-        <c-col>
-          <div class="text-body-secondary">Cuota Promedio</div>
-          <div class="fw-semibold text-truncate">${{ getAverageMonthlyFee() | number:'1.2-2' }} mensual</div>
-          <c-progress class="mt-2" thin color="warning" [value]="60" aria-label="Cuota promedio" />
-        </c-col>
-        <c-col>
-          <div class="text-body-secondary">Rango de Edades</div>
-          <div class="fw-semibold text-truncate">{{ getMinAge() }}-{{ getMaxAge() }} años</div>
-          <c-progress class="mt-2" thin color="danger" [value]="80" aria-label="Rango de edades" />
-        </c-col>
-        <c-col class="d-none d-xl-block">
-          <div class="text-body-secondary">Capacidad Total</div>
-          <div class="fw-semibold text-truncate">{{ capacidadTotal }} plazas disponibles</div>
-          <c-progress class="mt-2" thin color="primary" [value]="(totalEstudiantes / capacidadTotal) * 100"
-            aria-label="Capacidad total" />
-        </c-col>
-      </c-row>
-    </c-card-footer>
-  </c-card>
+              <!-- Mensaje cuando no hay categorías -->
+              <tr *ngIf="paginatedItems.length === 0">
+                <td colspan="7" class="text-center py-4">
+                  <div class="text-body-secondary">
+                    <svg cIcon name="cilFolder" size="xl" class="mb-2"></svg>
+                    <p class="mb-0">No se encontraron categorías</p>
+                    <small>{{ searchTerm ? 'Intenta con otros términos de búsqueda' : 'Comienza agregando una nueva categoría' }}</small>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
 
-  <!-- Widgets de métricas estadísticas -->
-  <c-row class="mb-4">
-    <c-col md="12" xl="6">
-      <c-widget-stat-a class="mb-4" color="primary" [title]="'Ingresos Mensuales Totales'">
-        <ng-template cTemplateId="widgetValueTemplate" ngPreserveWhitespaces>
-          ${{ ingresosMensuales | number:'1.2-2' }}
-          <span class="fs-6 fw-normal">
-            ({{ getRevenueGrowthPercentage() }}% <svg [cIcon]="icons.cilArrowTop" class="text-success"></svg>)
-          </span>
-        </ng-template>
-        <ng-template cTemplateId="widgetActionTemplate">
-          <c-dropdown alignment="end" variant="btn-group">
-            <button [caret]="false" cButton cDropdownToggle class="p-0" color="transparent">
-              <svg [cIcon]="icons.cilOptions" class="text-high-emphasis-inverse"></svg>
-            </button>
-            <div cDropdownMenu>
-              <a [routerLink]="[]" cDropdownItem>Ver Detalles</a>
-              <a [routerLink]="[]" cDropdownItem>Exportar Datos</a>
-              <a [routerLink]="[]" cDropdownItem>Configurar</a>
-            </div>
-          </c-dropdown>
-        </ng-template>
-        <ng-template cTemplateId="widgetChartTemplate">
-          <c-chart [data]="revenueChartData" [options]="miniChartOptions" class="mt-3 mx-3" height="110" type="line" />
-        </ng-template>
-      </c-widget-stat-a>
-    </c-col>
-
-    <c-col md="12" xl="6">
-      <c-widget-stat-a class="mb-4" color="success" [title]="'Ocupación Promedio'">
-        <ng-template cTemplateId="widgetValueTemplate" ngPreserveWhitespaces>
-          {{ ocupacionPromedio }}%
-          <span class="fs-6 fw-normal">
-            ({{ totalEstudiantes }}/{{ capacidadTotal }} alumnos)
-          </span>
-        </ng-template>
-        <ng-template cTemplateId="widgetActionTemplate">
-          <c-dropdown alignment="end" variant="btn-group">
-            <button [caret]="false" cButton cDropdownToggle class="p-0" color="transparent">
-              <svg [cIcon]="icons.cilOptions" class="text-high-emphasis-inverse"></svg>
-            </button>
-            <div cDropdownMenu>
-              <a [routerLink]="[]" cDropdownItem>Ver por Categoría</a>
-              <a [routerLink]="[]" cDropdownItem>Gestionar Capacidad</a>
-              <a [routerLink]="[]" cDropdownItem>Reportes</a>
-            </div>
-          </c-dropdown>
-        </ng-template>
-        <ng-template cTemplateId="widgetChartTemplate">
-          <c-chart [data]="occupancyChartData" [options]="miniChartOptions" class="mt-3 mx-3" height="110"
-            type="doughnut" />
-        </ng-template>
-      </c-widget-stat-a>
-    </c-col>
-  </c-row>
-
-  <!-- Widget de distribución por nivel -->
-  <c-row class="mb-4">
-    <c-col xs="12" lg="6">
-      <c-card class="h-100 shadow-sm">
-        <c-card-header class="bg-transparent border-bottom-0 pb-0">
-          <h5 class="card-title mb-0 text-body-emphasis">Distribución por Nivel</h5>
-          <small class="text-body-secondary">Categorías por dificultad</small>
-        </c-card-header>
-        <c-card-body class="pt-2">
-          <div class="mb-3" *ngFor="let nivel of nivelesDisponibles">
-            <div class="d-flex justify-content-between align-items-center mb-1">
-              <span class="text-body-emphasis fw-semibold">{{ nivel | titlecase }}</span>
-              <c-badge [color]="getNivelBadgeColor(nivel)" class="text-uppercase">
-                {{ getCategoriesByLevel(nivel) }} categorías
-              </c-badge>
-            </div>
-            <c-progress thin [color]="getNivelBadgeColor(nivel)"
-              [value]="(getCategoriesByLevel(nivel) / categorias.length) * 100" aria-label="Distribución por nivel" />
-          </div>
-        </c-card-body>
-      </c-card>
-    </c-col>
-
-    <c-col xs="12" lg="6">
-      <c-card class="h-100 shadow-sm">
-        <c-card-header class="bg-transparent border-bottom-0 pb-0">
-          <h5 class="card-title mb-0 text-body-emphasis">Estado de Categorías</h5>
-          <small class="text-body-secondary">Activas vs Inactivas</small>
-        </c-card-header>
-        <c-card-body class="pt-2">
-          <div style="height: 280px; position: relative;">
-            <c-chart type="pie" [data]="pieChartData" [options]="chartOptions">
-            </c-chart>
-          </div>
-        </c-card-body>
-      </c-card>
-    </c-col>
-  </c-row>
-
-</c-container>
+        <!-- Paginación -->
+         <div *ngIf="totalPages > 1" class="d-flex justify-content-center mt-3">
+           <nav aria-label="Paginación de categorías">
+             <ul class="pagination">
+               <li class="page-item" [class.disabled]="currentPage === 1">
+                 <a class="page-link" 
+                    (click)="currentPage > 1 && onPageChange(currentPage - 1)"
+                    style="cursor: pointer;">
+                   Anterior
+                 </a>
+               </li>
+               
+               <li class="page-item" 
+                   *ngFor="let page of [].constructor(totalPages); let i = index"
+                   [class.active]="currentPage === i + 1">
+                 <a class="page-link" 
+                    (click)="onPageChange(i + 1)"
+                    style="cursor: pointer;">
+                   {{ i + 1 }}
+                 </a>
+               </li>
+               
+               <li class="page-item" [class.disabled]="currentPage === totalPages">
+                 <a class="page-link" 
+                    (click)="currentPage < totalPages && onPageChange(currentPage + 1)"
+                    style="cursor: pointer;">
+                   Siguiente
+                 </a>
+               </li>
+             </ul>
+           </nav>
+         </div>
+      </c-card-body>
+    </c-card>
+  </c-col>
+</c-row>

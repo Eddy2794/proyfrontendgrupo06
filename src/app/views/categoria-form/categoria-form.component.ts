@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { Categoria, NIVELES, DIAS_SEMANA, Horario } from '../../models/categoria';
+import { Categoria, CategoriaClass, NIVELES, DIAS_SEMANA, Horario } from '../../models/categoria';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CategoriaService } from '../../services/categoria.service';
 import { FormsModule } from '@angular/forms';
@@ -52,7 +52,7 @@ export class CategoriaFormComponent implements OnInit {
   }
 
   iniciarVariable() {
-    this.categoria = new Categoria();
+    this.categoria = new CategoriaClass();
   }
 
   cargarCategoria(id: string) {
@@ -78,7 +78,7 @@ export class CategoriaFormComponent implements OnInit {
     }
 
     this.loading = true;
-    this.categoriaService.updateCategoria(this.categoria).subscribe({
+    this.categoriaService.updateCategoria(this.categoria._id!, this.categoria).subscribe({
       next: result => {
         if (result.success) {
           this.showSuccessToast('Categoría actualizada', 'La categoría se modificó correctamente');
@@ -117,36 +117,38 @@ export class CategoriaFormComponent implements OnInit {
   }
 
   validarFormulario(): boolean {
-    if (!this.categoria.nombre.trim()) {
+    if (!this.categoria?.nombre?.trim()) {
       this.showErrorToast('Campo requerido', 'El nombre de la categoría es obligatorio');
       return false;
     }
 
-    if (this.categoria.edad_min >= this.categoria.edad_max) {
+    if ((this.categoria?.edad_min ?? 0) >= (this.categoria?.edad_max ?? 0)) {
       this.showErrorToast('Error en edades', 'La edad mínima debe ser menor que la edad máxima');
       return false;
     }
 
-    if (this.categoria.cuota_mensual < 0) {
+    if ((this.categoria?.cuota_mensual ?? 0) < 0) {
       this.showErrorToast('Error en cuota', 'La cuota mensual no puede ser negativa');
       return false;
     }
 
-    if (this.categoria.max_alumnos < 1) {
+    if ((this.categoria?.max_alumnos ?? 0) < 1) {
       this.showErrorToast('Error en capacidad', 'El máximo de alumnos debe ser al menos 1');
       return false;
     }
 
     // Validar horarios
-    for (let horario of this.categoria.horarios) {
-      if (!horario.dia || !horario.hora_inicio || !horario.hora_fin) {
-        this.showErrorToast('Error en horarios', 'Todos los campos de horario son requeridos');
-        return false;
-      }
+    if (this.categoria?.horarios) {
+      for (let horario of this.categoria.horarios) {
+        if (!horario.dia || !horario.hora_inicio || !horario.hora_fin) {
+          this.showErrorToast('Error en horarios', 'Todos los campos de horario son requeridos');
+          return false;
+        }
 
-      if (horario.hora_inicio >= horario.hora_fin) {
-        this.showErrorToast('Error en horarios', 'La hora de inicio debe ser menor que la hora de fin');
-        return false;
+        if (horario.hora_inicio >= horario.hora_fin) {
+          this.showErrorToast('Error en horarios', 'La hora de inicio debe ser menor que la hora de fin');
+          return false;
+        }
       }
     }
 
@@ -162,15 +164,19 @@ export class CategoriaFormComponent implements OnInit {
   }
 
   agregarHorario() {
-    this.categoria.horarios.push({
-      dia: 'LUNES',
-      hora_inicio: '09:00',
-      hora_fin: '10:00'
-    });
+    if (this.categoria?.horarios) {
+      this.categoria.horarios.push({
+        dia: 'LUNES',
+        hora_inicio: '09:00',
+        hora_fin: '10:00'
+      });
+    }
   }
 
   eliminarHorario(index: number) {
-    this.categoria.horarios.splice(index, 1);
+    if (this.categoria?.horarios) {
+      this.categoria.horarios.splice(index, 1);
+    }
   }
 
   cancelar() {
