@@ -124,6 +124,20 @@
         </c-card>
     </c-col>
 </c-row>
+<c-row>
+    <c-col xs="12">
+        <c-card class="mb-4">
+            <c-card-header class="d-flex justify-content-between align-items-center">
+                <div>
+                    <strong><h3 class="mb-3">Cuántas categorías están participando por torneo</h3></strong>
+                </div>
+            </c-card-header>
+            <c-card-body>
+                <c-chart [data]="dataTorneoCategoria" type="bar"/>
+            </c-card-body>
+        </c-card>
+    </c-col>
+</c-row>
 <c-row class="mt-4">
   <c-col xs>
     <c-card class="mb-4">
