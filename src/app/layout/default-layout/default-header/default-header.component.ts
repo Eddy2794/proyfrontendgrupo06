@@ -30,11 +30,30 @@ import { UserStateService } from '../../../services/user-state.service';
 import { User, Persona } from '../../../models';
 
 @Component({
-    selector: 'app-default-header',
-    templateUrl: './default-header.component.html',
-  imports: [ContainerComponent, HeaderTogglerDirective, SidebarToggleDirective, IconDirective, HeaderNavComponent, NavItemComponent, NavLinkDirective, RouterLink, RouterLinkActive, NgTemplateOutlet, BreadcrumbRouterComponent, DropdownComponent, DropdownToggleDirective, AvatarComponent, DropdownMenuDirective, DropdownHeaderDirective, DropdownItemDirective, 
-    // BadgeComponent, 
-    DropdownDividerDirective, CommonModule, AsyncPipe]
+  selector: 'app-default-header',
+  templateUrl: './default-header.component.html',
+  imports: [
+    ContainerComponent, 
+    HeaderTogglerDirective, 
+    SidebarToggleDirective, 
+    IconDirective, 
+    HeaderNavComponent, 
+    NavItemComponent, 
+    NavLinkDirective, 
+    RouterLink, 
+    RouterLinkActive, 
+    NgTemplateOutlet, 
+    BreadcrumbRouterComponent, 
+    DropdownComponent, 
+    DropdownToggleDirective, 
+    AvatarComponent, 
+    DropdownMenuDirective, 
+    DropdownHeaderDirective, 
+    DropdownItemDirective, 
+    DropdownDividerDirective, 
+    CommonModule, 
+    AsyncPipe
+  ]
 })
 export class DefaultHeaderComponent extends HeaderComponent implements OnInit, OnDestroy {
 
