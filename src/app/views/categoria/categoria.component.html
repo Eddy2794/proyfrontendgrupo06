@@ -138,7 +138,7 @@
 
                 <!-- Cuota Mensual -->
                 <td>
-                  <span class="fw-semibold">${{ (categoria.precio?.cuotaMensual || 0) | number:'1.0-0' }}</span>
+                  <span class="fw-semibold">${{ (categoria.precio.cuotaMensual || 0) | number:'1.0-0' }}</span>
                 </td>
 
                 <!-- Profesor -->
@@ -310,7 +310,7 @@
         </div>
         <div class="col-md-6">
           <div class="mb-3">
-            <strong>Cuota Mensual:</strong> ${{ (categoriaSeleccionada.precio?.cuotaMensual || 0) | number:'1.0-0' }}
+            <strong>Cuota Mensual:</strong> ${{ (categoriaSeleccionada.precio.cuotaMensual || 0) | number:'1.0-0' }}
           </div>
           <div class="mb-3">
             <strong>Profesor:</strong> {{ getNombreProfesor(categoriaSeleccionada._id) }}

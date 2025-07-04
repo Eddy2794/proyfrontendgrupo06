@@ -10,7 +10,6 @@ import {
   ToastComponent,
   FormDirective,
   FormControlDirective,
-  FormLabelDirective,
   FormSelectDirective
 } from '@coreui/angular';
 import { NotificationService } from '../../services/notification.service';
@@ -26,7 +25,6 @@ import { ColorModeService } from '@coreui/angular';
     NotificationsComponent,
     FormDirective,
     FormControlDirective,
-    FormLabelDirective,
     FormSelectDirective
   ],
   templateUrl: './categoria-form.component.html',

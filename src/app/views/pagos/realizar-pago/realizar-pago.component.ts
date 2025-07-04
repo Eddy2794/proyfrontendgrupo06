@@ -15,6 +15,7 @@ import { PagoService } from '../../../services/pago.service';
 import { CategoriaService } from '../../../services/categoria.service';
 import { MercadoPagoService } from '../../../services/mercadopago.service';
 import { NotificationService } from '../../../services/notification.service';
+import { ConfigService } from '../../../services/config.service';
 import { Categoria, CreatePaymentPreferenceRequest, PaymentPreferenceResponse } from '../../../models';
 import { environment } from '../../../../environments/environment';
 
