@@ -15,6 +15,7 @@ export interface Categoria {
     };
   };
   cupoMaximo: number;
+  profesor?: string;
   horarios?: Horario[];
   configuracionPago?: {
     habilitarDescuentos: boolean;
@@ -31,15 +32,7 @@ export interface Categoria {
   fechaCreacion?: Date;
   fechaActualizacion?: Date;
   
-  // Campos virtuales para compatibilidad hacia atrás
-  edad_min?: number;
-  edad_max?: number;
-  cuota_mensual?: number;
-  activa?: boolean;
-  max_alumnos?: number;
-  alumnos_actuales?: number;
-  createdAt?: Date;
-  updatedAt?: Date;
+  // Campos de compatibilidad eliminados - usar solo nomenclatura nueva
 }
 
 export class CategoriaClass implements Categoria {
@@ -59,6 +52,7 @@ export class CategoriaClass implements Categoria {
     };
   };
   cupoMaximo: number;
+  profesor?: string;
   horarios?: Horario[];
   configuracionPago?: {
     habilitarDescuentos: boolean;
@@ -100,25 +94,7 @@ export class CategoriaClass implements Categoria {
     this.alumnosActuales = 0;
   }
 
-  // Getters para compatibilidad hacia atrás
-  get edad_min(): number { return this.edadMinima; }
-  get edad_max(): number { return this.edadMaxima; }
-  get cuota_mensual(): number { return this.precio.cuotaMensual; }
-  get activa(): boolean { return this.estado === 'ACTIVA'; }
-  get max_alumnos(): number { return this.cupoMaximo; }
-  get alumnos_actuales(): number { return this.alumnosActuales || 0; }
-  get createdAt(): Date | undefined { return this.fechaCreacion; }
-  get updatedAt(): Date | undefined { return this.fechaActualizacion; }
-
-  // Setters para compatibilidad hacia atrás
-  set edad_min(value: number) { this.edadMinima = value; }
-  set edad_max(value: number) { this.edadMaxima = value; }
-  set cuota_mensual(value: number) { this.precio.cuotaMensual = value; }
-  set activa(value: boolean) { this.estado = value ? 'ACTIVA' : 'INACTIVA'; }
-  set max_alumnos(value: number) { this.cupoMaximo = value; }
-  set alumnos_actuales(value: number) { this.alumnosActuales = value; }
-  set createdAt(value: Date | undefined) { this.fechaCreacion = value; }
-  set updatedAt(value: Date | undefined) { this.fechaActualizacion = value; }
+  // Getters y setters de compatibilidad eliminados - usar solo nomenclatura nueva
 }
 
 export interface Horario {

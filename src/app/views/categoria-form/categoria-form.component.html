@@ -23,7 +23,7 @@
             </div>
           </div>
 
-          <form *ngIf="!loading">
+          <form #categoriaFormNg="ngForm" (ngSubmit)="guardar()" [validated]="categoriaFormValidated" novalidate cForm *ngIf="!loading">
             <div class="row">
               <!-- Información Básica -->
               <div class="col-md-6">
@@ -37,9 +37,13 @@
                     <svg cIcon name="cil-football" class="me-1" size="sm"></svg>
                     Nombre de la Categoría *
                   </label>
-                  <input name="nombre" type="text" class="form-control" id="idNombre" 
+                  <input cFormControl name="nombre" type="text" class="form-control" id="idNombre" 
                          [(ngModel)]="categoria.nombre" required
+                         #nombre="ngModel"
                          placeholder="Ej: Sub-10, Infantil, Juvenil A">
+                  <div *ngIf="nombre.invalid && (nombre.touched || nombre.dirty || categoriaFormValidated)" class="invalid-feedback d-block">
+                    El nombre de la categoría es requerido.
+                  </div>
                   <div class="form-text">Nombre que identifica la categoría formativa</div>
                 </div>
 
@@ -60,24 +64,71 @@
                     <svg cIcon name="cil-settings" class="me-1" size="sm"></svg>
                     Nivel Formativo *
                   </label>
-                  <select name="nivel" class="form-select" id="idNivel" 
-                          [(ngModel)]="categoria.nivel" required>
+                  <select cSelect name="nivel" class="form-select" id="idNivel" 
+                          [(ngModel)]="categoria.nivel" required
+                          #nivel="ngModel">
                     <option value="" disabled>Selecciona el nivel formativo</option>
                     <option *ngFor="let nivel of niveles" [value]="nivel">{{ nivel }}</option>
                   </select>
+                  <div *ngIf="nivel.invalid && (nivel.touched || nivel.dirty || categoriaFormValidated)" class="invalid-feedback d-block">
+                    El nivel formativo es requerido.
+                  </div>
                   <div class="form-text">Nivel de desarrollo futbolístico de la categoría</div>
                 </div>
 
                 <div class="mb-3">
-                  <div class="form-check form-switch">
-                    <input class="form-check-input" type="checkbox" id="idActiva" 
-                           name="activa" [(ngModel)]="categoria.activa">
-                    <label class="form-check-label" for="idActiva">
-                      <svg cIcon name="cil-group" class="me-1" size="sm"></svg>
-                      Categoría activa para inscripciones
-                    </label>
+                  <label for="idTipo" class="form-label">
+                    <svg cIcon name="cil-tags" class="me-1" size="sm"></svg>
+                    Tipo de Categoría *
+                  </label>
+                  <select cSelect name="tipo" class="form-select" id="idTipo" 
+                          [(ngModel)]="categoria.tipo" required
+                          #tipo="ngModel">
+                    <option value="" disabled>Selecciona el tipo de categoría</option>
+                    <option *ngFor="let tipo of tiposCategoria" [value]="tipo">{{ tipo }}</option>
+                  </select>
+                  <div *ngIf="tipo.invalid && (tipo.touched || tipo.dirty || categoriaFormValidated)" class="invalid-feedback d-block">
+                    El tipo de categoría es requerido.
                   </div>
-                  <div class="form-text">Permite que los jugadores se inscriban en esta categoría</div>
+                  <div class="form-text">Clasificación de la categoría según edad y enfoque</div>
+                </div>
+
+                <div class="mb-3">
+                  <label for="idProfesor" class="form-label">
+                    <svg cIcon name="cil-user" class="me-1" size="sm"></svg>
+                    Profesor a Cargo
+                  </label>
+                  <select name="profesor" class="form-select" id="idProfesor" 
+                          [(ngModel)]="categoria.profesor">
+                    <option value="" disabled>Selecciona un profesor</option>
+                    <option *ngFor="let profesor of profesores" [value]="profesor._id">
+                      {{ profesor.persona?.nombres }} {{ profesor.persona?.apellidos }}
+                    </option>
+                  </select>
+                  <div class="form-text">Profesor responsable de esta categoría</div>
+                  <div *ngIf="loadingProfesores" class="text-muted small">
+                    <div class="spinner-border spinner-border-sm me-1" role="status"></div>
+                    Cargando profesores...
+                  </div>
+                </div>
+
+                <div class="mb-3">
+                  <label for="idEstado" class="form-label">
+                    <svg cIcon name="cil-group" class="me-1" size="sm"></svg>
+                    Estado de la Categoría *
+                  </label>
+                  <select cSelect name="estado" class="form-select" id="idEstado" 
+                          [(ngModel)]="categoria.estado" required
+                          #estado="ngModel">
+                    <option value="" disabled>Selecciona el estado</option>
+                    <option value="ACTIVA">ACTIVA</option>
+                    <option value="INACTIVA">INACTIVA</option>
+                    <option value="SUSPENDIDA">SUSPENDIDA</option>
+                  </select>
+                  <div *ngIf="estado.invalid && (estado.touched || estado.dirty || categoriaFormValidated)" class="invalid-feedback d-block">
+                    El estado de la categoría es requerido.
+                  </div>
+                  <div class="form-text">Estado actual de la categoría para inscripciones</div>
                 </div>
               </div>
 
@@ -95,9 +146,13 @@
                         <svg cIcon name="cil-user" class="me-1" size="sm"></svg>
                         Edad Mínima *
                       </label>
-                      <input name="edad_min" type="number" class="form-control" id="idEdadMin" 
-                             [(ngModel)]="categoria.edad_min" min="3" max="100" required
+                      <input cFormControl name="edadMinima" type="number" class="form-control" id="idEdadMin" 
+                             [(ngModel)]="categoria.edadMinima" min="3" max="100" required
+                             #edadMinima="ngModel"
                              placeholder="6">
+                      <div *ngIf="edadMinima.invalid && (edadMinima.touched || edadMinima.dirty || categoriaFormValidated)" class="invalid-feedback d-block">
+                        La edad mínima es requerida.
+                      </div>
                       <div class="form-text">Años mínimos para ingresar</div>
                     </div>
                   </div>
@@ -107,9 +162,13 @@
                         <svg cIcon name="cil-user" class="me-1" size="sm"></svg>
                         Edad Máxima *
                       </label>
-                      <input name="edad_max" type="number" class="form-control" id="idEdadMax" 
-                             [(ngModel)]="categoria.edad_max" min="3" max="100" required
+                      <input cFormControl name="edadMaxima" type="number" class="form-control" id="idEdadMax" 
+                             [(ngModel)]="categoria.edadMaxima" min="3" max="100" required
+                             #edadMaxima="ngModel"
                              placeholder="10">
+                      <div *ngIf="edadMaxima.invalid && (edadMaxima.touched || edadMaxima.dirty || categoriaFormValidated)" class="invalid-feedback d-block">
+                        La edad máxima es requerida.
+                      </div>
                       <div class="form-text">Años máximos permitidos</div>
                     </div>
                   </div>
@@ -125,9 +184,13 @@
                       <svg cIcon name="cil-money" size="sm"></svg>
                       $
                     </span>
-                    <input name="cuota_mensual" type="number" class="form-control" id="idCuotaMensual" 
-                           [(ngModel)]="categoria.cuota_mensual" min="0" step="0.01" required
+                    <input cFormControl name="cuotaMensual" type="number" class="form-control" id="idCuotaMensual" 
+                           [(ngModel)]="categoria.precio.cuotaMensual" min="0" step="0.01" required
+                           #cuotaMensual="ngModel"
                            placeholder="15000.00">
+                  </div>
+                  <div *ngIf="cuotaMensual.invalid && (cuotaMensual.touched || cuotaMensual.dirty || categoriaFormValidated)" class="invalid-feedback d-block">
+                    La cuota mensual es requerida.
                   </div>
                   <div class="form-text">Costo mensual de la categoría formativa</div>
                 </div>
@@ -137,9 +200,13 @@
                     <svg cIcon name="cil-people" class="me-1" size="sm"></svg>
                     Capacidad Máxima *
                   </label>
-                  <input name="max_alumnos" type="number" class="form-control" id="idMaxAlumnos" 
-                         [(ngModel)]="categoria.max_alumnos" min="1" max="100" required
+                  <input cFormControl name="cupoMaximo" type="number" class="form-control" id="idMaxAlumnos" 
+                         [(ngModel)]="categoria.cupoMaximo" min="1" max="100" required
+                         #cupoMaximo="ngModel"
                          placeholder="20">
+                  <div *ngIf="cupoMaximo.invalid && (cupoMaximo.touched || cupoMaximo.dirty || categoriaFormValidated)" class="invalid-feedback d-block">
+                    La capacidad máxima es requerida.
+                  </div>
                   <div class="form-text">Número máximo de jugadores por categoría</div>
                 </div>
               </div>
@@ -237,13 +304,13 @@
                         </div>
                       </div>
                       <div class="d-flex gap-2">
-                        <button type="button" class="btn btn-success" *ngIf="accion == 'new'"
-                                (click)="agregarCategoria()" [disabled]="loading">
+                        <button type="submit" class="btn btn-success" *ngIf="accion == 'new'"
+                                [disabled]="loading">
                           <svg cIcon name="cil-save" class="me-1" size="sm"></svg>
                           {{ loading ? 'Guardando...' : 'Crear Categoría' }}
                         </button>
-                        <button type="button" class="btn btn-primary" *ngIf="accion == 'update'"
-                                (click)="actualizarCategoria()" [disabled]="loading">
+                        <button type="submit" class="btn btn-primary" *ngIf="accion == 'update'"
+                                [disabled]="loading">
                           <svg cIcon name="cil-save" class="me-1" size="sm"></svg>
                           {{ loading ? 'Actualizando...' : 'Actualizar Categoría' }}
                         </button>
