@@ -1,14 +1,16 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { Alumno, AlumnoModel } from '../models/alumno.model';
+import { environment } from '../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class AlumnoService {
 
-  private apiUrl = 'http://localhost:3000/api/alumnos'; 
+  private apiUrl = `${environment.apiUrl}/alumnos`; 
 
   constructor(private http: HttpClient) { }
 
@@ -122,9 +124,50 @@ export class AlumnoService {
 
   // Obtener estadísticas de alumnos por mes
   getAlumnosPorMes(): Observable<any> {
-    const httpOptions = {
-      headers: new HttpHeaders()
+    // Obtener todos los alumnos y procesarlos localmente
+    return this.getAlumnos().pipe(
+      map((response: any) => this.processAlumnosPorMes(response))
+    );
+  }
+
+  /**
+   * Procesar datos de alumnos para obtener estadísticas por mes
+   */
+  private processAlumnosPorMes(response: any): any {
+    const alumnos = response.data || [];
+    
+    return {
+      success: true,
+      data: {
+        alumnosPorMes: this.groupByMonth(alumnos, 'fecha_inscripcion')
+      }
     };
-    return this.http.get<any>(this.apiUrl + '/stats/por-mes', httpOptions);
+  }
+
+  /**
+   * Agrupar datos por mes
+   */
+  private groupByMonth(items: any[], dateField: string): Array<{mes: string, cantidad: number}> {
+    const monthNames = [
+      'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+      'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+    ];
+    
+    const currentYear = new Date().getFullYear();
+    const monthCounts = new Array(12).fill(0);
+    
+    items.forEach(item => {
+      if (item[dateField]) {
+        const date = new Date(item[dateField]);
+        if (date.getFullYear() === currentYear) {
+          monthCounts[date.getMonth()]++;
+        }
+      }
+    });
+    
+    return monthNames.map((mes, index) => ({
+      mes,
+      cantidad: monthCounts[index]
+    }));
   }
 }

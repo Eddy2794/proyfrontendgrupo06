@@ -239,6 +239,7 @@ export class RealizarPagoComponent implements OnInit, AfterViewInit {
   private categoriaService = inject(CategoriaService);
   private mercadopagoService = inject(MercadoPagoService);
   private notificationService = inject(NotificationService);
+  private configService = inject(ConfigService);
 
   @ViewChild('mercadopagoButton', { static: false }) mercadopagoButton!: ElementRef;
 
@@ -349,11 +350,7 @@ export class RealizarPagoComponent implements OnInit, AfterViewInit {
     try {
       const categoriaId = this.paymentForm.get('categoriaId')?.value;
       const tipoPeriodo = this.paymentForm.get('tipoPeriodo')?.value;
-      const redirectUrls = {
-        success: `${window.location.origin}/pagos/historial?status=success`,
-        failure: `${window.location.origin}/pagos/historial?status=failure`,
-        pending: `${window.location.origin}/pagos/historial?status=pending`
-      };
+      const redirectUrls = this.configService.getRedirectUrls();
 
       if (tipoPeriodo === 'anual') {
         // Pago anual

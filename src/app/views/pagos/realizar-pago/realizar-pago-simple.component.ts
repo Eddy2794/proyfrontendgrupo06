@@ -235,6 +235,7 @@ export class RealizarPagoComponent implements OnInit, AfterViewInit {
   private categoriaService = inject(CategoriaService);
   private mercadopagoService = inject(MercadoPagoService);
   private notificationService = inject(NotificationService);
+  private configService = inject(ConfigService);
 
   @ViewChild('mercadopagoButton', { static: false }) mercadopagoButton!: ElementRef;
 
@@ -324,11 +325,7 @@ export class RealizarPagoComponent implements OnInit, AfterViewInit {
       const request: CreatePaymentPreferenceRequest = {
         categoriaId: this.paymentForm.get('categoriaId')?.value,
         tipoPeriodo: this.paymentForm.get('tipoPeriodo')?.value,
-        redirectUrls: {
-          success: `${window.location.origin}/pagos/historial?status=success`,
-          failure: `${window.location.origin}/pagos/historial?status=failure`,
-          pending: `${window.location.origin}/pagos/historial?status=pending`
-        }
+        redirectUrls: this.configService.getRedirectUrls()
       };
 
       this.pagoService.createPaymentPreference(request).subscribe({
