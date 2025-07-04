@@ -6,14 +6,14 @@ export class ProfesorCategoria {
     profesor: ProfesorModel;    
     categoria: CategoriaAuxiliar;
     fecha_asignacion: Date;
-    estado: string;
+    activo: boolean;
     observaciones: string;
 
     constructor(data: Partial<ProfesorCategoria> = {}) {
         this.profesor = new ProfesorModel() || data.profesor;
         this.categoria = new CategoriaAuxiliar() || data.categoria;
         this.fecha_asignacion = data.fecha_asignacion || new Date();
-        this.estado = data.estado || 'ACTIVO';
+        this.activo = data.activo !== undefined ? data.activo : true;
         this.observaciones = data.observaciones || '';
     }
 
@@ -23,7 +23,7 @@ export class ProfesorCategoria {
             profesor: this.profesor,
             categoria: this.categoria,
             fecha_asignacion: this.fecha_asignacion,
-            estado: this.estado,
+            activo: this.activo,
             observaciones: this.observaciones
         };
     }
@@ -34,7 +34,7 @@ export class ProfesorCategoria {
         profesorCategoria.profesor = ProfesorModel.fromJSON(data.profesor) || data.profesor_id;
         profesorCategoria.categoria = this.mapearCategoria(data.categoria) || data.categoria_id;
         profesorCategoria.fecha_asignacion = data.fecha_asignacion;
-        profesorCategoria.estado = data.estado;
+        profesorCategoria.activo = data.activo;
         profesorCategoria.observaciones = data.observaciones;
         return profesorCategoria;
     }
