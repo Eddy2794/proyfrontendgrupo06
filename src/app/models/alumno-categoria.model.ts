@@ -1,5 +1,5 @@
 import { Alumno, AlumnoModel } from './alumno.model';
-import { CategoriaEscuela } from './categoria-escuela.model';
+import { Categoria } from './categoria';
 
 // Tipos constantes basados en el backend
 export type EstadoAlumnoCategoria = 'ACTIVO' | 'INACTIVO';
@@ -8,7 +8,7 @@ export type EstadoAlumnoCategoria = 'ACTIVO' | 'INACTIVO';
 export interface AlumnoCategoria {
   _id?: string;
   alumno: string | Alumno; // ID o objeto completo de Alumno
-  categoria: string | CategoriaEscuela; // ID o objeto completo de Categoria
+  categoria: string | Categoria; // ID o objeto completo de Categoria
   fecha_inscripcion: Date | string;
   estado?: EstadoAlumnoCategoria;
   observaciones?: string;
@@ -19,14 +19,14 @@ export interface AlumnoCategoria {
   
   // Campos populados (cuando vienen del backend con populate)
   alumno_datos?: Alumno;
-  categoria_datos?: CategoriaEscuela;
+  categoria_datos?: Categoria;
 }
 
 // Clase para el modelo AlumnoCategoria con validaciones y métodos auxiliares
 export class AlumnoCategoriaModel implements AlumnoCategoria {
   _id?: string;
   alumno: string | Alumno;
-  categoria: string | CategoriaEscuela;
+  categoria: string | Categoria;
   fecha_inscripcion: Date | string;
   estado?: EstadoAlumnoCategoria;
   observaciones?: string;
@@ -35,7 +35,7 @@ export class AlumnoCategoriaModel implements AlumnoCategoria {
   createdAt?: Date | string;
   updatedAt?: Date | string;
   alumno_datos?: Alumno;
-  categoria_datos?: CategoriaEscuela;
+  categoria_datos?: Categoria;
 
   constructor(data: Partial<AlumnoCategoria> = {}) {
     this._id = data._id;
@@ -140,4 +140,4 @@ export class AlumnoCategoriaModel implements AlumnoCategoria {
 export const ESTADOS_ALUMNO_CATEGORIA: { value: EstadoAlumnoCategoria; label: string }[] = [
   { value: 'ACTIVO', label: 'Activo' },
   { value: 'INACTIVO', label: 'Inactivo' }
-];  
+];

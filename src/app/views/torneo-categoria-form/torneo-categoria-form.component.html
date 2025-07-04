@@ -1,30 +1,53 @@
-<div class="card mt-5">
-    <div class="card-header">
-        Crear Asignacion
-    </div>
-    <div class="card-body">
-        <form>
-            <div class="mb-3">
-                <label for="idtorneo" class="form-label">Torneos</label>
-                <select id="idtorneo" class="form-select" name="torneo" [(ngModel)]="torneoCategoria.torneo">
-                    <option *ngFor="let t of torneos" [ngValue]="t._id"> {{t.nombre}}
-                    </option>
-                </select>
-            </div>
-            <div class="mb-3">
-                <label for="idcategoria" class="form-label">Categorias</label>
-                <select id="idcategoria" class="form-select" name="categoria" [(ngModel)]="torneoCategoria.categoria">
-                    <option *ngFor="let c of categorias" [ngValue]="c._id"> {{c.nombre}}
-                    </option>
-                </select>
-            </div>
-            <div class="mb-3">
-                <label for="idobservacion" class="form-label">Observacion</label>
-                <input name="observacion" type="text" class="form-control" id="idobservacion"
-                    [(ngModel)]="torneoCategoria.observaciones">
-            </div>
-            <button type="button" class="btn btn-primary me-2" *ngIf="accion == 'new'" (click)="agregarTorneoCategoria()">Guardar</button>
-            <button type="button" class="btn btn-primary"  *ngIf="accion == 'update'" (click)="actualizarTorneoCategoria()">Actualizar</button>
-        </form>
-    </div>
-</div>
+<c-row>
+    <c-col xs="12">
+        <c-card class="mb-4">
+            <c-card-header class="d-flex justify-content-between align-items-center">
+                <div>
+                    <strong>{{tituloForm}}</strong>
+                </div>
+            </c-card-header>
+            <c-card-body>
+                <c-alert *ngIf="mostrarExito" color="success">{{ mensajeExito }}</c-alert>
+                <c-alert *ngIf="mostrarError" color="danger">{{ mensajeError }}</c-alert>
+                <form #formTorneoCategoria="ngForm" [validated]="formValidado"
+                    (ngSubmit)="accion === 'new' ? agregarTorneoCategoria() : actualizarTorneoCategoria()" novalidate
+                    cForm cRow class="needs-validation">
+
+                    <c-col [md]="6">
+                        <label cLabel for="idtorneo">Torneo <span class="text-danger">*</span></label>
+                        <select id="idtorneo" name="torneo" class="form-select" [(ngModel)]="torneoCategoria.torneo"
+                            required cFormControl>
+                            <option value="" disabled selected>Seleccione un torneo</option>
+                            <option *ngFor="let t of torneos" [ngValue]="t._id">{{ t.nombre }}</option>
+                        </select>
+                        <c-form-feedback [valid]="false">Debe seleccionar un torneo</c-form-feedback>
+                    </c-col>
+
+                    <c-col [md]="6">
+                        <label cLabel for="idcategoria">Categoría <span class="text-danger">*</span></label>
+                        <select id="idcategoria" name="categoria" class="form-select"
+                            [(ngModel)]="torneoCategoria.categoria" required cFormControl>
+                            <option value="" disabled selected>Seleccione una categoría</option>
+                            <option *ngFor="let c of categorias" [ngValue]="c._id">{{ c.nombre }}</option>
+                        </select>
+                        <c-form-feedback [valid]="false">Debe seleccionar una categoría</c-form-feedback>
+                    </c-col>
+
+                    <c-col [md]="12">
+                        <label cLabel for="idobservacion">Observación <span class="text-danger">*</span></label>
+                        <input id="idobservacion" name="observaciones" type="text"
+                            [(ngModel)]="torneoCategoria.observaciones" required cFormControl/>
+                        <c-form-feedback [valid]="false">Ingrese una observación válida</c-form-feedback>
+                    </c-col>
+
+                    <c-col [md]="12" class="mt-3">
+                        <button type="submit" cButton color="primary">
+                            {{ accion === 'new' ? 'Guardar' : 'Actualizar' }}
+                        </button>
+                    </c-col>
+                </form>
+
+            </c-card-body>
+        </c-card>
+    </c-col>
+</c-row>

@@ -6,14 +6,14 @@ export class TorneoCategoria {
   torneo: Torneo;
   categoria: CategoriaAuxiliar;
   observaciones: string;
-  activa: boolean;
+  estado: string;
   fecha_asignacion: Date;
 
   constructor() {
     this.torneo = new Torneo();
     this.categoria = new CategoriaAuxiliar();
     this.observaciones = "";
-    this.activa = true;
+    this.estado = 'ACTIVO';
     this.fecha_asignacion = new Date();
   }
 }

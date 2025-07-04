@@ -60,6 +60,9 @@ export class RegisterComponent {
   }
 
   onSubmit() {
+    // Limpiar errores personalizados del backend antes de validar
+    this.clearCustomErrors();
+    
     if (this.form.invalid) {
       this.markFormGroupTouched();
       return;
@@ -125,7 +128,24 @@ export class RegisterComponent {
       },
       error: (error) => {
         this.isLoading = false;
-        this.error = error.error?.message || error.message || 'Error en el registro. Intente nuevamente.';
+        // Primero intentar obtener el mensaje de error específico del backend
+        let errorMessage = 'Error en el registro. Intente nuevamente.';
+        
+        if (error.error?.error) {
+          // Estructura: { error: "mensaje", code: "...", success: false }
+          errorMessage = error.error.error;
+        } else if (error.error?.message) {
+          // Estructura alternativa: { message: "mensaje" }
+          errorMessage = error.error.message;
+        } else if (error.message) {
+          // Error HTTP genérico
+          errorMessage = error.message;
+        }
+        
+        // Marcar campos específicos con error según el mensaje
+        this.markFieldWithError(errorMessage);
+        
+        this.error = errorMessage;
       }
     });
   }
@@ -150,6 +170,46 @@ export class RegisterComponent {
     });
   }
 
+  private markFieldWithError(errorMessage: string) {
+    // Limpiar errores personalizados previos
+    this.clearCustomErrors();
+    
+    // Identificar qué campo tiene error basado en el mensaje del backend
+    const errorLower = errorMessage.toLowerCase();
+    
+    if (errorLower.includes('número de documento') || errorLower.includes('documento')) {
+      this.setFieldError('numeroDocumento', { backendError: 'Este número de documento ya está registrado' });
+    } else if (errorLower.includes('email') || errorLower.includes('correo')) {
+      this.setFieldError('email', { backendError: 'Este email ya está registrado' });
+    } else if (errorLower.includes('usuario') || errorLower.includes('username')) {
+      this.setFieldError('username', { backendError: 'Este nombre de usuario ya está en uso' });
+    } else if (errorLower.includes('teléfono') || errorLower.includes('telefono')) {
+      this.setFieldError('telefono', { backendError: 'Este teléfono ya está registrado' });
+    }
+    
+    // Marcar todos los campos como touched para mostrar los errores
+    this.markFormGroupTouched();
+  }
+
+  private setFieldError(fieldName: string, error: any) {
+    const control = this.form.get(fieldName);
+    if (control) {
+      control.setErrors({ ...control.errors, ...error });
+      control.markAsTouched();
+    }
+  }
+
+  private clearCustomErrors() {
+    Object.keys(this.form.controls).forEach(key => {
+      const control = this.form.get(key);
+      if (control && control.errors) {
+        const { backendError, ...otherErrors } = control.errors;
+        const hasOtherErrors = Object.keys(otherErrors).length > 0;
+        control.setErrors(hasOtherErrors ? otherErrors : null);
+      }
+    });
+  }
+
   // Métodos helper para validaciones en el template
   isFieldInvalid(fieldName: string): boolean {
     const field = this.form.get(fieldName);
@@ -161,11 +221,14 @@ export class RegisterComponent {
     if (field && field.errors && field.touched) {
       const errors = field.errors;
       
+      // Priorizar errores del backend
+      if (errors['backendError']) return errors['backendError'];
       if (errors['required']) return `${fieldName} es obligatorio`;
       if (errors['email']) return 'Email inválido';
       if (errors['minlength']) return `Mínimo ${errors['minlength'].requiredLength} caracteres`;
       if (errors['maxlength']) return `Máximo ${errors['maxlength'].requiredLength} caracteres`;
       if (errors['pattern']) return 'Solo se permiten letras y números';
+      if (errors['passwordsMismatch']) return 'Las contraseñas no coinciden';
     }
     
     return '';

@@ -2,7 +2,6 @@ import { Component, OnInit, Output, EventEmitter } from '@angular/core';
 import { Router } from '@angular/router';
 import { ProfesorService } from '../../services/profesor.service';
 import { 
-  ContainerComponent, 
   RowComponent,
   ColComponent, 
   CardComponent, 
@@ -14,6 +13,7 @@ import {
 } from '@coreui/angular';
 import { IconDirective } from '@coreui/icons-angular';
 import { NgIf, NgFor } from '@angular/common';
+import { ProfesorModel } from '../../models/profesor-model';
 
 @Component({
   selector: 'app-profesor-list',
@@ -36,7 +36,7 @@ import { NgIf, NgFor } from '@angular/common';
 })
 export class ProfesorListComponent implements OnInit {
  
-  profesores: any[] = [];
+  profesores: ProfesorModel[] = [];
   successMessage = '';
   errorMessage = '';
   
@@ -52,7 +52,7 @@ export class ProfesorListComponent implements OnInit {
   getProfesores() {
     this.profesorService.getProfesores().subscribe({
       next: (response: any) => {
-        this.profesores = response.data;
+        this.profesores = response.data.map((prof: any) => ProfesorModel.fromJSON(prof));
         console.log('profesores', this.profesores);
       },
       error: (error) => {
@@ -62,24 +62,17 @@ export class ProfesorListComponent implements OnInit {
     });
   }
 
-  onEditProfesor(profesor: any) {
-    console.log('onEditProfesor llamado con:', profesor);
-    console.log('profesor desde el list', profesor);
+  editProfesor(profesor: any) {
     // Navegar al formulario con los datos del profesor para editar
     this.router.navigate(['/profesor'], { 
       queryParams: { 
         edit: 'true',
         id: profesor._id
-      },
-      state: { 
-        profesor: profesor,
-        isEditing: true 
-      } 
+      }
     });
-    console.log('Navegación completada a /profesor');
   }
 
-  onNewProfesor() {
+  addProfesor() {
     // Navegar al formulario para crear un nuevo profesor
     this.router.navigate(['/profesor']);
   }
@@ -88,8 +81,8 @@ export class ProfesorListComponent implements OnInit {
     if (confirm('¿Estás seguro de que quieres eliminar este profesor?')) {
       this.profesorService.deleteProfesor(id).subscribe({
         next: (response: any) => {
-          this.profesores = this.profesores.filter((p: any) => p._id !== id);
           this.successMessage = 'Profesor eliminado exitosamente';
+          this.getProfesores();
         },
         error: (error) => {
           this.errorMessage = 'Error al eliminar el profesor';
@@ -97,10 +90,5 @@ export class ProfesorListComponent implements OnInit {
         }
       });
     }
-  }
-
-  // Método para actualizar la lista desde el componente padre
-  refreshList() {
-    this.getProfesores();
   }
 }

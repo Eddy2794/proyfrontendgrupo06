@@ -1,32 +1,71 @@
-<h1 class="my-2">Torneos</h1>
+<c-row>
+    <c-col xs="12">
+        <c-card class="mb-4">
+            <c-card-header class="d-flex justify-content-between align-items-center">
+                <div>
+                    <strong><h3 class="mb-3">Cantidad de torneos por mes</h3></strong>
+                </div>
+            </c-card-header>
+            <c-card-body>
+                <c-chart [data]="data" type="bar"/>
+            </c-card-body>
+        </c-card>
+    </c-col>
+</c-row>
+<c-row>
+    <c-col xs="12">
+        <c-card class="mb-4">
+            <c-card-header class="d-flex justify-content-between align-items-center">
+                <div>
+                    <strong>Torneos</strong>
+                </div>
+                <div>
+                    <button class=" btn btn-primary" (click)="agregar()">NUEVO TORNEO</button>
+                </div>
+            </c-card-header>
+            <c-card-body>
+                <c-alert *ngIf="mostrarExito" color="success">{{ mensajeExito }}</c-alert>
+                <c-alert *ngIf="mostrarError" color="danger">{{ mensajeError }}</c-alert>
+                <table cTable responsive="xxl">
+                    <thead>
+                        <tr>
+                            <th scope="col">Nombre</th>
+                            <th scope="col">Fecha de inicio</th>
+                            <th scope="col">Organizador</th>
+                            <th scope="col">Direccion</th>
+                            <th scope="col">Costo inscripcion</th>
+                            <th scope="col">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr *ngFor="let t of torneos">
+                            <td>{{ t.nombre }}</td>
+                            <td>{{ t.fecha_inicio | date:'dd/MM/yyyy'}}</td>
+                            <td>{{ t.organizador }}</td>
+                            <td>{{ t.lugar}} - {{ t.direccion}}</td>
+                            <td>{{ t.costo_inscripcion | currency}}</td>
+                            <td>
+                                <button class="btn btn-primary mb-1" (click)="modificar(t)">Modificar</button>
+                                <button (click)="toggleLiveDemo(t)" cButton>Eliminar</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </c-card-body>
+        </c-card>
+    </c-col>
+</c-row>
 
-<div class="row mb-2">
-    <div class="col-12">
-        <button class=" btn btn-primary" (click)="agregar()">NUEVO TORNEO</button>
-    </div>
-</div>
-<table class="table">
-    <thead>
-        <tr>
-            <th scope="col">Nombre</th>
-            <th scope="col">Fecha de inicio</th>
-            <th scope="col">Organizador</th>
-            <th scope="col">Direccion</th>
-            <th scope="col">Costo inscripcion</th>
-            <th scope="col">Acciones</th>
-        </tr>
-    </thead>
-    <tbody>
-        <tr *ngFor="let t of torneos">
-            <td>{{ t.nombre }}</td>
-            <td>{{ t.fecha_inicio | date:'dd/MM/yyyy'}}</td>
-            <td>{{ t.organizador }}</td>
-            <td>{{ t.lugar}} - {{ t.direccion}}</td>
-            <td>{{ t.costo_inscripcion | currency}}</td>
-            <td>
-                <button class="btn btn-primary mb-1" (click)="modificar(t)">Modificar</button>
-                <button class="btn btn-primary" (click)="eliminarTorneo(t._id!)">Eliminar</button>
-            </td>
-        </tr>
-    </tbody>
-</table>
+<c-modal id="liveDemoModal" [visible]="visible" (visibleChange)="handleLiveDemoChange($event)">
+    <c-modal-header>
+        <h5 cModalTitle>Eliminar Torneo</h5>
+        <button (click)="toggleLiveDemo()" cButtonClose></button>
+    </c-modal-header>
+    <c-modal-body>Debe confirmar para poder eliminar el torneo</c-modal-body>
+    <c-modal-footer>
+        <button (click)="toggleLiveDemo()" cButton color="secondary">
+            Cancelar
+        </button>
+        <button (click)="eliminarTorneo()" class="btn btn-primary">Eliminar</button>
+    </c-modal-footer>
+</c-modal>

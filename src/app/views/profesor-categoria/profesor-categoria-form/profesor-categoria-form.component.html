@@ -18,7 +18,7 @@
               <svg cIcon name="cilUser" size="sm"></svg>
               {{ isEditing ? 'Editar Categoría de Profesor' : 'Asignar Categoría a Profesor' }}
             </h4>
-            <button cButton color="secondary" (click)="goToList()">
+            <button cButton color="secondary" (click)="irALista()">
               <svg cIcon name="cilList" size="sm" class="me-2"></svg>
               Ver Lista
             </button>
@@ -40,32 +40,28 @@
             <c-col [xs]="12" [md]="6">
               <label cLabel for="profesor">Profesor</label>
               <select cSelect id="profesor" name="profesor" required [(ngModel)]="profesorCategoria.profesor"
-                #profesor="ngModel" (blur)="markAsTouched(profesor)">
+                #profesor="ngModel">
                 <option value="">Seleccione un profesor...</option>
-                <option *ngFor="let prof of profesores" [value]="prof._id">
-                  {{ prof.persona?.apellidos }}, {{ prof.persona?.nombres }}
+                <option *ngFor="let prof of profesores" [ngValue]="prof">
+                  {{ prof.personaData.apellidos }}, {{ prof.personaData.nombres }}
                 </option>
               </select>
-              <c-form-feedback *ngIf="profesor.valid && (profesor.touched || profesor.dirty)" [valid]="true">
-                ¡Se ve bien!
-              </c-form-feedback>
-              <c-form-feedback *ngIf="profesor.invalid && (profesor.touched || profesor.dirty || profesorCategoriaFormValidated)"
-                [valid]="false">El profesor es requerido.</c-form-feedback>
+              <div *ngIf="profesor.invalid && (profesor.touched || profesor.dirty || profesorCategoriaFormValidated)" class="invalid-feedback d-block">
+                El profesor es requerido.
+              </div>
             </c-col>
 
             <!-- Categoría -->
             <c-col [xs]="12" [md]="6">
               <label cLabel for="categoria">Categoría</label>
               <select cSelect id="categoria" name="categoria" required [(ngModel)]="profesorCategoria.categoria"
-                #categoria="ngModel" (blur)="markAsTouched(categoria)">
+                #categoria="ngModel">
                 <option value="">Seleccione una categoría...</option>
-                <option *ngFor="let cat of categorias" [value]="cat._id">{{ cat.nombre }}</option>
+                <option *ngFor="let cat of categorias" [ngValue]="cat">{{ cat.nombre }}</option>
               </select>
-              <c-form-feedback *ngIf="categoria.valid && (categoria.touched || categoria.dirty)" [valid]="true">
-                ¡Se ve bien!
-              </c-form-feedback>
-              <c-form-feedback *ngIf="categoria.invalid && (categoria.touched || categoria.dirty || profesorCategoriaFormValidated)"
-                [valid]="false">La categoría es requerida.</c-form-feedback>
+              <div *ngIf="categoria.invalid && (categoria.touched || categoria.dirty || profesorCategoriaFormValidated)" class="invalid-feedback d-block">
+                La categoría es requerida.
+              </div>
             </c-col>
 
             <!-- SECCIÓN: ESTADO -->

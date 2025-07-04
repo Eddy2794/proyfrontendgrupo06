@@ -1,5 +1,3 @@
-<p>profesor-list works!</p>
-
 <!-- Alertas de éxito y error -->
 <c-alert *ngIf="successMessage" color="success" dismissible>
   {{ successMessage }}
@@ -19,7 +17,7 @@
             <svg cIcon name="cilList" size="sm"></svg>
             Lista de Profesores
           </h4>
-          <button cButton color="primary" (click)="onNewProfesor()">
+          <button cButton color="primary" (click)="addProfesor()">
             <svg cIcon name="cilPlus" size="sm" class="me-2"></svg>
             Nuevo Profesor
           </button>
@@ -41,12 +39,12 @@
             <tbody>
               <tr *ngFor="let profesor of profesores; let i = index">
                 <th scope="row">{{ i + 1 }}</th>
-                <td>{{ profesor.persona?.apellidos || profesor.apellidos }}</td>
-                <td>{{ profesor.persona?.nombres || profesor.nombres }}</td>
-                <td>{{ profesor.persona?.email || profesor.email }}</td>
-                <td>{{ profesor.persona?.telefono || 'No disponible' }}</td>
+                <td>{{ profesor.personaData.apellidos}}</td>
+                <td>{{ profesor.personaData.nombres}}</td>
+                <td>{{ profesor.personaData.email}}</td>
+                <td>{{ profesor.personaData.telefono}}</td>
                 <td>
-                  <button cButton color="primary" size="sm" class="me-1" (click)="onEditProfesor(profesor)">
+                  <button cButton color="primary" size="sm" class="me-1" (click)="editProfesor(profesor)">
                     <svg cIcon name="cilPencil" size="sm"></svg>
                     Actualizar
                   </button>

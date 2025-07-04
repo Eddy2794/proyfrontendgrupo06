@@ -1,29 +1,112 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
-import {TorneoCategoriaService} from '../../services/torneo-categoria.service'
-import {TorneoCategoria} from '../../models/torneo-categoria';
-
+import { TorneoCategoriaService } from '../../services/torneo-categoria.service'
+import { TorneoCategoria } from '../../models/torneo-categoria';
+import {
+  TableDirective,
+  ColComponent,
+  RowComponent,
+  CardComponent,
+  CardBodyComponent,
+  CardHeaderComponent,
+  AlertComponent,
+  ButtonCloseDirective,
+  ButtonDirective,
+  ModalBodyComponent,
+  ModalComponent,
+  ModalFooterComponent,
+  ModalHeaderComponent,
+  ModalTitleDirective
+} from '@coreui/angular';
+import { type ChartData } from 'chart.js';
+import { ChartjsComponent } from '@coreui/angular-chartjs';
 @Component({
   selector: 'app-torneo-categoria',
-  imports: [FormsModule, CommonModule],
+  imports: [FormsModule, CommonModule,
+    AlertComponent,
+    TableDirective,
+    CardComponent,
+    CardBodyComponent,
+    CardHeaderComponent,
+    ColComponent,
+    RowComponent,
+    AlertComponent,
+    ButtonCloseDirective,
+    ButtonDirective,
+    ModalBodyComponent,
+    ModalComponent,
+    ModalFooterComponent,
+    ModalHeaderComponent,
+    ModalTitleDirective,
+    ChartjsComponent
+  ],
   templateUrl: './torneo-categoria.component.html',
   styleUrl: './torneo-categoria.component.scss'
 })
-export class TorneoCategoriaComponent {
+export class TorneoCategoriaComponent implements OnInit {
 
   torneosCategorias: TorneoCategoria[] = [];
-
+  mensajeExito: string = '';
+  mensajeError: string = '';
+  mostrarExito: boolean = false;
+  mostrarError: boolean = false;
+  data: ChartData = {
+    labels: [],
+    datasets: [
+      {
+        label: 'Categorías por torneo',
+        backgroundColor: '#42A5F5',
+        data: []
+      }
+    ]
+  };
   constructor(private torneoCategoriaService: TorneoCategoriaService, private router: Router) {
     this.getTorneosCategorias();
   }
 
+  ngOnInit(): void {
+    this.torneoCategoriaService.getTorneosCategorias().subscribe({
+      next: response => {
+        const relaciones = response.data.data; // accedemos a los items
+        const conteoPorTorneo: { [nombreTorneo: string]: number } = {};
 
+        for (let relacion of relaciones) {
+          const torneo = relacion.torneo;
+          if (torneo && torneo.nombre) {
+            conteoPorTorneo[torneo.nombre] = (conteoPorTorneo[torneo.nombre] || 0) + 1;
+          }
+        }
+
+        // Cargar datos al gráfico
+        this.data = {
+          labels: Object.keys(conteoPorTorneo),
+          datasets: [
+            {
+              label: 'Categorías por torneo',
+              backgroundColor: '#42A5F5',
+              data: Object.values(conteoPorTorneo),
+            }
+          ]
+        };
+
+      },
+      error: err => {
+        console.error('Error al cargar relaciones torneo-categoría:', err);
+      }
+    });
+  }
+  ocultarAlerta() {
+    setTimeout(() => {
+      this.mostrarExito = false;
+      this.mostrarError = false;
+    }, 2000);
+  }
   getTorneosCategorias() {
     this.torneoCategoriaService.getTorneosCategorias().subscribe({
-      next: (result) => {
-        this.torneosCategorias = result.data.data;
+      next: (result: { data: { data: TorneoCategoria[] } }) => {
+        this.torneosCategorias = result.data.data.filter(tc => tc.torneo !== null);
       },
       error: (err) => {
         console.error('Error al cargar torneos-categorias:', err);
@@ -37,23 +120,37 @@ export class TorneoCategoriaComponent {
   modificar(torneoCategoria: TorneoCategoria) {
     this.router.navigate(['torneo-categoria-form', torneoCategoria._id]);
   }
+  visible = false;
+  torneoAEliminar: TorneoCategoria | null = null;
 
-
-  eliminarTorneoCategoria(id: string) {
-    if (confirm('¿Estás seguro de que querés eliminar este asignacion?')) {
-      this.torneoCategoriaService.deleteTorneo(id).subscribe({
-        next: result => {
-          if (result.success == true) {
-            alert("La asignacion se eliminó correctamente");
-            this.getTorneosCategorias();
-          }
-        },
-        error: error => {
-          alert("Ocurrio un error al eliminar");
-          console.log(error);
-        }
-      })
+  toggleLiveDemo(torneo?: TorneoCategoria) {
+    if (torneo) {
+      this.torneoAEliminar = torneo;
     }
+    this.visible = !this.visible;
   }
 
+
+  handleLiveDemoChange(event: any) {
+    this.visible = event;
+  }
+  eliminarTorneoCategoria() {
+    if (!this.torneoAEliminar || !this.torneoAEliminar._id) return;
+    this.torneoCategoriaService.deleteTorneo(this.torneoAEliminar._id).subscribe({
+      next: result => {
+        if (result.success == true) {
+          this.mensajeExito = "El torneo se eliminó correctamente";
+          this.mostrarExito = true;
+          this.ocultarAlerta();
+          this.getTorneosCategorias();
+        }
+      },
+      error: error => {
+        this.mensajeError = "Ocurrió un error al eliminar";
+        this.mostrarError = true;
+        this.ocultarAlerta();
+        console.log(error);
+      }
+    })
+  }
 }

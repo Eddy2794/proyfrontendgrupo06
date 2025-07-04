@@ -8,8 +8,12 @@
 >
   <c-sidebar-header class="border-bottom">
     <c-sidebar-brand [routerLink]="[]">
-      <svg [class]="{icon: false}" cIcon class="sidebar-brand-full" height="32" name="logo" title="CoreUI Logo"></svg>
-      <svg cIcon class="sidebar-brand-narrow" height="32" name="signet" title="CoreUI Logo"></svg>
+      <div class="sidebar-brand-full d-flex align-items-center justify-content-center py-2">
+          <img src="assets/brand/9dejulio.svg" alt="9 DE JULIO" height="48" class="me-2">
+          <h5 class="mb-0 fw-bold text-white">9 DE JULIO</h5>
+        </div>
+      <div class="sidebar-brand-narrow d-flex align-items-center justify-content-center py-2">
+      </div>
     </c-sidebar-brand>
   </c-sidebar-header>
 
