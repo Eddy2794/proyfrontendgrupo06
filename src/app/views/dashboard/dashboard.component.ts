@@ -25,6 +25,7 @@ import { WidgetsDropdownComponent } from '../widgets/widgets-dropdown/widgets-dr
 import { DashboardChartsData, IChartProps } from './dashboard-charts-data';
 import { AlumnoCategoriaService, AlumnoCategoriaStats } from '../../services/alumno-categoria.service';
 import { TorneoService } from '../../services/torneo.service';
+import { TorneoCategoriaService } from '../../services/torneo-categoria.service'
 interface IInscripcionData {
   categoria: string;
   totalAlumnos: number;
@@ -78,12 +79,13 @@ export class DashboardComponent implements OnInit {
     trafficRadio: new FormControl('Month')
   });
 
-  constructor(private torneoService: TorneoService) { }
+  constructor(private torneoService: TorneoService, private torneoCategoriaService: TorneoCategoriaService) { }
   ngOnInit(): void {
     this.initCharts();
     this.updateChartOnColorModeChange();
     this.loadInscripcionesData();
     this.cargarTorneosData();
+    this.cargarTorneosCategoriasData();
   }
   cargarTorneosData() {
     this.torneoService.getTorneos().subscribe({
@@ -120,6 +122,47 @@ export class DashboardComponent implements OnInit {
       },
       error: err => {
         console.error('Error al cargar torneos', err);
+      }
+    });
+  }
+  dataTorneoCategoria: ChartData = {
+    labels: [],
+    datasets: [
+      {
+        label: 'Categorías por torneo',
+        backgroundColor: '#42A5F5',
+        data: []
+      }
+    ]
+  };
+  cargarTorneosCategoriasData(){
+     this.torneoCategoriaService.getTorneosCategorias().subscribe({
+      next: response => {
+        const relaciones = response.data.data; // accedemos a los items
+        const conteoPorTorneo: { [nombreTorneo: string]: number } = {};
+
+        for (let relacion of relaciones) {
+          const torneo = relacion.torneo;
+          if (torneo && torneo.nombre) {
+            conteoPorTorneo[torneo.nombre] = (conteoPorTorneo[torneo.nombre] || 0) + 1;
+          }
+        }
+
+        // Cargar datos al gráfico
+        this.dataTorneoCategoria = {
+          labels: Object.keys(conteoPorTorneo),
+          datasets: [
+            {
+              label: 'Categorías por torneo',
+              backgroundColor: '#42A5F5',
+              data: Object.values(conteoPorTorneo),
+            }
+          ]
+        };
+
+      },
+      error: err => {
+        console.error('Error al cargar relaciones torneo-categoría:', err);
       }
     });
   }

@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
@@ -20,6 +20,8 @@ import {
   ModalHeaderComponent,
   ModalTitleDirective
 } from '@coreui/angular';
+import { type ChartData } from 'chart.js';
+import { ChartjsComponent } from '@coreui/angular-chartjs';
 @Component({
   selector: 'app-torneo-categoria',
   imports: [FormsModule, CommonModule,
@@ -37,22 +39,64 @@ import {
     ModalComponent,
     ModalFooterComponent,
     ModalHeaderComponent,
-    ModalTitleDirective
+    ModalTitleDirective,
+    ChartjsComponent
   ],
   templateUrl: './torneo-categoria.component.html',
   styleUrl: './torneo-categoria.component.scss'
 })
-export class TorneoCategoriaComponent {
+export class TorneoCategoriaComponent implements OnInit {
 
   torneosCategorias: TorneoCategoria[] = [];
   mensajeExito: string = '';
   mensajeError: string = '';
   mostrarExito: boolean = false;
   mostrarError: boolean = false;
+  data: ChartData = {
+    labels: [],
+    datasets: [
+      {
+        label: 'Categorías por torneo',
+        backgroundColor: '#42A5F5',
+        data: []
+      }
+    ]
+  };
   constructor(private torneoCategoriaService: TorneoCategoriaService, private router: Router) {
     this.getTorneosCategorias();
   }
 
+  ngOnInit(): void {
+    this.torneoCategoriaService.getTorneosCategorias().subscribe({
+      next: response => {
+        const relaciones = response.data.data; // accedemos a los items
+        const conteoPorTorneo: { [nombreTorneo: string]: number } = {};
+
+        for (let relacion of relaciones) {
+          const torneo = relacion.torneo;
+          if (torneo && torneo.nombre) {
+            conteoPorTorneo[torneo.nombre] = (conteoPorTorneo[torneo.nombre] || 0) + 1;
+          }
+        }
+
+        // Cargar datos al gráfico
+        this.data = {
+          labels: Object.keys(conteoPorTorneo),
+          datasets: [
+            {
+              label: 'Categorías por torneo',
+              backgroundColor: '#42A5F5',
+              data: Object.values(conteoPorTorneo),
+            }
+          ]
+        };
+
+      },
+      error: err => {
+        console.error('Error al cargar relaciones torneo-categoría:', err);
+      }
+    });
+  }
   ocultarAlerta() {
     setTimeout(() => {
       this.mostrarExito = false;
