@@ -15,7 +15,7 @@ export class TorneoCategoriaService {
   getTorneosCategorias(): Observable<any> {
     return this.http.get<any>(this.apiUrl + '/', {
       params: {
-        activa: 'true'
+        estado: 'ACTIVO'
       }
     });
   }
@@ -26,6 +26,14 @@ export class TorneoCategoriaService {
       params: new HttpParams()
     }
     return this.http.get(this.apiUrl + '/' + id, httpOptions);
+  }
+
+  getTorneosPorCategoria(categoriaId: string): Observable<any> {
+    let httpOptions = {
+      headers: new HttpHeaders(),
+      params: new HttpParams().set('populate', 'torneo_datos,categoria_datos')
+    }
+    return this.http.get<any>(this.apiUrl + '/categoria/' + categoriaId, httpOptions);
   }
 
   addTorneo(torneoCategoria: TorneoCategoria): Observable<any> {
