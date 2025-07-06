@@ -138,7 +138,7 @@
 
                 <!-- Cuota Mensual -->
                 <td>
-                  <span class="fw-semibold">${{ (categoria.precio?.cuotaMensual || 0) | number:'1.0-0' }}</span>
+                  <span class="fw-semibold">${{ categoria.precio?.cuotaMensual ? (categoria.precio.cuotaMensual | number:'1.0-0') : '0' }}</span>
                 </td>
 
                 <!-- Profesor -->
@@ -310,7 +310,7 @@
         </div>
         <div class="col-md-6">
           <div class="mb-3">
-            <strong>Cuota Mensual:</strong> ${{ (categoriaSeleccionada.precio?.cuotaMensual || 0) | number:'1.0-0' }}
+            <strong>Cuota Mensual:</strong> ${{ categoriaSeleccionada.precio?.cuotaMensual ? (categoriaSeleccionada.precio.cuotaMensual | number:'1.0-0') : '0' }}
           </div>
           <div class="mb-3">
             <strong>Profesor:</strong> {{ getNombreProfesor(categoriaSeleccionada._id) }}
@@ -368,8 +368,8 @@
                   </td>
                   <td>{{ (alumnoCategoria.fecha_inscripcion | date:'dd/MM/yyyy') || 'N/A' }}</td>
                   <td>
-                    <c-badge [color]="alumnoCategoria.activo ? 'success' : 'secondary'">
-                      {{ alumnoCategoria.activo ? 'Activo' : 'Inactivo' }}
+                    <c-badge [color]="alumnoCategoria.estado === 'ACTIVO' ? 'success' : 'secondary'">
+                      {{ alumnoCategoria.estado === 'ACTIVO' ? 'Activo' : 'Inactivo' }}
                     </c-badge>
                   </td>
                 </tr>
@@ -399,14 +399,14 @@
                 <tr *ngFor="let torneoCategoria of torneosCategoria">
                   <td>
                     <div>
-                      <strong>{{ torneoCategoria.torneo_datos?.nombre }}</strong><br>
-                      <small class="text-body-secondary">{{ torneoCategoria.torneo_datos?.descripcion }}</small>
+                      <strong>{{ torneoCategoria.torneo?.nombre }}</strong><br>
+                      <small class="text-body-secondary">{{ torneoCategoria.torneo?.descripcion }}</small>
                     </div>
                   </td>
-                  <td>{{ (torneoCategoria.torneo_datos?.fecha_inicio | date:'dd/MM/yyyy') || 'N/A' }}</td>
+                  <td>{{ (torneoCategoria.torneo?.fecha_inicio | date:'dd/MM/yyyy') || 'N/A' }}</td>
                   <td>
-                    <c-badge [color]="torneoCategoria.activo ? 'success' : 'secondary'">
-                      {{ torneoCategoria.activo ? 'Participando' : 'No participando' }}
+                    <c-badge [color]="torneoCategoria.estado === 'ACTIVO' ? 'success' : 'secondary'">
+                      {{ torneoCategoria.estado === 'ACTIVO' ? 'Participando' : 'No participando' }}
                     </c-badge>
                   </td>
                 </tr>
@@ -421,6 +421,15 @@
     </div>
   </c-modal-body>
   <c-modal-footer>
+    <button 
+      (click)="exportarAlumnosPDF()" 
+      cButton 
+      color="primary" 
+      [disabled]="!categoriaSeleccionada || alumnosCategoria.length === 0"
+      class="me-2">
+      <svg cIcon name="cilCloudDownload" class="me-1"></svg>
+      Exportar PDF
+    </button>
     <button (click)="cerrarDetalles()" cButton color="secondary">
       Cerrar
     </button>
