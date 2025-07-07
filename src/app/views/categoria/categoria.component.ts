@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import {
   RowComponent,
   ColComponent,
@@ -39,6 +39,7 @@ import { FormsModule } from '@angular/forms';
 import { debounceTime, Subject } from 'rxjs';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
+import { ProfesorCategoria } from '../../models/profesor-categoria';
 
 
 @Component({
@@ -86,6 +87,15 @@ export class CategoriaComponent implements OnInit {
   filtroEstado?: string; // undefined, 'activa', 'inactiva'
   filtroNivel?: string; // undefined, 'PRINCIPIANTE', 'INTERMEDIO', 'AVANZADO', 'COMPETITIVO'
 
+  // Nuevos filtros avanzados
+  filtroTipo?: string; // undefined, 'ESCUELA', 'COMPETITIVA', 'RECREATIVA'
+  filtroProfesor?: string; // undefined, id del profesor
+  filtroPrecioMin?: number; // precio mínimo
+  filtroPrecioMax?: number; // precio máximo
+  filtroEdadMin?: number; // edad mínima
+  filtroEdadMax?: number; // edad máxima
+  filtroDisponibilidad?: string; // undefined, 'disponible', 'lleno', 'casi_lleno'
+
   // Paginación
   currentPage: number = 1;
   itemsPerPage: number = 10;
@@ -100,6 +110,12 @@ export class CategoriaComponent implements OnInit {
 
   // Opciones para filtros
   nivelesDisponibles = ['PRINCIPIANTE', 'INTERMEDIO', 'AVANZADO', 'COMPETITIVO'];
+  tiposDisponibles = ['ESCUELA', 'COMPETITIVA', 'RECREATIVA'];
+  disponibilidadOpciones = [
+    { value: 'disponible', label: 'Con cupos disponibles' },
+    { value: 'casi_lleno', label: 'Casi lleno (>80%)' },
+    { value: 'lleno', label: 'Completo' }
+  ];
 
   // Modal de detalles
   modalDetallesVisible: boolean = false;
@@ -127,14 +143,32 @@ export class CategoriaComponent implements OnInit {
     private profesorCategoriaService: ProfesorCategoriaService,
     private router: Router,
     private colorModeService: ColorModeService,
-    private notificationService: NotificationService
+    private notificationService: NotificationService,
+    private cdr: ChangeDetectorRef
   ) { }
 
   ngOnInit(): void {
     this.setupSearchDebounce();
-    this.loadCategorias();
-    this.cargarProfesores();
-    this.cargarProfesoresCategorias();
+    this.cargarDatosIniciales();
+  }
+
+  // Método para cargar datos en el orden correcto
+  cargarDatosIniciales(): void {
+    this.loading = true;
+
+    // Primero cargar datos relacionados
+    Promise.all([
+      this.cargarProfesoresPromise(),
+      this.cargarProfesoresCategoriasPromise(),
+      this.cargarAlumnosCategoriaPromise(),
+      this.cargarTorneosCategoriasPromise()
+    ]).then(() => {
+      // Después cargar categorías y calcular campos
+      this.loadCategorias();
+    }).catch(error => {
+      console.error('Error al cargar datos iniciales:', error);
+      this.loading = false;
+    });
   }
 
   setupSearchDebounce(): void {
@@ -154,10 +188,55 @@ export class CategoriaComponent implements OnInit {
       next: result => {
         if (result.success) {
           this.categorias = result.data.categorias || [];
+
+          // Mapear y calcular campos faltantes para cada categoría
+          this.categorias.forEach(cat => {
+            // Calcular alumnosActuales usando los datos ya cargados
+            cat.alumnosActuales = this.alumnosCategoria.filter(ac =>
+              (ac.categoria === cat._id || ac.categoriaId === cat._id) &&
+              (ac.estado === 'ACTIVO' || ac.estado === 'ACTIVA')
+            ).length;
+
+            // Asegurar defaults para campos requeridos
+            cat.cupoMaximo = cat.cupoMaximo ?? 0;
+            cat.precio = cat.precio || { cuotaMensual: 0 };
+
+            // Formatear fechaCreacion si viene como string
+            if (cat.fechaCreacion && typeof cat.fechaCreacion === 'string') {
+              cat.fechaCreacion = new Date(cat.fechaCreacion);
+            } else if (!cat.fechaCreacion) {
+              cat.fechaCreacion = new Date();
+            }
+          });
+
+          // Debug: Verificar estructura de datos de categorías
+          console.log('Datos de categorías recibidos:', this.categorias);
+          if (this.categorias.length > 0) {
+            console.log('Primera categoría:', this.categorias[0]);
+            console.log('Campos de fecha:', {
+              fechaCreacion: this.categorias[0].fechaCreacion,
+              fechaActualizacion: this.categorias[0].fechaActualizacion,
+              cupoMaximo: this.categorias[0].cupoMaximo,
+              alumnosActuales: this.categorias[0].alumnosActuales,
+              precio: this.categorias[0].precio
+            });
+          }
+
+          // Debug: Verificar datos después del mapeo
+          console.log('Datos después del mapeo:', {
+            totalCategorias: this.categorias.length,
+            totalAlumnosCategoria: this.alumnosCategoria.length,
+            totalProfesoresCategorias: this.profesoresCategorias.length,
+            primeraCategoria: this.categorias[0]
+          });
+
           this.totalItems = this.categorias.length;
           this.aplicarFiltros();
-          // Recargar relaciones profesor-categoría cuando se actualicen las categorías
-          this.cargarProfesoresCategorias();
+
+          // Recalcular datos después de un breve delay para asegurar que todo esté cargado
+          setTimeout(() => {
+            this.recalcularDatosCategoria();
+          }, 100);
         } else {
           this.notificationService.showError('Error', 'No se pudieron cargar las categorías');
         }
@@ -181,7 +260,8 @@ export class CategoriaComponent implements OnInit {
       categoriasFiltradas = categoriasFiltradas.filter(categoria =>
         categoria.nombre?.toLowerCase().includes(termino) ||
         (categoria.descripcion && categoria.descripcion.toLowerCase().includes(termino)) ||
-        (categoria.nivel && categoria.nivel.toLowerCase().includes(termino))
+        (categoria.nivel && categoria.nivel.toLowerCase().includes(termino)) ||
+        (categoria.tipo && categoria.tipo.toLowerCase().includes(termino))
       );
     }
 
@@ -196,6 +276,62 @@ export class CategoriaComponent implements OnInit {
     // Filtro por nivel
     if (this.filtroNivel) {
       categoriasFiltradas = categoriasFiltradas.filter(categoria => categoria.nivel === this.filtroNivel);
+    }
+
+    // Filtro por tipo de categoría
+    if (this.filtroTipo) {
+      categoriasFiltradas = categoriasFiltradas.filter(categoria => categoria.tipo === this.filtroTipo);
+    }
+
+    // Filtro por profesor asignado
+    if (this.filtroProfesor) {
+      const categoriasDelProfesor = this.profesoresCategorias
+        .filter(pc => pc.profesorId === this.filtroProfesor)
+        .map(pc => pc.categoriaId);
+      categoriasFiltradas = categoriasFiltradas.filter(categoria =>
+        categoriasDelProfesor.includes(categoria._id)
+      );
+    }
+
+    // Filtro por rango de precios
+    if (this.filtroPrecioMin !== undefined && this.filtroPrecioMin > 0) {
+      categoriasFiltradas = categoriasFiltradas.filter(categoria =>
+        (categoria.precio?.cuotaMensual || 0) >= this.filtroPrecioMin!
+      );
+    }
+    if (this.filtroPrecioMax !== undefined && this.filtroPrecioMax > 0) {
+      categoriasFiltradas = categoriasFiltradas.filter(categoria =>
+        (categoria.precio?.cuotaMensual || 0) <= this.filtroPrecioMax!
+      );
+    }
+
+    // Filtro por rango de edades
+    if (this.filtroEdadMin !== undefined && this.filtroEdadMin > 0) {
+      categoriasFiltradas = categoriasFiltradas.filter(categoria =>
+        (categoria.edadMaxima || 0) >= this.filtroEdadMin!
+      );
+    }
+    if (this.filtroEdadMax !== undefined && this.filtroEdadMax > 0) {
+      categoriasFiltradas = categoriasFiltradas.filter(categoria =>
+        (categoria.edadMinima || 0) <= this.filtroEdadMax!
+      );
+    }
+
+    // Filtro por disponibilidad de cupos
+    if (this.filtroDisponibilidad) {
+      categoriasFiltradas = categoriasFiltradas.filter(categoria => {
+        const ocupacion = this.getOccupancyPercentage(categoria);
+        switch (this.filtroDisponibilidad) {
+          case 'disponible':
+            return ocupacion < 100;
+          case 'casi_lleno':
+            return ocupacion >= 80 && ocupacion < 100;
+          case 'lleno':
+            return ocupacion >= 100;
+          default:
+            return true;
+        }
+      });
     }
 
     // Aplicar paginación
@@ -226,8 +362,105 @@ export class CategoriaComponent implements OnInit {
     this.searchTerm = '';
     this.filtroEstado = undefined;
     this.filtroNivel = undefined;
+    this.filtroTipo = undefined;
+    this.filtroProfesor = undefined;
+    this.filtroPrecioMin = undefined;
+    this.filtroPrecioMax = undefined;
+    this.filtroEdadMin = undefined;
+    this.filtroEdadMax = undefined;
+    this.filtroDisponibilidad = undefined;
     this.currentPage = 1;
     this.aplicarFiltros();
+  }
+
+  // Métodos para gestión de filtros avanzados
+  aplicarFiltrosAvanzados(): void {
+    this.currentPage = 1;
+    this.aplicarFiltros();
+  }
+
+  // Método para calcular ingresos estimados
+  calcularIngresosEstimados(categoria: Categoria): number {
+    const alumnosActivos = this.alumnosCategoria.filter(ac =>
+      (ac.categoria === categoria._id || ac.categoriaId === categoria._id) &&
+      (ac.estado === 'ACTIVO' || ac.estado === 'ACTIVA')
+    ).length;
+    const cuota = categoria.precio?.cuotaMensual ?? 0;
+    return alumnosActivos * cuota;
+  }
+
+  getNombreProfesorAsignado(categoriaId: string): string {
+    return this.getNombreProfesor(categoriaId);
+  }
+
+  // Métodos para análisis de torneos
+  getTorneosActivos(): number {
+    return this.torneosCategoria.filter(tc => tc.estado === 'ACTIVO').length;
+  }
+
+  getTorneosProximos(): number {
+    const hoy = new Date();
+    return this.torneosCategoria.filter(tc => {
+      if (tc.torneo?.fecha_inicio) {
+        const fechaInicio = new Date(tc.torneo.fecha_inicio);
+        return fechaInicio > hoy && tc.estado === 'ACTIVO';
+      }
+      return false;
+    }).length;
+  }
+
+  getTorneosFinalizados(): number {
+    const hoy = new Date();
+    return this.torneosCategoria.filter(tc => {
+      if (tc.torneo?.fecha_fin) {
+        const fechaFin = new Date(tc.torneo.fecha_fin);
+        return fechaFin < hoy;
+      }
+      return false;
+    }).length;
+  }
+
+  // Método para calcular porcentaje de ocupación
+  getOccupancyPercentage(categoria: Categoria): number {
+    const cupoMaximo = categoria.cupoMaximo || 0;
+    const alumnosActuales = categoria.alumnosActuales || 0;
+    return cupoMaximo > 0 ? (alumnosActuales / cupoMaximo) * 100 : 0;
+  }
+
+
+
+  // Método para obtener estadísticas de la categoría
+  getEstadisticasCategoria(categoria: Categoria): any {
+    const alumnosDeCategoria = this.alumnosCategoria.filter(ac =>
+      (ac.categoria === categoria._id || ac.categoriaId === categoria._id) &&
+      (ac.estado === 'ACTIVO' || ac.estado === 'ACTIVA')
+    );
+
+    let promedioEdad = 'N/A';
+    if (alumnosDeCategoria.length > 0) {
+      const edades = alumnosDeCategoria
+        .map(ac => ac.alumno_datos?.persona?.fechaNacimiento)
+        .filter(fecha => fecha)
+        .map(fecha => {
+          const hoy = new Date();
+          const nacimiento = new Date(fecha!);
+          return hoy.getFullYear() - nacimiento.getFullYear();
+        });
+
+      if (edades.length > 0) {
+        const suma = edades.reduce((acc, edad) => acc + edad, 0);
+        promedioEdad = Math.round(suma / edades.length).toString();
+      }
+    }
+
+    return {
+      promedioEdad,
+      diasEntrenamiento: categoria.horarios?.length || 0,
+      horasSemanales: categoria.horarios?.reduce((total, horario) => {
+        // Calcular horas por día (esto es una estimación simple)
+        return total + 2; // Asumiendo 2 horas por sesión
+      }, 0) || 0
+    };
   }
 
   // Métodos de paginación
@@ -368,11 +601,6 @@ export class CategoriaComponent implements OnInit {
     return colors[nivel] || 'secondary';
   }
 
-  getOccupancyPercentage(categoria: any): number {
-    const current = categoria.alumnos_actuales || categoria.alumnosActuales || 0;
-    const max = categoria.cupoMaximo || 1;
-    return max > 0 ? (current / max) * 100 : 0;
-  }
 
   getEstadoActivo(categoria: any): boolean {
     return categoria.estado === 'ACTIVA';
@@ -389,9 +617,13 @@ export class CategoriaComponent implements OnInit {
   }
 
   // Métodos para el modal de detalles
-  abrirDetalles(categoria: Categoria) {
+  abrirDetalles(categoria: Categoria): void {
     this.categoriaSeleccionada = categoria;
     this.modalDetallesVisible = true;
+
+    // Forzar detección de cambios
+    this.cdr.detectChanges();
+
     this.cargarDetallesCategoria(categoria._id!);
   }
 
@@ -403,6 +635,7 @@ export class CategoriaComponent implements OnInit {
     this.torneosCategoria = [];
   }
 
+  // Métodos para modales
   onModalDetallesChange(visible: boolean) {
     if (!visible) {
       this.cerrarDetalles();
@@ -415,36 +648,120 @@ export class CategoriaComponent implements OnInit {
     }
   }
 
-  cargarProfesores() {
-    this.profesorService.getProfesoresActivos().subscribe({
-      next: (profesores: any) => {
-        this.profesores = profesores || [];
-      },
-      error: (error: any) => {
-        console.error('Error al cargar profesores:', error);
-      }
-    });
-  }
-
-  cargarProfesoresCategorias() {
-    this.profesorCategoriaService.getProfesorCategorias().subscribe({
-      next: (response: any) => {
-        // Asegurar que siempre sea un array
-        if (Array.isArray(response)) {
-          this.profesoresCategorias = response;
-        } else if (response && Array.isArray(response.data)) {
-          this.profesoresCategorias = response.data;
-        } else {
-          this.profesoresCategorias = [];
+  // Métodos Promise para carga de datos
+  cargarProfesoresPromise(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      this.profesorService.getProfesoresActivos().subscribe({
+        next: (profesores: any) => {
+          this.profesores = profesores || [];
+          resolve();
+        },
+        error: (error: any) => {
+          console.error('Error al cargar profesores:', error);
+          reject(error);
         }
-      },
-      error: (error: any) => {
-        console.error('Error al cargar relaciones profesor-categoría:', error);
-        this.profesoresCategorias = []; // Asegurar que sea un array en caso de error
-      }
+      });
     });
   }
 
+  cargarProfesoresCategoriasPromise(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      this.profesorCategoriaService.getProfesorCategorias().subscribe({
+        next: (response: any) => {
+          let rawArray = Array.isArray(response) ? response : (response && Array.isArray(response.data) ? response.data : []);
+          this.profesoresCategorias = rawArray.map((item: any) => ProfesorCategoria.fromJSON(item));
+          resolve();
+        },
+        error: (error: any) => {
+          console.error('Error al cargar relaciones profesor-categoría:', error);
+          this.profesoresCategorias = [];
+          reject(error);
+        }
+      });
+    });
+  }
+
+  cargarAlumnosCategoriaPromise(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      this.alumnoCategoriaService.getAlumnoCategorias().subscribe({
+        next: (response: any) => {
+          if (Array.isArray(response)) {
+            this.alumnosCategoria = response;
+          } else if (response && Array.isArray(response.data?.datos)) {
+            this.alumnosCategoria = response.data.datos;
+          } else if (response && Array.isArray(response.data)) {
+            this.alumnosCategoria = response.data;
+          } else {
+            this.alumnosCategoria = [];
+          }
+          resolve();
+        },
+        error: (error: any) => {
+          console.error('Error al cargar relaciones alumno-categoría:', error);
+          this.alumnosCategoria = [];
+          reject(error);
+        }
+      });
+    });
+  }
+
+  cargarTorneosCategoriasPromise(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      this.torneoCategoriaService.getTorneosCategorias().subscribe({
+        next: (response: any) => {
+          this.torneosCategoria = response.data?.data || response.data || response || [];
+          console.log('Torneos-categorías cargados:', this.torneosCategoria.length);
+          resolve();
+        },
+        error: (error: any) => {
+          console.error('Error al cargar torneos-categorías:', error);
+          this.torneosCategoria = [];
+          reject(error);
+        }
+      });
+    });
+  }
+
+  // Método para recalcular datos después de cargas
+  recalcularDatosCategoria(): void {
+    this.categorias.forEach(cat => {
+      // Recalcular alumnosActuales
+      cat.alumnosActuales = this.alumnosCategoria.filter(ac => 
+        (ac.categoria === cat._id || ac.categoriaId === cat._id) && 
+        (ac.estado === 'ACTIVO' || ac.estado === 'ACTIVA')
+      ).length;
+    });
+  }
+
+  // Método para obtener nombre del profesor
+  getNombreProfesor(categoriaId: string | undefined): string {
+    if (!categoriaId) return 'Sin asignar';
+
+    // Verificar que profesoresCategorias sea un array
+    if (!Array.isArray(this.profesoresCategorias)) {
+      return 'Sin asignar';
+    }
+
+    // Buscar la relación profesor-categoría activa para esta categoría
+    const profesorCategoria = this.profesoresCategorias.find(pc =>
+      (pc.categoria?._id === categoriaId || pc.categoriaId === categoriaId) && 
+      (pc.estado === 'ACTIVO' || pc.activo === true)
+    );
+
+    if (!profesorCategoria) return 'Sin asignar';
+
+    // Obtener el profesor desde la relación
+    const profesor = profesorCategoria.profesor;
+    if (!profesor) return 'Sin asignar';
+
+    // Construir el nombre del profesor
+    const nombres = profesor.persona?.nombres || profesor.personaData?.nombres || profesor.nombres || '';
+    const apellidos = profesor.persona?.apellidos || profesor.personaData?.apellidos || profesor.apellidos || '';
+
+    return `${nombres} ${apellidos}`.trim() || 'Profesor no encontrado';
+  }
+
+  // Método para cargar detalles de categoría
   cargarDetallesCategoria(categoriaId: string) {
     this.loadingDetalles = true;
 
@@ -476,32 +793,7 @@ export class CategoriaComponent implements OnInit {
     });
   }
 
-  getNombreProfesor(categoriaId: string | undefined): string {
-    if (!categoriaId) return 'Sin asignar';
-
-    // Verificar que profesoresCategorias sea un array
-    if (!Array.isArray(this.profesoresCategorias)) {
-      return 'Sin asignar';
-    }
-
-    // Buscar la relación profesor-categoría activa para esta categoría
-    const profesorCategoria = this.profesoresCategorias.find(pc =>
-      pc.categoria?._id === categoriaId && pc.estado === 'ACTIVO'
-    );
-
-    if (!profesorCategoria) return 'Sin asignar';
-
-    // Obtener el profesor desde la relación
-    const profesor = profesorCategoria.profesor;
-    if (!profesor) return 'Sin asignar';
-
-    // Construir el nombre del profesor
-    const nombres = profesor.persona?.nombres || profesor.personaData?.nombres || '';
-    const apellidos = profesor.persona?.apellidos || profesor.personaData?.apellidos || '';
-
-    return `${nombres} ${apellidos}`.trim() || 'Profesor no encontrado';
-  }
-
+  // Método para exportar alumnos a PDF
   exportarAlumnosPDF(): void {
     if (!this.categoriaSeleccionada || this.alumnosCategoria.length === 0) {
       this.notificationService.showWarning('Advertencia', 'No hay alumnos para exportar');
@@ -518,15 +810,15 @@ export class CategoriaComponent implements OnInit {
 
     const fechaActual = new Date().toLocaleDateString('es-ES');
     const horaActual = new Date().toLocaleTimeString('es-ES');
-    
+
     // Calcular estadísticas
     const alumnosActivos = this.alumnosCategoria.filter(a => a.estado === 'ACTIVO').length;
     const alumnosInactivos = this.alumnosCategoria.filter(a => a.estado === 'INACTIVO').length;
-    
+
     // Calcular distribución por género y edades
     const generos = { masculino: 0, femenino: 0, otro: 0 };
     const edades: number[] = [];
-    
+
     this.alumnosCategoria.forEach(alumno => {
       const personaAlumno = alumno.alumno_datos?.persona_datos || alumno.alumno_datos?.persona;
       if (personaAlumno?.genero) {
@@ -538,20 +830,20 @@ export class CategoriaComponent implements OnInit {
           generos.otro++;
         }
       }
-      
+
       if (personaAlumno?.fechaNacimiento) {
         const fechaNac = new Date(personaAlumno.fechaNacimiento);
         const edad = new Date().getFullYear() - fechaNac.getFullYear();
         edades.push(edad);
       }
     });
-    
+
     const edadMinima = edades.length > 0 ? Math.min(...edades) : 0;
     const edadMaxima = edades.length > 0 ? Math.max(...edades) : 0;
-    
+
     // Obtener información del entrenador
     const nombreEntrenador = this.getNombreProfesor(this.categoriaSeleccionada._id);
-    
+
     // Formatear horarios
     const horariosTexto = this.categoriaSeleccionada.horarios && this.categoriaSeleccionada.horarios.length > 0
       ? this.categoriaSeleccionada.horarios.map(h => `${h.dia}: ${h.hora_inicio || h.horaInicio} - ${h.hora_fin || h.horaFin}`).join(', ')
@@ -630,28 +922,28 @@ export class CategoriaComponent implements OnInit {
           </thead>
           <tbody>
             ${this.alumnosCategoria.map((alumno, index) => {
-                const personaAlumno = alumno.alumno_datos?.persona_datos || alumno.alumno_datos?.persona;
-                const datosAlumno = alumno.alumno_datos;
-                
-                // Calcular edad
-                let edad = 'N/A';
-                if (personaAlumno?.fechaNacimiento) {
-                  const fechaNac = new Date(personaAlumno.fechaNacimiento);
-                  const edadCalculada = new Date().getFullYear() - fechaNac.getFullYear();
-                  const mesActual = new Date().getMonth();
-                  const mesNacimiento = fechaNac.getMonth();
-                  if (mesActual < mesNacimiento || (mesActual === mesNacimiento && new Date().getDate() < fechaNac.getDate())) {
-                    edad = (edadCalculada - 1).toString();
-                  } else {
-                    edad = edadCalculada.toString();
-                  }
-                }
-                
-                const fechaInscripcion = alumno.fecha_inscripcion || datosAlumno?.fecha_inscripcion
-                  ? new Date(alumno.fecha_inscripcion || datosAlumno?.fecha_inscripcion).toLocaleDateString('es-ES')
-                  : 'N/A';
-                
-                return `
+      const personaAlumno = alumno.alumno_datos?.persona_datos || alumno.alumno_datos?.persona;
+      const datosAlumno = alumno.alumno_datos;
+
+      // Calcular edad
+      let edad = 'N/A';
+      if (personaAlumno?.fechaNacimiento) {
+        const fechaNac = new Date(personaAlumno.fechaNacimiento);
+        const edadCalculada = new Date().getFullYear() - fechaNac.getFullYear();
+        const mesActual = new Date().getMonth();
+        const mesNacimiento = fechaNac.getMonth();
+        if (mesActual < mesNacimiento || (mesActual === mesNacimiento && new Date().getDate() < fechaNac.getDate())) {
+          edad = (edadCalculada - 1).toString();
+        } else {
+          edad = edadCalculada.toString();
+        }
+      }
+
+      const fechaInscripcion = alumno.fecha_inscripcion || datosAlumno?.fecha_inscripcion
+        ? new Date(alumno.fecha_inscripcion || datosAlumno?.fecha_inscripcion).toLocaleDateString('es-ES')
+        : 'N/A';
+
+      return `
                   <tr style="background-color: ${index % 2 === 0 ? '#f9f9f9' : 'white'};">
                     <td style="padding: 6px; border: 1px solid #ddd; font-weight: bold;">
                       ${datosAlumno?.numero_socio || 'N/A'}
@@ -687,7 +979,7 @@ export class CategoriaComponent implements OnInit {
                     </td>
                   </tr>
                 `;
-              }).join('')}
+    }).join('')}
           </tbody>
         </table>
         
