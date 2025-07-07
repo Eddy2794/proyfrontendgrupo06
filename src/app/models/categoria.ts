@@ -84,7 +84,7 @@ export class CategoriaClass implements Categoria {
         primeraVez: 0
       }
     };
-    this.cupoMaximo = 20;
+    this.cupoMaximo = 1; // Sincronizado con backend (mínimo 1)
     this.horarios = [];
     this.configuracionPago = {
       habilitarDescuentos: true,
@@ -173,4 +173,3 @@ export const NIVELES = ['PRINCIPIANTE', 'INTERMEDIO', 'AVANZADO', 'COMPETITIVO']
 export const DIAS_SEMANA = ['LUNES', 'MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES', 'SABADO', 'DOMINGO'] as const;
 export const METODOS_PAGO = ['EFECTIVO', 'TRANSFERENCIA', 'MERCADOPAGO'] as const;
 
-// Nota: Alias CategoriaEscuela eliminados en Fase 2 de migración - usar Categoria directamente

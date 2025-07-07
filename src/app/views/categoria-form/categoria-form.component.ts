@@ -40,6 +40,56 @@ export class CategoriaFormComponent implements OnInit {
   profesores: any[] = [];
   loadingProfesores = false;
   categoriaFormValidated = false;
+  equipamientoIncluidoText: string = '';
+  equipamientoRequeridoText: string = '';
+
+  // Getters y setters para navegación segura
+  get habilitarDescuentos(): boolean {
+    return this.categoria?.configuracionPago?.habilitarDescuentos || false;
+  }
+
+  set habilitarDescuentos(value: boolean) {
+    if (!this.categoria.configuracionPago) {
+      this.categoria.configuracionPago = {
+        habilitarDescuentos: false,
+        metodosPermitidos: ['EFECTIVO', 'TRANSFERENCIA', 'MERCADOPAGO']
+      };
+    }
+    this.categoria.configuracionPago.habilitarDescuentos = value;
+  }
+
+  get descuentoHermanos(): number {
+    return this.categoria?.precio?.descuentos?.hermanos || 0;
+  }
+
+  set descuentoHermanos(value: number) {
+    if (!this.categoria.precio.descuentos) {
+      this.categoria.precio.descuentos = {};
+    }
+    this.categoria.precio.descuentos.hermanos = value;
+  }
+
+  get descuentoPagoAnual(): number {
+    return this.categoria?.precio?.descuentos?.pagoAnual || 0;
+  }
+
+  set descuentoPagoAnual(value: number) {
+    if (!this.categoria.precio.descuentos) {
+      this.categoria.precio.descuentos = {};
+    }
+    this.categoria.precio.descuentos.pagoAnual = value;
+  }
+
+  get descuentoPrimeraVez(): number {
+    return this.categoria?.precio?.descuentos?.primeraVez || 0;
+  }
+
+  set descuentoPrimeraVez(value: number) {
+    if (!this.categoria.precio.descuentos) {
+      this.categoria.precio.descuentos = {};
+    }
+    this.categoria.precio.descuentos.primeraVez = value;
+  }
 
 
 
@@ -74,6 +124,8 @@ export class CategoriaFormComponent implements OnInit {
   iniciarVariable() {
     this.categoria = new CategoriaClass();
     this.categoriaFormValidated = false;
+    this.equipamientoIncluidoText = '';
+    this.equipamientoRequeridoText = '';
   }
 
   cargarCategoria(id: string) {
@@ -82,6 +134,9 @@ export class CategoriaFormComponent implements OnInit {
       next: result => {
         if (result.success) {
           Object.assign(this.categoria, result.data);
+          // Convertir arrays de equipamiento a texto
+          this.equipamientoIncluidoText = this.categoria.equipamiento?.incluido?.join(', ') || '';
+          this.equipamientoRequeridoText = this.categoria.equipamiento?.requerido?.join(', ') || '';
         }
         this.loading = false;
       },
@@ -97,6 +152,9 @@ export class CategoriaFormComponent implements OnInit {
     if (!this.validarFormulario()) {
       return;
     }
+
+    // Preparar equipamiento desde texto
+    this.prepararEquipamiento();
 
     this.loading = true;
     this.categoriaService.updateCategoria(this.categoria._id!, this.categoria).subscribe({
@@ -120,6 +178,9 @@ export class CategoriaFormComponent implements OnInit {
       return;
     }
 
+    // Preparar equipamiento desde texto
+    this.prepararEquipamiento();
+
     // Preparar datos solo con los campos requeridos por el backend
     const categoriaData = {
       nombre: this.categoria.nombre,
@@ -134,7 +195,10 @@ export class CategoriaFormComponent implements OnInit {
       },
       cupoMaximo: this.categoria.cupoMaximo,
       nivel: this.categoria.nivel,
-      horarios: this.categoria.horarios
+      horarios: this.categoria.horarios,
+      profesor: this.categoria.profesor,
+      configuracionPago: this.categoria.configuracionPago,
+      equipamiento: this.categoria.equipamiento
     };
 
     console.log('Datos de categoría a enviar:', categoriaData);
@@ -171,6 +235,7 @@ export class CategoriaFormComponent implements OnInit {
   }
 
   validarFormulario(): boolean {
+    // Validaciones básicas de campos requeridos
     if (!this.categoria?.nombre?.trim()) {
       this.showErrorToast('Campo requerido', 'El nombre de la categoría es obligatorio');
       return false;
@@ -181,34 +246,137 @@ export class CategoriaFormComponent implements OnInit {
       return false;
     }
 
-    if ((this.categoria?.edadMinima ?? 0) >= (this.categoria?.edadMaxima ?? 0)) {
+    if (!this.categoria?.nivel) {
+      this.showErrorToast('Campo requerido', 'El nivel de la categoría es obligatorio');
+      return false;
+    }
+
+    // Validación de longitud del nombre (sincronizada con backend)
+    if (this.categoria?.nombre?.trim().length < 2) {
+      this.showErrorToast('Error en nombre', 'El nombre debe tener al menos 2 caracteres');
+      return false;
+    }
+
+    if (this.categoria?.nombre?.trim().length > 100) {
+      this.showErrorToast('Error en nombre', 'El nombre no puede exceder 100 caracteres');
+      return false;
+    }
+
+    // Validación cruzada de edades (sincronizada con backend)
+    const edadMin = this.categoria?.edadMinima ?? 0;
+    const edadMax = this.categoria?.edadMaxima ?? 0;
+    
+    if (edadMin <= 0 || edadMax <= 0) {
+      this.showErrorToast('Error en edades', 'Las edades mínima y máxima deben ser mayores a 0');
+      return false;
+    }
+
+    if (edadMin >= edadMax) {
       this.showErrorToast('Error en edades', 'La edad mínima debe ser menor que la edad máxima');
       return false;
     }
 
-    if ((this.categoria?.precio?.cuotaMensual ?? 0) < 0) {
+    if (edadMax - edadMin > 15) {
+      this.showWarningToast('Advertencia en edades', 'El rango de edades es muy amplio (más de 15 años). Verifique si es correcto.');
+    }
+
+    // Límites de edad sincronizados con backend (3-100 años)
+    if (edadMin < 3) {
+      this.showErrorToast('Error en edad mínima', 'La edad mínima no puede ser menor a 3 años');
+      return false;
+    }
+
+    if (edadMax > 100) {
+      this.showErrorToast('Error en edad máxima', 'La edad máxima no puede ser mayor a 100 años');
+      return false;
+    }
+
+    // Validación de cuota mensual (sincronizada con backend - permite 0)
+    const cuotaMensual = this.categoria?.precio?.cuotaMensual ?? 0;
+    
+    if (cuotaMensual < 0) {
       this.showErrorToast('Error en cuota', 'La cuota mensual no puede ser negativa');
       return false;
     }
 
-    if ((this.categoria?.cupoMaximo ?? 0) < 1) {
-      this.showErrorToast('Error en capacidad', 'El máximo de alumnos debe ser al menos 1');
+    // Advertencias para valores extremos (pero no errores)
+    if (cuotaMensual > 100000) {
+      this.showWarningToast('Advertencia en cuota', 'El precio parece muy alto (más de $100.000). Por favor verifique el monto.');
+    }
+
+    if (cuotaMensual > 0 && cuotaMensual < 1000) {
+      this.showWarningToast('Advertencia en cuota', 'La cuota mensual parece muy baja. Verifique si es correcta.');
+    }
+
+    // Validación de capacidad (sincronizada con backend: 1-100 alumnos)
+    const cupoMaximo = this.categoria?.cupoMaximo ?? 0;
+    
+    if (cupoMaximo < 1) {
+      this.showErrorToast('Error en capacidad', 'La capacidad mínima debe ser de al menos 1 alumno');
       return false;
     }
 
-    // Validar horarios
-    if (this.categoria?.horarios) {
-      for (let horario of this.categoria.horarios) {
+    if (cupoMaximo > 100) {
+      this.showErrorToast('Error en capacidad', 'La capacidad no puede exceder 100 alumnos');
+      return false;
+    }
+
+    // Advertencias para valores altos
+    if (cupoMaximo > 50) {
+      this.showWarningToast('Advertencia en capacidad', 'La capacidad es muy alta (más de 50 alumnos). Verifique si es manejable.');
+    }
+
+    // Validación mejorada de horarios
+    if (this.categoria?.horarios && this.categoria.horarios.length > 0) {
+      for (let i = 0; i < this.categoria.horarios.length; i++) {
+        const horario = this.categoria.horarios[i];
+        
         if (!horario.dia || !horario.hora_inicio || !horario.hora_fin) {
-          this.showErrorToast('Error en horarios', 'Todos los campos de horario son requeridos');
+          this.showErrorToast('Error en horarios', `Todos los campos del horario ${i + 1} son requeridos`);
           return false;
         }
 
         if (horario.hora_inicio >= horario.hora_fin) {
-          this.showErrorToast('Error en horarios', 'La hora de inicio debe ser menor que la hora de fin');
+          this.showErrorToast('Error en horarios', `En el horario ${i + 1}: La hora de inicio debe ser menor que la hora de fin`);
           return false;
         }
+
+        // Validar que no sea muy temprano o muy tarde
+        const horaInicio = parseInt(horario.hora_inicio.split(':')[0]);
+        const horaFin = parseInt(horario.hora_fin.split(':')[0]);
+        
+        if (horaInicio < 6) {
+          this.showWarningToast('Advertencia en horarios', `El horario ${i + 1} inicia muy temprano (antes de las 6:00 AM)`);
+        }
+        
+        if (horaFin > 23) {
+          this.showWarningToast('Advertencia en horarios', `El horario ${i + 1} termina muy tarde (después de las 11:00 PM)`);
+        }
+
+        // Verificar duración mínima y máxima
+        const duracionHoras = horaFin - horaInicio;
+        if (duracionHoras < 1) {
+          this.showErrorToast('Error en horarios', `El horario ${i + 1} debe tener una duración mínima de 1 hora`);
+          return false;
+        }
+        
+        if (duracionHoras > 4) {
+          this.showWarningToast('Advertencia en horarios', `El horario ${i + 1} es muy largo (más de 4 horas). Verifique si es correcto.`);
+        }
       }
+
+      // Verificar horarios duplicados
+      for (let i = 0; i < this.categoria.horarios.length; i++) {
+        for (let j = i + 1; j < this.categoria.horarios.length; j++) {
+          if (this.categoria.horarios[i].dia === this.categoria.horarios[j].dia) {
+            this.showErrorToast('Error en horarios', `Hay horarios duplicados para el día ${this.categoria.horarios[i].dia}`);
+            return false;
+          }
+        }
+      }
+    } else {
+      this.showErrorToast('Error en horarios', 'Debe agregar al menos un horario de entrenamiento');
+      return false;
     }
 
     return true;
@@ -220,6 +388,14 @@ export class CategoriaFormComponent implements OnInit {
 
   showErrorToast(title: string, message: string) {
     this.notificationService.showError(title, message);
+  }
+
+  showWarningToast(title: string, message: string) {
+    this.notificationService.showWarning(title, message);
+  }
+
+  showInfoToast(title: string, message: string) {
+    this.notificationService.showInfo(title, message);
   }
 
   agregarHorario() {
@@ -255,5 +431,44 @@ export class CategoriaFormComponent implements OnInit {
         this.loadingProfesores = false;
       }
     });
+  }
+
+  prepararEquipamiento() {
+    // Convertir texto a arrays para equipamiento
+    if (!this.categoria.equipamiento) {
+      this.categoria.equipamiento = { incluido: [], requerido: [] };
+    }
+    
+    this.categoria.equipamiento.incluido = this.equipamientoIncluidoText
+      .split(',')
+      .map(item => item.trim())
+      .filter(item => item.length > 0);
+    
+    this.categoria.equipamiento.requerido = this.equipamientoRequeridoText
+      .split(',')
+      .map(item => item.trim())
+      .filter(item => item.length > 0);
+  }
+
+  toggleMetodoPago(metodo: string, event: any) {
+    if (!this.categoria.configuracionPago) {
+      this.categoria.configuracionPago = {
+        habilitarDescuentos: true,
+        metodosPermitidos: []
+      };
+    }
+
+    const metodosPermitidos = this.categoria.configuracionPago.metodosPermitidos;
+    
+    if (event.target.checked) {
+      if (!metodosPermitidos.includes(metodo)) {
+        metodosPermitidos.push(metodo);
+      }
+    } else {
+      const index = metodosPermitidos.indexOf(metodo);
+      if (index > -1) {
+        metodosPermitidos.splice(index, 1);
+      }
+    }
   }
 }

@@ -6,62 +6,42 @@
           <strong>Gestión de Categorías</strong>
           <small class="text-body-secondary ms-2">Administrar categorías de entrenamiento</small>
         </div>
-        <button 
-          cButton 
-          color="primary" 
-          size="sm"
-          (click)="agregarCategoria()"
-          cTooltip="Agregar nueva categoría">
+        <button cButton color="primary" size="sm" (click)="agregarCategoria()" cTooltip="Agregar nueva categoría">
           <svg cIcon name="cilPlus" class="me-1"></svg>
           Nueva Categoría
         </button>
       </c-card-header>
-      
+
       <c-card-body>
-        <!-- Barra de búsqueda y filtros -->
+        <!-- Barra de búsqueda y filtros básicos -->
         <c-row class="mb-3">
           <c-col md="4">
             <c-input-group>
               <span cInputGroupText>
                 <svg cIcon name="cilSearch"></svg>
               </span>
-              <input 
-                cFormControl 
-                placeholder="Buscar por nombre o descripción..."
-                [value]="searchTerm"
-                (input)="onSearch($any($event.target).value)"
-                type="text">
+              <input cFormControl placeholder="Buscar por nombre, descripción o tipo..." [value]="searchTerm"
+                (input)="onSearch($any($event.target).value)" type="text">
             </c-input-group>
           </c-col>
           <c-col md="2">
-            <select 
-              class="form-select"
-              [value]="filtroEstado || ''"
-              (change)="onFiltroEstadoChange($any($event.target).value || undefined)"
-              aria-label="Filtrar por estado">
+            <select class="form-select" [value]="filtroEstado || ''"
+              (change)="onFiltroEstadoChange($any($event.target).value || undefined)" aria-label="Filtrar por estado">
               <option value="">Todos los estados</option>
               <option value="activa">Activas</option>
               <option value="inactiva">Inactivas</option>
             </select>
           </c-col>
           <c-col md="2">
-            <select 
-              class="form-select"
-              [value]="filtroNivel || ''"
-              (change)="onFiltroNivelChange($any($event.target).value || undefined)"
-              aria-label="Filtrar por nivel">
+            <select class="form-select" [value]="filtroNivel || ''"
+              (change)="onFiltroNivelChange($any($event.target).value || undefined)" aria-label="Filtrar por nivel">
               <option value="">Todos los niveles</option>
               <option *ngFor="let nivel of nivelesDisponibles" [value]="nivel">{{ nivel }}</option>
             </select>
           </c-col>
           <c-col md="2">
-            <button 
-              cButton 
-              color="secondary" 
-              variant="outline"
-              size="sm"
-              (click)="limpiarFiltros()"
-              cTooltip="Limpiar filtros">
+            <button cButton color="secondary" variant="outline" size="sm" (click)="limpiarFiltros()"
+              cTooltip="Limpiar todos los filtros">
               <svg cIcon name="cilReload" class="me-1"></svg>
               Limpiar
             </button>
@@ -73,21 +53,15 @@
           </c-col>
         </c-row>
 
+
+
         <!-- Mensaje de error -->
-        <c-alert 
-          *ngIf="errorMessage" 
-          color="danger" 
-          [dismissible]="true"
-          (dismissed)="clearMessages()">
+        <c-alert *ngIf="errorMessage" color="danger" [dismissible]="true" (dismissed)="clearMessages()">
           {{ errorMessage }}
         </c-alert>
 
         <!-- Mensaje de éxito -->
-        <c-alert 
-          *ngIf="successMessage" 
-          color="success" 
-          [dismissible]="true"
-          (dismissed)="clearMessages()">
+        <c-alert *ngIf="successMessage" color="success" [dismissible]="true" (dismissed)="clearMessages()">
           {{ successMessage }}
         </c-alert>
 
@@ -106,8 +80,10 @@
                 <th scope="col">Nivel</th>
                 <th scope="col">Rango de Edad</th>
                 <th scope="col">Cuota Mensual</th>
+                <th scope="col">Ingresos Est.</th>
                 <th scope="col">Profesor</th>
                 <th scope="col">Ocupación</th>
+                <th scope="col">Creación</th>
                 <th scope="col">Estado</th>
                 <th scope="col" class="text-center">Acciones</th>
               </tr>
@@ -124,9 +100,7 @@
 
                 <!-- Nivel -->
                 <td>
-                  <c-badge 
-                    [color]="getLevelBadgeColor(categoria.nivel)"
-                    class="me-1">
+                  <c-badge [color]="getLevelBadgeColor(categoria.nivel)" class="me-1">
                     {{ categoria.nivel }}
                   </c-badge>
                 </td>
@@ -138,12 +112,25 @@
 
                 <!-- Cuota Mensual -->
                 <td>
-                  <span class="fw-semibold">${{ (categoria.precio.cuotaMensual || 0) | number:'1.0-0' }}</span>
+                  <span class="fw-semibold">${{ categoria.precio?.cuotaMensual ? (categoria.precio.cuotaMensual |
+                    number:'1.0-0') : '0' }}</span>
+                </td>
+
+                <!-- Ingresos Estimados -->
+                <td>
+                  <div>
+                    <span class="fw-semibold text-success">${{ calcularIngresosEstimados(categoria) | number:'1.0-0'
+                      }}</span>
+                    <br>
+                    <small class="text-body-secondary">{{ categoria.alumnosActuales || 0 }} alumnos</small>
+                  </div>
+
                 </td>
 
                 <!-- Profesor -->
                 <td>
-                  <small class="text-body-secondary">{{ getNombreProfesor(categoria._id) }}</small>
+                  <small class="text-body-secondary">{{ categoria._id ? getNombreProfesorAsignado(categoria._id) : 'No
+                    asignado' }}</small>
                 </td>
 
                 <!-- Ocupación -->
@@ -151,9 +138,7 @@
                   <div class="d-flex align-items-center">
                     <small class="me-2">{{ (categoria.alumnosActuales || 0) }}/{{ (categoria.cupoMaximo || 0) }}</small>
                     <div class="progress" style="width: 60px; height: 8px;">
-                      <div 
-                        class="progress-bar" 
-                        [class]="'bg-' + getOccupancyColor(getOccupancyPercentage(categoria))"
+                      <div class="progress-bar" [class]="'bg-' + getOccupancyColor(getOccupancyPercentage(categoria))"
                         [style.width.%]="getOccupancyPercentage(categoria)">
                       </div>
                     </div>
@@ -161,57 +146,48 @@
                   </div>
                 </td>
 
+                <!-- Fecha de Creación -->
+                <td>
+                  <div>
+                    <small class="text-body-secondary">
+                      {{ categoria.fechaCreacion ? (categoria.fechaCreacion | date:'dd/MM/yyyy') : 'N/A' }}
+                    </small>
+                    <br>
+                    <small class="text-body-secondary" style="font-size: 0.75rem;">
+                      {{ categoria.fechaActualizacion ? 'Mod: ' + (categoria.fechaActualizacion | date:'dd/MM/yy') : ''
+                      }}
+                    </small>
+                  </div>
+                </td>
+
                 <!-- Estado -->
                 <td>
-                  <c-badge 
-                    [color]="getBadgeClass(categoria)"
-                    class="me-1">
+                  <c-badge [color]="getBadgeClass(categoria)" class="me-1">
                     {{ getEstadoText(categoria) }}
                   </c-badge>
-                  <br>
-                  <button 
-                    cButton 
-                    size="sm" 
-                    variant="outline" 
-                    [color]="getEstadoActivo(categoria) ? 'warning' : 'success'"
-                    class="mt-1 w-100"
-                    style="min-width: 100px;"
-                    (click)="cambiarEstadoCategoria(categoria, !getEstadoActivo(categoria))"
-                    [cTooltip]="getButtonText(categoria)">
-                    <svg cIcon [name]="getButtonIcon(categoria)" size="sm" class="me-1"></svg>
-                    {{ getEstadoActivo(categoria) ? 'Desactivar' : 'Activar' }}
-                  </button>
                 </td>
 
                 <!-- Acciones -->
                 <td class="text-center">
                   <div class="btn-group" role="group">
-                    <button 
-                      cButton 
-                      size="sm" 
-                      variant="outline" 
-                      color="info"
-                      (click)="abrirDetalles(categoria)"
+                    <button cButton size="sm" variant="outline" color="info" (click)="abrirDetalles(categoria)"
                       cTooltip="Ver detalles">
                       <svg cIcon name="cilInfo" size="sm"></svg>
                     </button>
-                    
-                    <button 
-                      cButton 
-                      size="sm" 
-                      variant="outline" 
-                      color="primary"
-                      (click)="editarCategoria(categoria)"
+
+                    <button cButton size="sm" variant="outline" color="primary" (click)="editarCategoria(categoria)"
                       cTooltip="Editar categoría">
                       <svg cIcon name="cilPencil" size="sm"></svg>
                     </button>
-                    
-                    <button 
-                      cButton 
-                      size="sm" 
-                      variant="outline" 
-                      color="danger"
-                      (click)="confirmarEliminacion(categoria)"
+
+                    <button cButton size="sm" variant="outline"
+                      [color]="getEstadoActivo(categoria) ? 'warning' : 'success'"
+                      (click)="cambiarEstadoCategoria(categoria, !getEstadoActivo(categoria))"
+                      [cTooltip]="getButtonText(categoria)">
+                      <svg cIcon [name]="getButtonIcon(categoria)" size="sm"></svg>
+                    </button>
+
+                    <button cButton size="sm" variant="outline" color="danger" (click)="confirmarEliminacion(categoria)"
                       cTooltip="Eliminar categoría">
                       <svg cIcon name="cilTrash" size="sm"></svg>
                     </button>
@@ -221,11 +197,12 @@
 
               <!-- Mensaje cuando no hay categorías -->
               <tr *ngIf="paginatedItems.length === 0">
-                <td colspan="8" class="text-center py-4">
+                <td colspan="10" class="text-center py-4">
                   <div class="text-body-secondary">
                     <svg cIcon name="cilFolder" size="xl" class="mb-2"></svg>
                     <p class="mb-0">No se encontraron categorías</p>
-                    <small>{{ searchTerm ? 'Intenta con otros términos de búsqueda' : 'Comienza agregando una nueva categoría' }}</small>
+                    <small>{{ searchTerm ? 'Intenta con otros términos de búsqueda' : 'Comienza agregando una nueva
+                      categoría' }}</small>
                   </div>
                 </td>
               </tr>
@@ -234,49 +211,40 @@
         </div>
 
         <!-- Paginación -->
-         <div *ngIf="totalPages > 1" class="d-flex justify-content-center mt-3">
-           <nav aria-label="Paginación de categorías">
-             <ul class="pagination">
-               <li class="page-item" [class.disabled]="currentPage === 1">
-                 <a class="page-link" 
-                    (click)="currentPage > 1 && onPageChange(currentPage - 1)"
-                    style="cursor: pointer;">
-                   Anterior
-                 </a>
-               </li>
-               
-               <li class="page-item" 
-                   *ngFor="let page of [].constructor(totalPages); let i = index"
-                   [class.active]="currentPage === i + 1">
-                 <a class="page-link" 
-                    (click)="onPageChange(i + 1)"
-                    style="cursor: pointer;">
-                   {{ i + 1 }}
-                 </a>
-               </li>
-               
-               <li class="page-item" [class.disabled]="currentPage === totalPages">
-                 <a class="page-link" 
-                    (click)="currentPage < totalPages && onPageChange(currentPage + 1)"
-                    style="cursor: pointer;">
-                   Siguiente
-                 </a>
-               </li>
-             </ul>
-           </nav>
-         </div>
+        <div *ngIf="totalPages > 1" class="d-flex justify-content-center mt-3">
+          <nav aria-label="Paginación de categorías">
+            <ul class="pagination">
+              <li class="page-item" [class.disabled]="currentPage === 1">
+                <a class="page-link" (click)="currentPage > 1 && onPageChange(currentPage - 1)"
+                  style="cursor: pointer;">
+                  Anterior
+                </a>
+              </li>
+
+              <li class="page-item" *ngFor="let page of [].constructor(totalPages); let i = index"
+                [class.active]="currentPage === i + 1">
+                <a class="page-link" (click)="onPageChange(i + 1)" style="cursor: pointer;">
+                  {{ i + 1 }}
+                </a>
+              </li>
+
+              <li class="page-item" [class.disabled]="currentPage === totalPages">
+                <a class="page-link" (click)="currentPage < totalPages && onPageChange(currentPage + 1)"
+                  style="cursor: pointer;">
+                  Siguiente
+                </a>
+              </li>
+            </ul>
+          </nav>
+        </div>
       </c-card-body>
     </c-card>
   </c-col>
-  </c-row>
+</c-row>
 
 <!-- Modal de detalles de categoría -->
-<c-modal 
-  [visible]="modalDetallesVisible" 
-  (visibleChange)="onModalDetallesChange($event)"
-  size="lg"
-  scrollable="true"
-  id="modalDetallesCategoria">
+<c-modal [visible]="modalDetallesVisible" (visibleChange)="onModalDetallesChange($event)" size="lg" [scrollable]="true"
+  [backdrop]="true" [keyboard]="true" id="modalDetallesCategoria">
   <c-modal-header>
     <h5 cModalTitle>Detalles de la Categoría</h5>
     <button (click)="cerrarDetalles()" cButtonClose></button>
@@ -286,7 +254,7 @@
       <c-spinner color="primary"></c-spinner>
       <p class="mt-2 text-body-secondary">Cargando detalles...</p>
     </div>
-    
+
     <div *ngIf="!loadingDetalles && categoriaSeleccionada">
       <!-- Información básica -->
       <div class="row mb-4">
@@ -299,13 +267,16 @@
             <strong>Descripción:</strong> {{ categoriaSeleccionada.descripcion || 'Sin descripción' }}
           </div>
           <div class="mb-3">
-            <strong>Nivel:</strong> 
+            <strong>Nivel:</strong>
             <c-badge [color]="getLevelBadgeColor(categoriaSeleccionada.nivel)">
               {{ categoriaSeleccionada.nivel }}
             </c-badge>
           </div>
           <div class="mb-3">
             <strong>Rango de Edad:</strong> {{ formatAgeRange(categoriaSeleccionada) }}
+          </div>
+          <div class="mb-3">
+            <strong>Tipo:</strong> {{ categoriaSeleccionada.tipo || 'No especificado' }}
           </div>
         </div>
         <div class="col-md-6">
@@ -316,17 +287,136 @@
             <strong>Profesor:</strong> {{ getNombreProfesor(categoriaSeleccionada._id) }}
           </div>
           <div class="mb-3">
-            <strong>Capacidad:</strong> {{ (categoriaSeleccionada.alumnosActuales || 0) }}/{{ (categoriaSeleccionada.cupoMaximo || 0) }} alumnos
+            <strong>Capacidad:</strong> {{ (categoriaSeleccionada.alumnosActuales || 0) }}/{{
+            (categoriaSeleccionada.cupoMaximo || 0) }} alumnos
           </div>
           <div class="mb-3">
-            <strong>Estado:</strong> 
+            <strong>Estado:</strong>
             <c-badge [color]="getBadgeClass(categoriaSeleccionada)">
               {{ getEstadoText(categoriaSeleccionada) }}
             </c-badge>
           </div>
+          <div class="mb-3">
+            <strong>Creación:</strong> {{ categoriaSeleccionada.fechaCreacion ? (categoriaSeleccionada.fechaCreacion |
+            date:'dd/MM/yyyy HH:mm') : 'N/A' }}
+          </div>
+          <div class="mb-3" *ngIf="categoriaSeleccionada.fechaActualizacion">
+            <strong>Última Modificación:</strong> {{ categoriaSeleccionada.fechaActualizacion | date:'dd/MM/yyyy HH:mm'
+            }}
+          </div>
         </div>
       </div>
-      
+
+      <!-- Estadísticas y Análisis Financiero -->
+      <div class="row mb-4">
+        <div class="col-md-6">
+          <h6 class="text-body-secondary mb-3">ESTADÍSTICAS AVANZADAS</h6>
+          <div class="card border-0 bg-light">
+            <div class="card-body p-3">
+              <div class="row text-center">
+                <div class="col-6 border-end">
+                  <div class="h4 mb-0 text-primary">{{ getEstadisticasCategoria(categoriaSeleccionada).promedioEdad }}
+                  </div>
+                  <small class="text-body-secondary">Promedio de Edad</small>
+                </div>
+                <div class="col-6">
+                  <div class="h4 mb-0 text-info">{{ getOccupancyPercentage(categoriaSeleccionada) | number:'1.0-0' }}%
+                  </div>
+                  <small class="text-body-secondary">Ocupación</small>
+                </div>
+              </div>
+              <hr class="my-2">
+              <div class="row text-center">
+                <div class="col-6 border-end">
+                  <div class="h5 mb-0 text-warning">{{ getEstadisticasCategoria(categoriaSeleccionada).diasEntrenamiento
+                    }}</div>
+                  <small class="text-body-secondary">Días/Semana</small>
+                </div>
+                <div class="col-6">
+                  <div class="h5 mb-0 text-secondary">{{ getEstadisticasCategoria(categoriaSeleccionada).horasSemanales
+                    }}</div>
+                  <small class="text-body-secondary">Horas/Semana</small>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <h6 class="text-body-secondary mb-3">INFORMACIÓN FINANCIERA</h6>
+          <div class="card border-0 bg-light">
+            <div class="card-body p-3">
+              <div class="mb-3">
+                <div class="d-flex justify-content-between align-items-center">
+                  <span>Ingresos Mensuales:</span>
+                  <span class="fw-bold text-success">${{ calcularIngresosEstimados(categoriaSeleccionada) |
+                    number:'1.0-0' }}</span>
+                </div>
+              </div>
+              <div class="mb-3">
+                <div class="d-flex justify-content-between align-items-center">
+                  <span>Ingresos Anuales Est.:</span>
+                  <span class="fw-bold text-success">${{ calcularIngresosEstimados(categoriaSeleccionada) * 12 |
+                    number:'1.0-0' }}</span>
+                </div>
+              </div>
+              <div class="mb-3">
+                <div class="d-flex justify-content-between align-items-center">
+                  <span>Potencial Máximo:</span>
+                  <span class="fw-bold text-info">${{ (categoriaSeleccionada.cupoMaximo || 0) *
+                    (categoriaSeleccionada.precio?.cuotaMensual || 0) | number:'1.0-0' }}</span>
+                </div>
+              </div>
+              <div class="progress" style="height: 8px;">
+                <div class="progress-bar bg-success" [style.width.%]="getOccupancyPercentage(categoriaSeleccionada)"
+                  [attr.aria-valuenow]="getOccupancyPercentage(categoriaSeleccionada)" aria-valuemin="0"
+                  aria-valuemax="100">
+                </div>
+              </div>
+              <small class="text-body-secondary">Aprovechamiento del potencial financiero</small>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Análisis de Torneos -->
+      <div class="mb-4" *ngIf="torneosCategoria.length > 0">
+        <h6 class="text-body-secondary mb-3">ANÁLISIS DE TORNEOS</h6>
+        <div class="row">
+          <div class="col-md-3 text-center">
+            <div class="card border-0 bg-primary text-white">
+              <div class="card-body p-2">
+                <div class="h4 mb-0">{{ torneosCategoria.length }}</div>
+                <small>Torneos Totales</small>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-3 text-center">
+            <div class="card border-0 bg-success text-white">
+              <div class="card-body p-2">
+                <div class="h4 mb-0">{{ getTorneosActivos() }}</div>
+                <small>Participando</small>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-3 text-center">
+            <div class="card border-0 bg-warning text-white">
+              <div class="card-body p-2">
+                <div class="h4 mb-0">{{ getTorneosProximos() }}</div>
+                <small>Próximos</small>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-3 text-center">
+            <div class="card border-0 bg-info text-white">
+              <div class="card-body p-2">
+                <div class="h4 mb-0">{{ getTorneosFinalizados() }}</div>
+                <small>Finalizados</small>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Horarios de entrenamiento -->
       <div class="mb-4">
         <h6 class="text-body-secondary mb-3">HORARIOS DE ENTRENAMIENTO</h6>
@@ -344,7 +434,7 @@
           <p class="text-body-secondary">No hay horarios configurados</p>
         </ng-template>
       </div>
-      
+
       <!-- Alumnos inscritos -->
       <div class="mb-4">
         <h6 class="text-body-secondary mb-3">ALUMNOS INSCRITOS ({{ alumnosCategoria.length }})</h6>
@@ -362,14 +452,15 @@
                 <tr *ngFor="let alumnoCategoria of alumnosCategoria">
                   <td>
                     <div>
-                      <strong>{{ alumnoCategoria.alumno_datos?.persona?.nombres }} {{ alumnoCategoria.alumno_datos?.persona?.apellidos }}</strong><br>
+                      <strong>{{ alumnoCategoria.alumno_datos?.persona?.nombres }} {{
+                        alumnoCategoria.alumno_datos?.persona?.apellidos }}</strong><br>
                       <small class="text-body-secondary">{{ alumnoCategoria.alumno_datos?.persona?.email }}</small>
                     </div>
                   </td>
                   <td>{{ (alumnoCategoria.fecha_inscripcion | date:'dd/MM/yyyy') || 'N/A' }}</td>
                   <td>
-                    <c-badge [color]="alumnoCategoria.activo ? 'success' : 'secondary'">
-                      {{ alumnoCategoria.activo ? 'Activo' : 'Inactivo' }}
+                    <c-badge [color]="alumnoCategoria.estado === 'ACTIVO' ? 'success' : 'secondary'">
+                      {{ alumnoCategoria.estado === 'ACTIVO' ? 'Activo' : 'Inactivo' }}
                     </c-badge>
                   </td>
                 </tr>
@@ -381,7 +472,7 @@
           <p class="text-body-secondary">No hay alumnos inscritos en esta categoría</p>
         </ng-template>
       </div>
-      
+
       <!-- Torneos participados -->
       <div class="mb-4">
         <h6 class="text-body-secondary mb-3">TORNEOS PARTICIPADOS ({{ torneosCategoria.length }})</h6>
@@ -399,14 +490,14 @@
                 <tr *ngFor="let torneoCategoria of torneosCategoria">
                   <td>
                     <div>
-                      <strong>{{ torneoCategoria.torneo_datos?.nombre }}</strong><br>
-                      <small class="text-body-secondary">{{ torneoCategoria.torneo_datos?.descripcion }}</small>
+                      <strong>{{ torneoCategoria.torneo?.nombre }}</strong><br>
+                      <small class="text-body-secondary">{{ torneoCategoria.torneo?.descripcion }}</small>
                     </div>
                   </td>
-                  <td>{{ (torneoCategoria.torneo_datos?.fecha_inicio | date:'dd/MM/yyyy') || 'N/A' }}</td>
+                  <td>{{ (torneoCategoria.torneo?.fecha_inicio | date:'dd/MM/yyyy') || 'N/A' }}</td>
                   <td>
-                    <c-badge [color]="torneoCategoria.activo ? 'success' : 'secondary'">
-                      {{ torneoCategoria.activo ? 'Participando' : 'No participando' }}
+                    <c-badge [color]="torneoCategoria.estado === 'ACTIVO' ? 'success' : 'secondary'">
+                      {{ torneoCategoria.estado === 'ACTIVO' ? 'Participando' : 'No participando' }}
                     </c-badge>
                   </td>
                 </tr>
@@ -421,6 +512,11 @@
     </div>
   </c-modal-body>
   <c-modal-footer>
+    <button (click)="exportarAlumnosPDF()" cButton color="primary"
+      [disabled]="!categoriaSeleccionada || alumnosCategoria.length === 0" class="me-2">
+      <svg cIcon name="cilCloudDownload" class="me-1"></svg>
+      Exportar PDF
+    </button>
     <button (click)="cerrarDetalles()" cButton color="secondary">
       Cerrar
     </button>
@@ -428,11 +524,7 @@
 </c-modal>
 
 <!-- Modal de confirmación de eliminación -->
-<c-modal 
-  [visible]="modalEliminarVisible" 
-  (visibleChange)="onModalEliminarChange($event)"
-  size="sm"
-  alignment="center"
+<c-modal [visible]="modalEliminarVisible" (visibleChange)="onModalEliminarChange($event)" size="sm" alignment="center"
   id="modalEliminarCategoria">
   <c-modal-header>
     <h5 cModalTitle>Confirmar Eliminación</h5>
