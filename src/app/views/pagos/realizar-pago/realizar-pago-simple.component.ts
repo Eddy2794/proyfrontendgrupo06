@@ -12,10 +12,10 @@ import {
 } from '@coreui/angular';
 
 import { PagoService } from '../../../services/pago.service';
-import { CategoriaEscuelaService } from '../../../services/categoria-escuela.service';
+import { CategoriaService } from '../../../services/categoria.service';
 import { MercadoPagoService } from '../../../services/mercadopago.service';
 import { NotificationService } from '../../../services/notification.service';
-import { CategoriaEscuela, CreatePaymentPreferenceRequest, PaymentPreferenceResponse } from '../../../models';
+import { Categoria, CreatePaymentPreferenceRequest, PaymentPreferenceResponse } from '../../../models';
 import { environment } from '../../../../environments/environment';
 
 @Component({
@@ -61,16 +61,15 @@ import { environment } from '../../../../environments/environment';
                   <select 
                     class="form-select"
                     id="categoria"
-                    formControlName="categoriaEscuelaId">
+                    formControlName="categoriaId">
                     <option value="">Selecciona una categoría</option>
                     <option 
                       *ngFor="let categoria of categorias" 
                       [value]="categoria._id">
-                      {{ categoria.nombre }} - \${{ categoria.precio | number:'1.2-2' }}
-                      <span *ngIf="categoria.descuento"> ({{ categoria.descuento }}% descuento)</span>
+                      {{ categoria.nombre }} - \${{ categoria.precio.cuotaMensual | number:'1.2-2' }}
                     </option>
                   </select>
-                  <div *ngIf="paymentForm.get('categoriaEscuelaId')?.invalid && paymentForm.get('categoriaEscuelaId')?.touched" 
+                  <div *ngIf="paymentForm.get('categoriaId')?.invalid && paymentForm.get('categoriaId')?.touched" 
                        class="text-danger small mt-1">
                     Selecciona una categoría
                   </div>
@@ -86,7 +85,7 @@ import { environment } from '../../../../environments/environment';
                         <small><strong>Edad:</strong> {{ selectedCategoria.edadMinima }} - {{ selectedCategoria.edadMaxima }} años</small>
                       </div>
                       <div class="col-md-6">
-                        <small><strong>Precio base:</strong> \${{ selectedCategoria.precio | number:'1.2-2' }}</small>
+                        <small><strong>Precio base:</strong> \${{ selectedCategoria.precio.cuotaMensual | number:'1.2-2' }}</small>
                       </div>
                     </div>
                   </c-card-body>
@@ -163,10 +162,7 @@ import { environment } from '../../../../environments/environment';
                       <p><strong>Período:</strong> {{ paymentForm.get('tipoPeriodo')?.value | titlecase }}</p>
                     </div>
                     <div class="col-md-6">
-                      <p><strong>Precio base:</strong> \${{ selectedCategoria?.precio | number:'1.2-2' }}</p>
-                      <p *ngIf="selectedCategoria?.descuento">
-                        <strong>Descuento:</strong> {{ selectedCategoria.descuento }}%
-                      </p>
+                      <p><strong>Precio base:</strong> \${{ selectedCategoria?.precio.cuotaMensual | number:'1.2-2' }}</p>
                       <p *ngIf="paymentForm.get('tipoPeriodo')?.value === 'anual'">
                         <strong>Descuento anual:</strong> 10%
                       </p>
@@ -236,9 +232,10 @@ export class RealizarPagoComponent implements OnInit, AfterViewInit {
   private fb = inject(FormBuilder);
   private router = inject(Router);
   private pagoService = inject(PagoService);
-  private categoriaService = inject(CategoriaEscuelaService);
+  private categoriaService = inject(CategoriaService);
   private mercadopagoService = inject(MercadoPagoService);
   private notificationService = inject(NotificationService);
+  private configService = inject(ConfigService);
 
   @ViewChild('mercadopagoButton', { static: false }) mercadopagoButton!: ElementRef;
 
@@ -247,12 +244,12 @@ export class RealizarPagoComponent implements OnInit, AfterViewInit {
   errorMessage = '';
   successMessage = '';
 
-  categorias: CategoriaEscuela[] = [];
-  selectedCategoria: CategoriaEscuela | null = null;
+  categorias: Categoria[] = [];
+  selectedCategoria: Categoria | null = null;
   paymentPreference: PaymentPreferenceResponse | null = null;
 
   paymentForm: FormGroup = this.fb.group({
-    categoriaEscuelaId: ['', Validators.required],
+    categoriaId: ['', Validators.required],
     tipoPeriodo: ['', Validators.required]
   });
 
@@ -267,9 +264,9 @@ export class RealizarPagoComponent implements OnInit, AfterViewInit {
 
   private loadCategorias() {
     this.loading = true;
-    this.categoriaService.getCategorias({ activo: true }).subscribe({
-      next: (response) => {
-        this.categorias = response.data?.categorias || [];
+    this.categoriaService.getCategoriasActivas().subscribe({
+      next: (categorias) => {
+        this.categorias = categorias || [];
         this.loading = false;
       },
       error: (error) => {
@@ -280,7 +277,7 @@ export class RealizarPagoComponent implements OnInit, AfterViewInit {
   }
 
   private setupFormSubscriptions() {
-    this.paymentForm.get('categoriaEscuelaId')?.valueChanges.subscribe(value => {
+    this.paymentForm.get('categoriaId')?.valueChanges.subscribe(value => {
       this.selectedCategoria = this.categorias.find(c => c._id === value) || null;
     });
   }
@@ -288,19 +285,19 @@ export class RealizarPagoComponent implements OnInit, AfterViewInit {
   calculateAmount(tipoPeriodo: string): number {
     if (!this.selectedCategoria) return 0;
     
-    let monto = this.selectedCategoria.precio;
-    
-    // Aplicar descuento de categoría
-    if (this.selectedCategoria.descuento) {
-      monto = monto * (1 - this.selectedCategoria.descuento / 100);
-    }
+    let monto = this.selectedCategoria.precio.cuotaMensual;
+    const descuentos = this.selectedCategoria.precio.descuentos || {};
     
     // Aplicar descuento anual
     if (tipoPeriodo === 'anual') {
-      monto = monto * 12 * 0.9; // 10% descuento anual
+      if (typeof descuentos.pagoAnual === 'number') {
+        monto = monto * 12 * (1 - descuentos.pagoAnual / 100);
+      } else {
+        monto = monto * 12 * 0.9; // 10% descuento anual por defecto
+      }
     }
     
-    return monto;
+    return Math.round(monto * 100) / 100;
   }
 
   calculateFinalAmount(): number {
@@ -326,13 +323,9 @@ export class RealizarPagoComponent implements OnInit, AfterViewInit {
 
     try {
       const request: CreatePaymentPreferenceRequest = {
-        categoriaEscuelaId: this.paymentForm.get('categoriaEscuelaId')?.value,
+        categoriaId: this.paymentForm.get('categoriaId')?.value,
         tipoPeriodo: this.paymentForm.get('tipoPeriodo')?.value,
-        redirectUrls: {
-          success: `${window.location.origin}/pagos/historial?status=success`,
-          failure: `${window.location.origin}/pagos/historial?status=failure`,
-          pending: `${window.location.origin}/pagos/historial?status=pending`
-        }
+        redirectUrls: this.configService.getRedirectUrls()
       };
 
       this.pagoService.createPaymentPreference(request).subscribe({

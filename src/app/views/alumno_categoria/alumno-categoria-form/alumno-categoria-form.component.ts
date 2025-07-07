@@ -4,10 +4,10 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AlumnoCategoriaService } from '../../../services/alumno-categoria.service';
 import { AlumnoService } from '../../../services/alumno.service';
-import { CategoriaEscuelaService } from '../../../services/categoria-escuela.service';
+import { CategoriaService } from '../../../services/categoria.service';
 import { AlumnoCategoria, AlumnoCategoriaModel } from '../../../models/alumno-categoria.model';
 import { Alumno } from '../../../models/alumno.model';
-import { CategoriaEscuela } from '../../../models/categoria-escuela.model';
+import { Categoria } from '../../../models/categoria';
 
 @Component({
   standalone: true,
@@ -19,7 +19,7 @@ import { CategoriaEscuela } from '../../../models/categoria-escuela.model';
 export class AlumnoCategoriaFormComponent implements OnInit {
   relacion: AlumnoCategoriaModel = new AlumnoCategoriaModel();
   alumnos: Alumno[] = [];
-  categorias: CategoriaEscuela[] = [];
+  categorias: Categoria[] = [];
   isEdit = false;
   loading = false;
 
@@ -28,7 +28,7 @@ export class AlumnoCategoriaFormComponent implements OnInit {
     private router: Router,
     private alumnoCategoriaService: AlumnoCategoriaService,
     private alumnoService: AlumnoService,
-    private categoriaEscuelaService: CategoriaEscuelaService
+    private categoriaService: CategoriaService
   ) {}
 
   ngOnInit(): void {
@@ -98,10 +98,10 @@ export class AlumnoCategoriaFormComponent implements OnInit {
   }*/
 
   cargarCategorias() {
-    this.categoriaEscuelaService.getCategorias({ estado: 'ACTIVA' }).subscribe({
-      next: (result) => {
-        console.log('Respuesta categorias:', result);
-        this.categorias = result.data?.categorias || [];
+    this.categoriaService.getCategoriasActivas().subscribe({
+      next: (categorias) => {
+        console.log('Respuesta categorias:', categorias);
+        this.categorias = categorias || [];
         console.log('Categorias cargadas:', this.categorias);
       },
       error: () => {
@@ -137,4 +137,4 @@ export class AlumnoCategoriaFormComponent implements OnInit {
   cancelar() {
     this.router.navigate(['/alumno-categoria']);
   }
-} 
+}

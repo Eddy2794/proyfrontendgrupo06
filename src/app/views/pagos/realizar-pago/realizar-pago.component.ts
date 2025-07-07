@@ -12,10 +12,11 @@ import {
 } from '@coreui/angular';
 
 import { PagoService } from '../../../services/pago.service';
-import { CategoriaEscuelaService } from '../../../services/categoria-escuela.service';
+import { CategoriaService } from '../../../services/categoria.service';
 import { MercadoPagoService } from '../../../services/mercadopago.service';
 import { NotificationService } from '../../../services/notification.service';
-import { CategoriaEscuela, CreatePaymentPreferenceRequest, PaymentPreferenceResponse } from '../../../models';
+import { ConfigService } from '../../../services/config.service';
+import { Categoria, CreatePaymentPreferenceRequest, PaymentPreferenceResponse } from '../../../models';
 import { environment } from '../../../../environments/environment';
 
 @Component({
@@ -61,11 +62,11 @@ import { environment } from '../../../../environments/environment';
                   <select 
                     class="form-select"
                     id="categoria"
-                    formControlName="categoriaEscuelaId">
+                    formControlName="categoriaId">
                     <option value="">Selecciona una categoría</option>
                     <option *ngFor="let categoria of categorias" [value]="categoria._id">{{ getCategoriaLabel(categoria) }}</option>
                   </select>
-                  <div *ngIf="paymentForm.get('categoriaEscuelaId')?.invalid && paymentForm.get('categoriaEscuelaId')?.touched" 
+                  <div *ngIf="paymentForm.get('categoriaId')?.invalid && paymentForm.get('categoriaId')?.touched" 
                        class="text-danger small mt-1">
                     Selecciona una categoría
                   </div>
@@ -236,9 +237,10 @@ export class RealizarPagoComponent implements OnInit, AfterViewInit {
   private fb = inject(FormBuilder);
   private router = inject(Router);
   private pagoService = inject(PagoService);
-  private categoriaService = inject(CategoriaEscuelaService);
+  private categoriaService = inject(CategoriaService);
   private mercadopagoService = inject(MercadoPagoService);
   private notificationService = inject(NotificationService);
+  private configService = inject(ConfigService);
 
   @ViewChild('mercadopagoButton', { static: false }) mercadopagoButton!: ElementRef;
 
@@ -247,12 +249,12 @@ export class RealizarPagoComponent implements OnInit, AfterViewInit {
   errorMessage = '';
   successMessage = '';
 
-  categorias: CategoriaEscuela[] = [];
-  selectedCategoria: CategoriaEscuela | null = null;
+  categorias: Categoria[] = [];
+  selectedCategoria: Categoria | null = null;
   paymentPreference: PaymentPreferenceResponse | null = null;
 
   paymentForm: FormGroup = this.fb.group({
-    categoriaEscuelaId: ['', Validators.required],
+    categoriaId: ['', Validators.required],
     tipoPeriodo: ['', Validators.required]
   });
 
@@ -269,10 +271,10 @@ export class RealizarPagoComponent implements OnInit, AfterViewInit {
     this.loading = true;
     console.log('🔄 Cargando categorías...');
 
-    this.categoriaService.getCategorias({ estado: 'ACTIVA' }).subscribe({
-      next: (response) => {
-        console.log('✅ Categorías cargadas:', response);
-        this.categorias = response.data?.categorias || [];
+    this.categoriaService.getCategoriasActivas().subscribe({
+      next: (categorias) => {
+        console.log('✅ Categorías cargadas:', categorias);
+        this.categorias = categorias || [];
         this.loading = false;
         
         if (this.categorias.length === 0) {
@@ -296,7 +298,7 @@ export class RealizarPagoComponent implements OnInit, AfterViewInit {
   }
 
   private setupFormSubscriptions() {
-    this.paymentForm.get('categoriaEscuelaId')?.valueChanges.subscribe(value => {
+    this.paymentForm.get('categoriaId')?.valueChanges.subscribe(value => {
       this.selectedCategoria = this.categorias.find(c => c._id === value) || null;
     });
   }
@@ -347,13 +349,9 @@ export class RealizarPagoComponent implements OnInit, AfterViewInit {
     this.errorMessage = '';
 
     try {
-      const categoriaId = this.paymentForm.get('categoriaEscuelaId')?.value;
+      const categoriaId = this.paymentForm.get('categoriaId')?.value;
       const tipoPeriodo = this.paymentForm.get('tipoPeriodo')?.value;
-      const redirectUrls = {
-        success: `${window.location.origin}/pagos/historial?status=success`,
-        failure: `${window.location.origin}/pagos/historial?status=failure`,
-        pending: `${window.location.origin}/pagos/historial?status=pending`
-      };
+      const redirectUrls = this.configService.getRedirectUrls();
 
       if (tipoPeriodo === 'anual') {
         // Pago anual
@@ -429,7 +427,7 @@ export class RealizarPagoComponent implements OnInit, AfterViewInit {
     this.router.navigate(['/pagos']);
   }
 
-  getDescuentosLabel(categoria: CategoriaEscuela): string {
+  getDescuentosLabel(categoria: Categoria): string {
     if (!categoria?.precio?.descuentos) return '';
     const d = categoria.precio.descuentos;
     const labels: string[] = [];
@@ -439,7 +437,7 @@ export class RealizarPagoComponent implements OnInit, AfterViewInit {
     return labels.length ? `(${labels.join(' - ')})` : '';
   }
 
-  getCategoriaLabel(categoria: CategoriaEscuela): string {
+  getCategoriaLabel(categoria: Categoria): string {
     const monto = categoria?.precio?.cuotaMensual != null ? categoria.precio.cuotaMensual.toLocaleString('es-AR', { style: 'currency', currency: 'ARS', minimumFractionDigits: 2 }) : '';
     const descuentos = this.getDescuentosLabel(categoria);
     return `${categoria.nombre} - ${monto}${descuentos ? ' ' + descuentos : ''}`;

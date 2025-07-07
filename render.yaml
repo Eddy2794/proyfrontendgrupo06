@@ -5,8 +5,12 @@ services:
     plan: free
     buildCommand: |
       pnpm install --no-frozen-lockfile --production=false
-      pnpm build
+      pnpm build --configuration=production
     startCommand: node server.js
     envVars:
       - key: NODE_ENV
         value: production
+      - key: FRONTEND_URL
+        value: https://proyfrontendgrupo06.onrender.com
+      - key: BACKEND_URL
+        value: https://trabajo-final-psw.onrender.com

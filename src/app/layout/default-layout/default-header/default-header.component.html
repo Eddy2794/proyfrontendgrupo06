@@ -1,6 +1,7 @@
 <!--<c-header class="mb-4 d-print-none" position="sticky">-->
 <ng-container>
-  <c-container [fluid]="true" class="border-bottom px-4">
+  <c-container [fluid]="true" class="border-bottom px-4 d-flex align-items-center">
+    <!-- Menú hamburguesa a la izquierda -->
     <button
       [cSidebarToggle]="sidebarId()"
       cHeaderToggler
@@ -11,31 +12,21 @@
     >
       <svg cIcon name="cilMenu" size="lg"></svg>
     </button>
-    <c-header-nav class="d-none d-md-flex">
+    
+    <!-- Brand logo -->
+    <div class="ms-3 d-flex align-items-center">
+      <img src="assets/brand/9dejulio.svg" alt="9 DE JULIO" height="48">
+    </div>
+    
+    <!-- Navegación principal centrada -->
+    <c-header-nav class="d-none d-md-flex justify-content-center flex-grow-1">
       <c-nav-item>
-        <a cNavLink routerLink="/dashboard" routerLinkActive="active">Dashboard</a>
+        <c-nav-link routerLink="/dashboard" routerLinkActive="active">Dashboard</c-nav-link>
       </c-nav-item>
-      <!-- <c-nav-item>
-        <a cNavLink routerLink="/users" routerLinkActive="active">Users</a>
-      </c-nav-item> -->
-      <!-- <c-nav-item>
-        <a cNavLink routerLink="/settings" routerLinkActive="active">Settings</a>
-      </c-nav-item> -->
     </c-header-nav>
 
-    <!-- <c-header-nav class="d-none d-md-flex ms-auto ">
-      <a cNavLink>
-        <svg cIcon class="my-1" name="cilBell" size="lg"></svg>
-      </a>
-      <a cNavLink>
-        <svg cIcon class="my-1" name="cilList" size="lg"></svg>
-      </a>
-      <a cNavLink>
-        <svg cIcon class="my-1" name="cilEnvelopeOpen" size="lg"></svg>
-      </a>
-    </c-header-nav> -->
-
-    <c-header-nav class="ms-auto ms-md-0">
+    <!-- Controles del usuario a la derecha -->
+    <c-header-nav class="ms-auto">
       <div class="nav-item py-1">
         <div class="vr h-100 mx-2 text-body text-opacity-75"></div>
       </div>
@@ -43,9 +34,6 @@
       <div class="nav-item py-1">
         <div class="vr h-100 mx-2 text-body text-opacity-75"></div>
       </div>
-    </c-header-nav>
-
-    <c-header-nav class="mx-0">
       <ng-container *ngTemplateOutlet="userDropdown" />
     </c-header-nav>
 

@@ -13,7 +13,7 @@ export class ProfesorCategoria {
         this.profesor = new ProfesorModel() || data.profesor;
         this.categoria = new CategoriaAuxiliar() || data.categoria;
         this.fecha_asignacion = data.fecha_asignacion || new Date();
-        this.activo = data.activo || true;
+        this.activo = data.activo !== undefined ? data.activo : true;
         this.observaciones = data.observaciones || '';
     }
 
@@ -45,8 +45,8 @@ export class ProfesorCategoria {
         categoriaAuxiliar.nombre = categoria.nombre;
         categoriaAuxiliar.descripcion = categoria.descripcion;
         categoriaAuxiliar.nivel = categoria.nivel;
-        categoriaAuxiliar.edad_min = categoria.edad_min;
-        categoriaAuxiliar.edad_max = categoria.edad_max;
+        categoriaAuxiliar.edadMinima = categoria.edadMinima;
+    categoriaAuxiliar.edadMaxima = categoria.edadMaxima;
         return categoriaAuxiliar;
     }
-}   
+}

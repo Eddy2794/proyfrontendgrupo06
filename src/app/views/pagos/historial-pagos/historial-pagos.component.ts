@@ -128,7 +128,7 @@ import { Pago } from '../../../models';
                       <span class="text-capitalize">{{ pago.tipoPeriodo }}</span>
                     </td>
                     <td>
-                      <span class="text-body-secondary">{{ pago.categoriaEscuela || 'No especificada' }}</span>
+                      <span class="text-body-secondary">{{ getCategoriaName(pago.categoria) }}</span>
                     </td>
                     <td>
                       <c-badge [color]="getStatusColor(pago.estado)">
@@ -330,5 +330,12 @@ export class HistorialPagosComponent implements OnInit {
       'procesando': 'Procesando'
     };
     return texts[estado] || estado;
+  }
+
+  getCategoriaName(categoria: string | any): string {
+    if (typeof categoria === 'string') {
+      return categoria || 'No especificada';
+    }
+    return categoria?.nombre || 'No especificada';
   }
 }

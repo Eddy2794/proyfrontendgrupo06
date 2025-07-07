@@ -10,8 +10,8 @@ import {
 } from '@coreui/angular';
 
 import { PagoService } from '../../services/pago.service';
-import { CategoriaEscuelaService } from '../../services/categoria-escuela.service';
-import { Pago, CategoriaEscuela } from '../../models';
+import { CategoriaService } from '../../services/categoria.service';
+import { Pago, Categoria } from '../../models';
 
 @Component({
   selector: 'app-pagos',
@@ -203,7 +203,7 @@ import { Pago, CategoriaEscuela } from '../../models';
 })
 export class PagosComponent implements OnInit {
   private pagoService = inject(PagoService);
-  private categoriaService = inject(CategoriaEscuelaService);
+  private categoriaService = inject(CategoriaService);
 
   paymentStats: any = null;
   hasPendingPayments = false;
