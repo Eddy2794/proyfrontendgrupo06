@@ -48,6 +48,7 @@ export class TorneoFormComponent implements OnInit {
   mensajeError: string = '';
   mostrarExito: boolean = false;
   mostrarError: boolean = false;
+  enviandoFormulario: boolean = false;
   @ViewChild('formTorneo') formTorneo!: NgForm;
   constructor(private activatedRoute: ActivatedRoute, private torneoService: TorneoService, private router: Router) {
     this.iniciarVariable();
@@ -83,12 +84,13 @@ export class TorneoFormComponent implements OnInit {
       this.mostrarError = false;
     }, 2000);
   }
-
+  originalTorneo!: Torneo;
   cargarTorneo(id: string) {
     this.torneoService.getTorneo(id).subscribe({
       next: result => {
         Object.assign(this.torneo, result.data);
         this.torneo.fecha_inicio = this.formatearFechaParaInput(this.torneo.fecha_inicio);
+        this.originalTorneo = JSON.parse(JSON.stringify(this.torneo));
       },
       error: error => {
         alert("Ocurrio un error al cargar el torneo");
@@ -96,10 +98,23 @@ export class TorneoFormComponent implements OnInit {
       }
     })
   }
-
+  private torneoIgual(): boolean {
+    return JSON.stringify(this.originalTorneo) === JSON.stringify(this.torneo);
+  }
   actualizarTorneo() {
     this.formValidado = true;
-    if (this.formTorneo.invalid) return;
+    if (this.formTorneo.invalid) {
+      this.enviandoFormulario = false;
+      return;
+    }
+    this.enviandoFormulario = true;
+    if (this.torneoIgual()) {
+      this.mensajeError = "No se realizaron cambios en el formulario";
+      this.mostrarError = true;
+      this.ocultarAlerta();
+      this.enviandoFormulario = false;
+      return;
+    }
     this.torneoService.updateTorneo(this.torneo).subscribe({
       next: result => {
         if (result.success == true) {
@@ -109,6 +124,7 @@ export class TorneoFormComponent implements OnInit {
 
           setTimeout(() => {
             this.router.navigate(['torneos']);
+            return;
           }, 2000);
         }
       },
@@ -116,6 +132,7 @@ export class TorneoFormComponent implements OnInit {
         this.mensajeError = "Ocurrió un error al actualizar";
         this.mostrarError = true;
         this.ocultarAlerta();
+        this.enviandoFormulario = false;
         console.log(error);
       }
     })
@@ -123,7 +140,11 @@ export class TorneoFormComponent implements OnInit {
 
   agregarTorneo() {
     this.formValidado = true;
-    if (this.formTorneo.invalid) return;
+    if (this.formTorneo.invalid) {
+      this.enviandoFormulario = false;
+      return;
+    }
+    this.enviandoFormulario = true;
     this.torneoService.addTorneo(this.torneo).subscribe({
       next: result => {
         if (result.success == true) {
@@ -132,13 +153,15 @@ export class TorneoFormComponent implements OnInit {
           this.ocultarAlerta();
           setTimeout(() => {
             this.router.navigate(['torneos']);
+            return;
           }, 2000);
         }
       },
       error: error => {
-        this.mensajeError = "Ocurrió un error al agregar";
+        this.mensajeError = "Ocurrió un error al agregar: " + error.message;
         this.mostrarError = true;
         this.ocultarAlerta();
+        this.enviandoFormulario = false;
         console.log(error);
       }
     })

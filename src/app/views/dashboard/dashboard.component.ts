@@ -26,6 +26,7 @@ import { DashboardChartsData, IChartProps } from './dashboard-charts-data';
 import { AlumnoCategoriaService, AlumnoCategoriaStats } from '../../services/alumno-categoria.service';
 import { TorneoService } from '../../services/torneo.service';
 import { TorneoCategoriaService } from '../../services/torneo-categoria.service'
+import { TorneoCategoria } from '../../models/torneo-categoria' 
 interface IInscripcionData {
   categoria: string;
   totalAlumnos: number;
@@ -137,8 +138,8 @@ export class DashboardComponent implements OnInit {
   };
   cargarTorneosCategoriasData(){
      this.torneoCategoriaService.getTorneosCategorias().subscribe({
-      next: response => {
-        const relaciones = response.data.data; // accedemos a los items
+      next: (response: { data: { data: TorneoCategoria[] } }) => {
+        const relaciones = response.data.data.filter(tc => tc.torneo !== null && tc.categoria !== null); 
         const conteoPorTorneo: { [nombreTorneo: string]: number } = {};
 
         for (let relacion of relaciones) {

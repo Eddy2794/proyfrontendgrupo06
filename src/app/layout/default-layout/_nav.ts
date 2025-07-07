@@ -64,7 +64,7 @@ export const navItems: INavData[] = [
   {
     name: 'Torneos',
     url: '/torneos',
-    iconComponent: { name: 'cil-trophy' }
+    iconComponent: { name: 'cil-list' }
   },
   {
     name: 'Torneos Categorías',
