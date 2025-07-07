@@ -129,7 +129,7 @@ export class TorneoFormComponent implements OnInit {
         }
       },
       error: error => {
-        this.mensajeError = "Ocurrió un error al actualizar";
+        this.mensajeError = "Ocurrió un error al actualizar: " + error.error.error;
         this.mostrarError = true;
         this.ocultarAlerta();
         this.enviandoFormulario = false;
@@ -158,7 +158,7 @@ export class TorneoFormComponent implements OnInit {
         }
       },
       error: error => {
-        this.mensajeError = "Ocurrió un error al agregar: " + error.message;
+        this.mensajeError = "Ocurrió un error al agregar: " + error.error.error;
         this.mostrarError = true;
         this.ocultarAlerta();
         this.enviandoFormulario = false;
