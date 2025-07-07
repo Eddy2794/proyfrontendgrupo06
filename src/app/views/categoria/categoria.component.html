@@ -53,67 +53,7 @@
           </c-col>
         </c-row>
 
-        <!-- Filtros avanzados -->
-        <c-row class="mb-3">
-          <c-col md="2">
-            <label class="form-label"><small>Tipo</small></label>
-            <select class="form-select form-select-sm" [(ngModel)]="filtroTipo" (change)="aplicarFiltrosAvanzados()"
-              aria-label="Filtrar por tipo">
-              <option value="">Todos los tipos</option>
-              <option *ngFor="let tipo of tiposDisponibles" [value]="tipo">{{ tipo }}</option>
-            </select>
-          </c-col>
-          <c-col md="2">
-            <label class="form-label"><small>Profesor</small></label>
-            <select class="form-select form-select-sm" [(ngModel)]="filtroProfesor" (change)="aplicarFiltrosAvanzados()"
-              aria-label="Filtrar por profesor">
-              <option value="">Todos los profesores</option>
-              <option *ngFor="let profesor of profesores" [value]="profesor._id">
-                {{ profesor.nombre }} {{ profesor.apellido }}
-              </option>
-            </select>
-          </c-col>
-          <c-col md="2">
-            <label class="form-label"><small>Precio Min.</small></label>
-            <input cFormControl size="sm" type="number" placeholder="$0" [(ngModel)]="filtroPrecioMin"
-              (input)="aplicarFiltrosAvanzados()" min="0">
-          </c-col>
-          <c-col md="2">
-            <label class="form-label"><small>Precio Max.</small></label>
-            <input cFormControl size="sm" type="number" placeholder="$999999" [(ngModel)]="filtroPrecioMax"
-              (input)="aplicarFiltrosAvanzados()" min="0">
-          </c-col>
-          <c-col md="2">
-            <label class="form-label"><small>Edad Min.</small></label>
-            <input cFormControl size="sm" type="number" placeholder="3" [(ngModel)]="filtroEdadMin"
-              (input)="aplicarFiltrosAvanzados()" min="3" max="80">
-          </c-col>
-          <c-col md="2">
-            <label class="form-label"><small>Edad Max.</small></label>
-            <input cFormControl size="sm" type="number" placeholder="80" [(ngModel)]="filtroEdadMax"
-              (input)="aplicarFiltrosAvanzados()" min="3" max="80">
-          </c-col>
-        </c-row>
 
-        <!-- Filtro de disponibilidad -->
-        <c-row class="mb-3">
-          <c-col md="3">
-            <label class="form-label"><small>Disponibilidad de cupos</small></label>
-            <select class="form-select form-select-sm" [(ngModel)]="filtroDisponibilidad"
-              (change)="aplicarFiltrosAvanzados()" aria-label="Filtrar por disponibilidad">
-              <option value="">Todas las categorías</option>
-              <option *ngFor="let opcion of disponibilidadOpciones" [value]="opcion.value">
-                {{ opcion.label }}
-              </option>
-            </select>
-          </c-col>
-          <c-col md="9" class="d-flex align-items-end">
-            <small class="text-body-secondary">
-              <svg cIcon name="cilInfo" size="sm" class="me-1"></svg>
-              Use los filtros avanzados para encontrar categorías específicas. Los filtros se aplican automáticamente.
-            </small>
-          </c-col>
-        </c-row>
 
         <!-- Mensaje de error -->
         <c-alert *ngIf="errorMessage" color="danger" [dismissible]="true" (dismissed)="clearMessages()">
@@ -224,14 +164,6 @@
                   <c-badge [color]="getBadgeClass(categoria)" class="me-1">
                     {{ getEstadoText(categoria) }}
                   </c-badge>
-                  <br>
-                  <button cButton size="sm" variant="outline"
-                    [color]="getEstadoActivo(categoria) ? 'warning' : 'success'" class="mt-1 w-100"
-                    style="min-width: 100px;" (click)="cambiarEstadoCategoria(categoria, !getEstadoActivo(categoria))"
-                    [cTooltip]="getButtonText(categoria)">
-                    <svg cIcon [name]="getButtonIcon(categoria)" size="sm" class="me-1"></svg>
-                    {{ getEstadoActivo(categoria) ? 'Desactivar' : 'Activar' }}
-                  </button>
                 </td>
 
                 <!-- Acciones -->
@@ -245,6 +177,13 @@
                     <button cButton size="sm" variant="outline" color="primary" (click)="editarCategoria(categoria)"
                       cTooltip="Editar categoría">
                       <svg cIcon name="cilPencil" size="sm"></svg>
+                    </button>
+
+                    <button cButton size="sm" variant="outline"
+                      [color]="getEstadoActivo(categoria) ? 'warning' : 'success'"
+                      (click)="cambiarEstadoCategoria(categoria, !getEstadoActivo(categoria))"
+                      [cTooltip]="getButtonText(categoria)">
+                      <svg cIcon [name]="getButtonIcon(categoria)" size="sm"></svg>
                     </button>
 
                     <button cButton size="sm" variant="outline" color="danger" (click)="confirmarEliminacion(categoria)"
