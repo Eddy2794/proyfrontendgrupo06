@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { ProfesorCategoriaService } from '../../../services/profesor-categoria.service';
@@ -58,6 +58,7 @@ export class ProfesorCategoriaFormComponent implements OnInit {
   profesores: ProfesorModel[] = [];
   categorias: CategoriaAuxiliar[] = [];
   profesorCategoria!: ProfesorCategoria;
+  originalProfesorCategoriaData: any = null;
   isSubmitting = false;
   successMessage = '';
   errorMessage = '';
@@ -70,7 +71,8 @@ export class ProfesorCategoriaFormComponent implements OnInit {
     private profesorService: ProfesorService,
     private categoriaService: CategoriaService,
     private router: Router,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private cd: ChangeDetectorRef
   ) {
     this.profesorCategoria = new ProfesorCategoria();
   }
@@ -81,8 +83,6 @@ export class ProfesorCategoriaFormComponent implements OnInit {
     this.route.queryParams.subscribe(params => {
       if (params['edit'] === 'true' && params['id']) {
         this.getProfesorCategoriaById(params['id']);
-      } else {
-        console.log('No hay datos de categoría para editar');
       }
     });
   }
@@ -94,7 +94,6 @@ export class ProfesorCategoriaFormComponent implements OnInit {
       },
       error: (error) => {
         this.errorMessage = 'Error al cargar los profesores';
-        console.error('Error:', error);
       }
     });
   }
@@ -113,12 +112,11 @@ export class ProfesorCategoriaFormComponent implements OnInit {
   mapearProfesorCategoriaForm(profesorCategoria: any) {
     this.isEditing = true;
     this.editingId = profesorCategoria._id;
-    // Mapear los datos del backend a la estructura del formulario
     this.profesorCategoria = ProfesorCategoria.fromJSON(profesorCategoria);
-    // Asegurar que los objetos de profesor y categoria sean los mismos que los de los arrays
     const { profesor, categoria } = this.profesorCategoria;
     this.profesorCategoria.profesor = this.profesores.find(p => p._id === profesor._id) || profesor;
     this.profesorCategoria.categoria = this.categorias.find(c => c._id === categoria._id) || categoria;
+    this.originalProfesorCategoriaData = JSON.parse(JSON.stringify(this.profesorCategoria));
   }
 
   getProfesorCategoriaById(id: string) {
@@ -127,17 +125,45 @@ export class ProfesorCategoriaFormComponent implements OnInit {
         this.mapearProfesorCategoriaForm(response.data || response);
       },
       error: (error) => {
-        console.error('Error al cargar categoría:', error);
         this.errorMessage = 'Error al cargar los datos de la categoría';
       }
     });
   }
 
-  onSubmit() {
-    // Marcar el formulario como validado para mostrar errores
-    this.profesorCategoriaFormValidated = true;
+  private hayCambios(): boolean {
+    if (!this.isEditing) {
+      return true;
+    }
+
+    if (!this.originalProfesorCategoriaData) {
+      return true;
+    }
+
+    const currentDataString = JSON.stringify(this.profesorCategoria);
+    const originalDataString = JSON.stringify(this.originalProfesorCategoriaData);
     
+    return currentDataString !== originalDataString;
+  }
+
+  onSubmit() {
+    this.profesorCategoriaFormValidated = true;
     this.isSubmitting = true;
+
+    if (!this.esFormularioValido()) {
+      this.errorMessage = 'Por favor, corrija los errores en el formulario antes de continuar.';
+      this.isSubmitting = false;
+      return;
+    }
+
+    if (this.isEditing && !this.hayCambios()) {
+      this.successMessage = 'No se realizaron cambios en el formulario.';
+      setTimeout(() => {
+        this.irALista();
+        this.isSubmitting = false;
+      }, 2000);
+      return;
+    }
+
     this.successMessage = '';
     this.errorMessage = '';
 
@@ -157,22 +183,20 @@ export class ProfesorCategoriaFormComponent implements OnInit {
     this.profesorCategoriaService.createProfesorCategoria(payload).subscribe({
       next: (response: any) => {
         this.successMessage = 'Categoría asignada exitosamente';
-        this.isSubmitting = false;
         setTimeout(() => {
           this.onReset();
           this.irALista();
+          this.isSubmitting = false;
         }, 1500);
       },
       error: (error) => {
         this.errorMessage = 'El profesor ya esta asignado a esta categoría';
         this.isSubmitting = false;
-        console.error('Error:', error);
       }
     });
   }
 
   updateProfesorCategoria() {
-    console.log('updateProfesorCategoria', this.editingId, this.profesorCategoria);
     const payload = {
       ...this.profesorCategoria,
       profesor: this.profesorCategoria.profesor._id,
@@ -181,32 +205,35 @@ export class ProfesorCategoriaFormComponent implements OnInit {
     this.profesorCategoriaService.updateProfesorCategoria(this.editingId!, payload).subscribe({
       next: (response: any) => {
         this.successMessage = 'Categoría actualizada exitosamente';
-        this.isSubmitting = false;
         setTimeout(() => {
           this.onReset();
           this.irALista();
+          this.isSubmitting = false;
         }, 1500);
       },
       error: (error) => {
         this.errorMessage = 'Error al actualizar la categoría';
         this.isSubmitting = false;
-        console.error('Error:', error);
       }
     });
   }
 
   deleteProfesorCategoria() {
+    this.isSubmitting = true;
     if (confirm('¿Estás seguro de que quieres eliminar esta categoría?')) {
       this.profesorCategoriaService.deleteProfesorCategoria(this.editingId!).subscribe({
         next: (response: any) => {
           this.successMessage = 'Categoría eliminada exitosamente';
+          this.isSubmitting = false;
           this.irALista();
         },
         error: (error) => {
           this.errorMessage = 'Error al eliminar la categoría';
-          console.error('Error:', error);
+          this.isSubmitting = false;
         }
       });
+    } else {
+      this.isSubmitting = false;
     }
   }
 
@@ -222,11 +249,19 @@ export class ProfesorCategoriaFormComponent implements OnInit {
     this.profesorCategoriaFormValidated = false;
     this.isEditing = false;
     this.editingId = null;
+    this.originalProfesorCategoriaData = null;
     this.successMessage = '';
     this.errorMessage = '';
   }
-  // Método para navegar a la lista
+
   irALista() {
       this.router.navigate(['/profesor-categoria/lista']);
+  }
+
+  esFormularioValido(): boolean {
+    return !!(this.profesorCategoria.profesor && 
+             this.profesorCategoria.profesor._id &&
+             this.profesorCategoria.categoria && 
+             this.profesorCategoria.categoria._id);
   }
 }

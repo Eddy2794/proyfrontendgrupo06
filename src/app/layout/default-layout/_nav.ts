@@ -13,7 +13,67 @@ export const navItems: INavData[] = [
   },
   {
     title: true,
-    name: 'Pagos'
+    name: 'Gestión Académica'
+  },
+  {
+    name: 'Alumnos',
+    iconComponent: { name: 'cil-people' },
+    children: [
+      {
+        name: 'Lista de Alumnos',
+        url: '/alumno',
+        iconComponent: { name: 'cil-user' }
+      },
+      {
+        name: 'Alumno-Categoría',
+        url: '/alumno-categoria',
+        iconComponent: { name: 'cil-list' }
+      },
+      {
+        name: 'Cuotas',
+        url: '/cuota',
+        iconComponent: { name: 'cil-dollar' }
+      }
+    ]
+  },
+  {
+    name: 'Profesores',
+    iconComponent: { name: 'cil-people' },
+    children: [
+      {
+        name: 'Lista de Profesores',
+        url: '/profesor/lista',
+        iconComponent: { name: 'cil-user-follow' }
+      },
+      {
+        name: 'Profesores y Categorias',
+        url: '/profesor-categoria/lista',
+        iconComponent: { name: 'cil-tags' }
+      }
+    ]
+  },
+  {
+    name: 'Categorías',
+    url: '/categorias',
+    iconComponent: { name: 'cil-tags' }
+  },
+  {
+    title: true,
+    name: 'Competencias'
+  },
+  {
+    name: 'Torneos',
+    url: '/torneos',
+    iconComponent: { name: 'cil-trophy' }
+  },
+  {
+    name: 'Torneos Categorías',
+    url: '/torneos-categorias',
+    iconComponent: { name: 'cil-list' }
+  },
+  {
+    title: true,
+    name: 'Finanzas'
   },
   {
     name: 'Pagos',
