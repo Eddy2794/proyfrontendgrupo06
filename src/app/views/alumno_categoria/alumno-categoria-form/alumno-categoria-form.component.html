@@ -1,73 +1,187 @@
-<div class="card shadow-sm mb-5">
-  <div class="card-header bg-primary text-white">
-    <h4 class="mb-0">{{ isEdit ? 'Editar Relación' : 'Nueva Relación Alumno-Categoría' }}</h4>
-  </div>
-  <div class="card-body">
-    <form (ngSubmit)="guardar()" *ngIf="!loading">
-      <div class="row">
-        <div class="col-md-6 mb-3">
-          <label for="alumno" class="form-label">Alumno</label>
-          <select id="alumno" class="form-select" [(ngModel)]="relacion.alumno" name="alumno" [disabled]="isEdit" required #alumno="ngModel">
-            <option [ngValue]="''">Seleccione un alumno</option>
-            <option *ngFor="let a of alumnos" [ngValue]="a._id">{{ a.persona_datos?.nombres }} {{ a.persona_datos?.apellidos }}</option>
-          </select>
-          <div *ngIf="alumno.invalid && alumno.touched" class="text-danger small">
-            El alumno es obligatorio.
-          </div>
+<c-row>
+  <c-col xs="12">
+    <c-card class="mb-4">
+      <c-card-header class="d-flex justify-content-between align-items-center">
+        <div>
+          <strong>{{ isEdit ? 'Editar Relación' : 'Nueva Relación Alumno-Categoría' }}</strong>
+          <small class="text-body-secondary ms-2">
+            {{ isEdit 
+              ? (categoriaCambiada 
+                ? 'Crear nueva relación con categoría diferente' 
+                : 'Modificar datos de la relación') 
+              : 'Completar datos de la nueva relación' 
+            }}
+          </small>
         </div>
-        <div class="col-md-6 mb-3">
-          <label for="categoria" class="form-label">Categoría</label>
-          <select id="categoria" class="form-select" [(ngModel)]="relacion.categoria" name="categoria" required #categoria="ngModel">
-            <option [ngValue]="''">Seleccione una categoría</option>
-            <option *ngFor="let c of categorias" [ngValue]="c._id">{{ c.nombre }}</option>
-          </select>
-          <div *ngIf="categoria.invalid && categoria.touched" class="text-danger small">
-            La categoría es obligatoria.
-          </div>
-        </div>
-      </div>
-      <div class="row">
-        <div class="col-md-6 mb-3">
-          <label for="fecha_inscripcion" class="form-label">Fecha de Alta</label>
-          <input id="fecha_inscripcion" type="date" class="form-control" [(ngModel)]="relacion.fecha_inscripcion" name="fecha_inscripcion" required #fecha_inscripcion="ngModel">
-          <div *ngIf="fecha_inscripcion.invalid && fecha_inscripcion.touched" class="text-danger small">
-            La fecha de inscripción es obligatoria.
-          </div>
-        </div>
-        <div class="col-md-6 mb-3">
-          <label for="estado" class="form-label">Estado</label>
-          <select id="estado" class="form-select" [(ngModel)]="relacion.estado" name="estado" required>
-            <option value="ACTIVO">Activo</option>
-            <option value="INACTIVO">Inactivo</option>
-          </select>
-        </div>
-      </div>
-      <div class="mb-3">
-        <label for="observaciones" class="form-label">Observaciones</label>
-        <textarea id="observaciones" class="form-control" [(ngModel)]="relacion.observaciones" name="observaciones"></textarea>
-        <div class="form-text">Opcional</div>
-      </div>
-      <div class="row" *ngIf="relacion.estado === 'INACTIVO'">
-        <div class="col-md-6 mb-3">
-          <label for="fecha_baja" class="form-label">Fecha de Baja</label>
-          <input id="fecha_baja" type="date" class="form-control" [(ngModel)]="relacion.fecha_baja" name="fecha_baja" />
-        </div>
-        <div class="col-md-6 mb-3">
-          <label for="motivo_baja" class="form-label">Motivo de Baja</label>
-          <input id="motivo_baja" class="form-control" [(ngModel)]="relacion.motivo_baja" name="motivo_baja" />
-        </div>
-      </div>
-      <div class="d-flex justify-content-end gap-3 mt-4">
-        <button type="submit" class="btn btn-success btn-lg px-4">
-          <i class="bi bi-save me-2"></i> Guardar
+        <button 
+          cButton 
+          color="secondary" 
+          variant="outline"
+          size="sm"
+          (click)="cancelar()">
+          <svg cIcon name="cilArrowLeft" class="me-1"></svg>
+          Volver
         </button>
-        <button type="button" class="btn btn-secondary btn-lg px-4" (click)="cancelar()">
-          <i class="bi bi-x-lg me-2"></i> Cancelar
-        </button>
-      </div>
-    </form>
-    <div *ngIf="loading">
-      <p>Cargando...</p>
-    </div>
-  </div>
-</div> 
+      </c-card-header>
+      
+      <c-card-body>
+        <!-- Spinner de carga -->
+        <div *ngIf="loading" class="text-center py-4">
+          <c-spinner color="primary"></c-spinner>
+          <p class="mt-2 text-body-secondary">Cargando datos de la relación...</p>
+        </div>
+
+        <!-- Formulario -->
+        <form *ngIf="!loading" (ngSubmit)="guardar()" novalidate>
+          
+          <!-- Sección: Datos de la Relación -->
+          <div class="mb-4">
+            <h5 class="border-bottom pb-2 mb-3">
+              <svg cIcon name="cilPeople" class="me-2"></svg>
+              Datos de la Relación
+            </h5>
+            
+            <c-row>
+              <c-col md="6">
+                <div class="mb-3">
+                  <label cLabel for="alumno" class="form-label">
+                    Alumno <span class="text-danger">*</span>
+                  </label>
+                  <select 
+                    cSelect 
+                    id="alumno" 
+                    [(ngModel)]="relacion.alumno" 
+                    name="alumno" 
+                    [disabled]="isEdit" 
+                    required 
+                    #alumno="ngModel">
+                    <option [ngValue]="''">Seleccione un alumno</option>
+                    <option *ngFor="let a of alumnos" [ngValue]="a._id">
+                      {{ a.persona_datos?.nombres }} {{ a.persona_datos?.apellidos }}
+                    </option>
+                  </select>
+                  <c-form-feedback 
+                    *ngIf="alumno.invalid && alumno.touched" 
+                    [valid]="false">
+                    El alumno es obligatorio.
+                  </c-form-feedback>
+                </div>
+              </c-col>
+              
+              <c-col md="6">
+                <div class="mb-3">
+                  <label cLabel for="categoria" class="form-label">
+                    Categoría <span class="text-danger">*</span>
+                  </label>
+                  <select 
+                    cSelect 
+                    id="categoria" 
+                    [(ngModel)]="relacion.categoria" 
+                    name="categoria" 
+                    required 
+                    #categoria="ngModel"
+                    (change)="onCategoriaChange()">
+                    <option [ngValue]="''">Seleccione una categoría</option>
+                    <option *ngFor="let c of categorias" [ngValue]="c._id">
+                      {{ c.nombre }}
+                    </option>
+                  </select>
+                  
+                  <!-- Advertencia cuando se cambia la categoría -->
+                  <c-alert 
+                    *ngIf="categoriaCambiada" 
+                    color="warning" 
+                    [dismissible]="true"
+                    (dismissed)="categoriaCambiada = false"
+                    class="mt-2">
+                    <svg cIcon name="cilWarning" class="me-2"></svg>
+                    <strong>¡Atención!</strong> Al cambiar la categoría se creará una nueva relación. 
+                    La relación actual se mantendrá como historial.
+                  </c-alert>
+                  
+                  <div class="form-text text-info">
+                    <svg cIcon name="cilInfo" size="sm" class="me-1"></svg>
+                    Cambie la categoría para crear una nueva relación para este alumno
+                  </div>
+                </div>
+              </c-col>
+            </c-row>
+
+            <c-row>
+              <c-col md="6">
+                <div class="mb-3">
+                  <label cLabel for="fecha_inscripcion" class="form-label">
+                    Fecha de Alta <span class="text-danger">*</span>
+                  </label>
+                  <input 
+                    cFormControl 
+                    id="fecha_inscripcion" 
+                    type="date" 
+                    [(ngModel)]="relacion.fecha_inscripcion" 
+                    name="fecha_inscripcion" 
+                    required 
+                    #fecha_inscripcion="ngModel">
+                  <c-form-feedback 
+                    *ngIf="fecha_inscripcion.invalid && fecha_inscripcion.touched" 
+                    [valid]="false">
+                    La fecha de inscripción es obligatoria.
+                  </c-form-feedback>
+                </div>
+              </c-col>
+            </c-row>
+          </div>
+
+          <!-- Sección: Observaciones -->
+          <div class="mb-4">
+            <h5 class="border-bottom pb-2 mb-3">
+              <svg cIcon name="cilNote" class="me-2"></svg>
+              Observaciones <small class="text-body-secondary">(Opcional)</small>
+            </h5>
+            
+            <c-row>
+              <c-col md="12">
+                <div class="mb-3">
+                  <label cLabel for="observaciones" class="form-label">
+                    Observaciones
+                  </label>
+                  <textarea 
+                    cFormControl 
+                    id="observaciones" 
+                    [(ngModel)]="relacion.observaciones" 
+                    name="observaciones"
+                    rows="3"
+                    placeholder="Ingrese observaciones adicionales sobre la relación...">
+                  </textarea>
+                  <div class="form-text">
+                    Información adicional relevante sobre la inscripción del alumno en la categoría.
+                  </div>
+                </div>
+              </c-col>
+            </c-row>
+          </div>
+
+          <!-- Botones de acción -->
+          <div class="d-flex justify-content-end gap-2 pt-3 border-top">
+            <button 
+              type="button"
+              cButton 
+              color="secondary" 
+              (click)="cancelar()">
+              <svg cIcon name="cilX" class="me-1"></svg>
+              Cancelar
+            </button>
+            
+            <button 
+              type="submit"
+              cButton 
+              color="primary"
+              [cTooltip]="categoriaCambiada ? 'Crear nueva relación con la categoría seleccionada' : 'Guardar cambios'">
+              <svg cIcon name="cilSave" class="me-1"></svg>
+              {{ isEdit ? (categoriaCambiada ? 'Crear Nueva Relación' : 'Actualizar') : 'Guardar' }}
+            </button>
+          </div>
+        </form>
+      </c-card-body>
+    </c-card>
+  </c-col>
+</c-row> 

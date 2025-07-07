@@ -18,7 +18,7 @@ export class AlumnoService {
   getAlumnos(): Observable<any> {
     let httpOptions = {
       headers: new HttpHeaders(),
-      params: new HttpParams().set('populate', 'persona_datos,tutor_datos')
+      params: new HttpParams().set('populate', 'persona_datos,tutor_datos,categoria_datos')
     }
     return this.http.get<any>(this.apiUrl + '/', httpOptions);
   }
@@ -27,31 +27,13 @@ export class AlumnoService {
   getAlumno(id: string): Observable<any> {
     let httpOptions = {
       headers: new HttpHeaders(),
-      params: new HttpParams().set('populate', 'persona_datos,tutor_datos')
+      params: new HttpParams().set('populate', 'persona_datos,tutor_datos,categoria_datos')
     }
     return this.http.get(this.apiUrl + '/' + id, httpOptions);
   }
 
-  // Buscar alumno por número de socio
-  getAlumnoByNumeroSocio(numeroSocio: string): Observable<any> {
-    let httpOptions = {
-      headers: new HttpHeaders(),
-      params: new HttpParams().set('populate', 'persona_datos,tutor_datos')
-    }
-    return this.http.get<any>(this.apiUrl + '/numero-socio/' + numeroSocio, httpOptions);
-  }
-
-  // Obtener alumnos por tutor
-  getAlumnosByTutor(tutorId: string): Observable<any> {
-    let httpOptions = {
-      headers: new HttpHeaders(),
-      params: new HttpParams().set('populate', 'persona_datos,tutor_datos')
-    }
-    return this.http.get<any>(this.apiUrl + '/tutor/' + tutorId, httpOptions);
-  }
-
   // Crear nuevo alumno
-  addAlumno(alumno: Alumno): Observable<any> {
+  createAlumno(alumno: any): Observable<any> {
     let httpOption = {
       headers: new HttpHeaders({
         'Content-Type': 'application/json'
@@ -62,14 +44,14 @@ export class AlumnoService {
   }
 
   // Actualizar alumno
-  updateAlumno(alumno: Alumno): Observable<any> {
+  updateAlumno(id: string, alumno: any): Observable<any> {
     let httpOption = {
       headers: new HttpHeaders({
         'Content-Type': 'application/json'
       })
     }
     let body: any = JSON.stringify(alumno);
-    return this.http.put(this.apiUrl + '/' + alumno._id, body, httpOption);
+    return this.http.put(this.apiUrl + '/' + id, body, httpOption);
   }
 
   // Eliminar alumno (soft delete)
@@ -81,23 +63,41 @@ export class AlumnoService {
     return this.http.delete(this.apiUrl + '/' + id, httpOptions);
   }
 
-  // Eliminar alumno permanentemente
-  deleteAlumnoFisico(id: string): Observable<any> { 
+  // Buscar alumno por número de socio
+  getAlumnoByNumeroSocio(numeroSocio: string): Observable<any> {
     let httpOptions = {
       headers: new HttpHeaders(),
-      params: new HttpParams()
+      params: new HttpParams().set('populate', 'persona_datos,tutor_datos,categoria_datos')
     }
-    return this.http.delete(this.apiUrl + '/eliminar/' + id, httpOptions);
+    return this.http.get<any>(this.apiUrl + '/numero-socio/' + numeroSocio, httpOptions);
   }
 
-  // Restaurar alumno
-  restoreAlumno(id: string): Observable<any> {
-    let httpOption = {
-      headers: new HttpHeaders({
-        'Content-Type': 'application/json'
-      })
+  // Validar número de socio único
+  validateNumeroSocio(numeroSocio: string, excludeId?: string): Observable<any> {
+    let params = new HttpParams().set('numeroSocio', numeroSocio);
+    if (excludeId) {
+      params = params.set('excludeId', excludeId);
     }
-    return this.http.patch(this.apiUrl + '/restaurar/' + id, {}, httpOption);
+    
+    return this.http.get(`${this.apiUrl}/validate-numero-socio`, { params });
+  }
+
+  // Obtener alumnos por tutor
+  getAlumnosByTutor(tutorId: string): Observable<any> {
+    let httpOptions = {
+      headers: new HttpHeaders(),
+      params: new HttpParams().set('populate', 'persona_datos,tutor_datos,categoria_datos')
+    }
+    return this.http.get<any>(this.apiUrl + '/tutor/' + tutorId, httpOptions);
+  }
+
+  // Obtener alumnos por categoría
+  getAlumnosByCategoria(categoriaId: string): Observable<any> {
+    let httpOptions = {
+      headers: new HttpHeaders(),
+      params: new HttpParams().set('populate', 'persona_datos,tutor_datos,categoria_datos')
+    }
+    return this.http.get<any>(this.apiUrl + '/categoria/' + categoriaId, httpOptions);
   }
 
   // Método para obtener alumnos con filtros de paginación
@@ -105,7 +105,7 @@ export class AlumnoService {
     let httpParams = new HttpParams()
       .set('page', page.toString())
       .set('limit', limit.toString())
-      .set('populate', 'persona_datos,tutor_datos');
+      .set('populate', 'persona_datos,tutor_datos,categoria_datos');
     
     // Agregar parámetros adicionales
     Object.keys(params).forEach(key => {
@@ -122,10 +122,35 @@ export class AlumnoService {
     return this.http.get<any>(this.apiUrl + '/', httpOptions);
   }
 
-  // Obtener estadísticas de alumnos por mes
+  // Obtener estadísticas de alumnos
+  getAlumnoStats(): Observable<any> {
+    return this.getAllAlumnos({}, 1, 999).pipe(
+      map((response: any) => this.processAlumnoStats(response))
+    );
+  }
+
+  /**
+   * Procesar respuesta para generar estadísticas de alumnos
+   */
+  private processAlumnoStats(response: any): any {
+    const alumnos = response.data?.docs || response.data || [];
+    const activos = alumnos.filter((a: any) => a.estado === 'ACTIVO');
+    const inactivos = alumnos.filter((a: any) => a.estado === 'INACTIVO');
+    
+    return {
+      success: true,
+      data: {
+        totalAlumnos: alumnos.length,
+        alumnosActivos: activos.length,
+        alumnosInactivos: inactivos.length,
+        alumnosPorMes: this.groupByMonth(alumnos, 'fecha_inscripcion')
+      }
+    };
+  }
+
+  // Obtener alumnos por mes
   getAlumnosPorMes(): Observable<any> {
-    // Obtener todos los alumnos y procesarlos localmente
-    return this.getAlumnos().pipe(
+    return this.getAllAlumnos({}, 1, 999).pipe(
       map((response: any) => this.processAlumnosPorMes(response))
     );
   }
@@ -134,7 +159,7 @@ export class AlumnoService {
    * Procesar datos de alumnos para obtener estadísticas por mes
    */
   private processAlumnosPorMes(response: any): any {
-    const alumnos = response.data || [];
+    const alumnos = response.data?.docs || response.data || [];
     
     return {
       success: true,
@@ -169,5 +194,29 @@ export class AlumnoService {
       mes,
       cantidad: monthCounts[index]
     }));
+  }
+
+  // Métodos de compatibilidad hacia atrás
+  addAlumno(alumno: Alumno): Observable<any> {
+    return this.createAlumno(alumno);
+  }
+
+  // Eliminar alumno permanentemente
+  deleteAlumnoFisico(id: string): Observable<any> { 
+    let httpOptions = {
+      headers: new HttpHeaders(),
+      params: new HttpParams()
+    }
+    return this.http.delete(this.apiUrl + '/eliminar/' + id, httpOptions);
+  }
+
+  // Restaurar alumno
+  restoreAlumno(id: string): Observable<any> {
+    let httpOption = {
+      headers: new HttpHeaders({
+        'Content-Type': 'application/json'
+      })
+    }
+    return this.http.patch(this.apiUrl + '/restaurar/' + id, {}, httpOption);
   }
 }

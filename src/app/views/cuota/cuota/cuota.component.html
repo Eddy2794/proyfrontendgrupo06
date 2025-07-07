@@ -2,6 +2,13 @@
   <app-cuota-list
     (verDetalle)="onVerDetalle($event)"
     (modificar)="onModificar($event)"
-    (nuevaCuota)="onNuevaCuota()">
+    (nuevaCuota)="onNuevaCuota()"
+    (pagarEfectivo)="onPagoEfectivo($event)">
   </app-cuota-list>
+
+  <app-cuota-detalle-modal
+    *ngIf="cuotaDetalleVisible && cuotaSeleccionada"
+    [cuota]="cuotaSeleccionada"
+    (close)="cerrarDetalle()">
+  </app-cuota-detalle-modal>
 </div>

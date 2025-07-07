@@ -1,103 +1,797 @@
-<div class="card shadow-sm mb-5">
-  <div class="card-header bg-primary text-white">
-    <h4 class="mb-0">{{ isEdit ? 'Editar Alumno' : 'Nuevo Alumno' }}</h4>
-  </div>
-  <div class="card-body">
-    <form (ngSubmit)="guardar()" *ngIf="!loading">
-      <div class="row">
-        <div class="col-md-6 mb-3">
-          <label for="persona" class="form-label">Alumno</label>
-          <select id="persona" class="form-select" [(ngModel)]="alumno.persona" name="persona" required [disabled]="isEdit" #persona="ngModel">
-            <option [ngValue]="''">Seleccione una persona</option>
-            <option *ngFor="let p of personas" [ngValue]="p._id">{{ p.nombres }} {{ p.apellidos }} - {{ p.numeroDocumento }}</option>
-          </select>
-          <div *ngIf="persona.invalid && persona.touched" class="text-danger small">
-            El alumno es obligatorio.
-          </div>
-          <div *ngIf="isEdit && alumno.persona_datos" class="form-text text-info">
-            Alumno actual: {{ alumno.persona_datos.nombres }} {{ alumno.persona_datos.apellidos }}
-          </div>
-        </div>
-        <div class="col-md-6 mb-3">
-          <label for="tutor" class="form-label">Tutor</label>
-          <select id="tutor" class="form-select" [(ngModel)]="alumno.tutor" name="tutor" required #tutor="ngModel">
-            <option [ngValue]="''">Seleccione un tutor</option>
-            <option *ngFor="let p of personas" [ngValue]="p._id">{{ p.nombres }} {{ p.apellidos }} - {{ p.numeroDocumento }}</option>
-          </select>
-          <div *ngIf="tutor.invalid && tutor.touched" class="text-danger small">
-            El tutor es obligatorio.
-          </div>
-          <div *ngIf="isEdit && alumno.tutor_datos" class="form-text text-info">
-            Tutor actual: {{ alumno.tutor_datos.nombres }} {{ alumno.tutor_datos.apellidos }}
-          </div>
-        </div>
+<div class="container-fluid">
+  <!-- Un solo <c-card> para todo el formulario -->
+  <c-card class="mb-4">
+    <c-card-header class="d-flex justify-content-between align-items-center">
+      <div>
+        <strong>{{ formTitle }}</strong>
       </div>
-      <div class="row">
-        <div class="col-md-6 mb-3">
-          <label for="numero_socio" class="form-label">Número de Socio</label>
-          <input id="numero_socio" class="form-control" [(ngModel)]="alumno.numero_socio" name="numero_socio" required #numero_socio="ngModel" />
-          <div *ngIf="numero_socio.invalid && numero_socio.touched" class="text-danger small">
-            El número de socio es obligatorio.
-          </div>
-        </div>
-        <div class="col-md-6 mb-3">
-          <label for="estado" class="form-label">Estado</label>
-          <select id="estado" class="form-select" [(ngModel)]="alumno.estado" name="estado" required #estado="ngModel">
-            <option *ngFor="let e of estados" [ngValue]="e.value">{{ e.label }}</option>
-          </select>
-          <div *ngIf="estado.invalid && estado.touched" class="text-danger small">
-            El estado es obligatorio.
-          </div>
-        </div>
-      </div>
-      <div class="row">
-        <div class="col-md-6 mb-3">
-          <label for="contacto_emergencia" class="form-label">Contacto de Emergencia</label>
-          <input id="contacto_emergencia" class="form-control" [(ngModel)]="alumno.contacto_emergencia" name="contacto_emergencia" required #contacto_emergencia="ngModel" />
-          <div *ngIf="contacto_emergencia.invalid && contacto_emergencia.touched" class="text-danger small">
-            El contacto de emergencia es obligatorio.
-          </div>
-        </div>
-        <div class="col-md-6 mb-3">
-          <label for="telefono_emergencia" class="form-label">Teléfono de Emergencia</label>
-          <input id="telefono_emergencia" class="form-control" [(ngModel)]="alumno.telefono_emergencia" name="telefono_emergencia" required #telefono_emergencia="ngModel" />
-          <div *ngIf="telefono_emergencia.invalid && telefono_emergencia.touched" class="text-danger small">
-            El teléfono de emergencia es obligatorio.
-          </div>
-        </div>
-      </div>
-      <div class="row">
-        <div class="col-md-6 mb-3">
-          <label for="fecha_inscripcion" class="form-label">Fecha de Inscripción</label>
-          <input id="fecha_inscripcion" type="date" class="form-control" [(ngModel)]="alumno.fecha_inscripcion" name="fecha_inscripcion" required #fecha_inscripcion="ngModel" />
-          <div *ngIf="fecha_inscripcion.invalid && fecha_inscripcion.touched" class="text-danger small">
-            La fecha de inscripción es obligatoria.
-          </div>
-        </div>
-        <div class="col-md-6 mb-3">
-          <label for="autoriza_fotos" class="form-label">Autoriza uso de fotos</label>
-          <div class="form-check">
-            <input type="checkbox" class="form-check-input" id="autoriza_fotos" [(ngModel)]="alumno.autoriza_fotos" name="autoriza_fotos" />
-            <label class="form-check-label" for="autoriza_fotos">Sí</label>
-          </div>
-        </div>
-      </div>
-      <div class="mb-3">
-        <label for="observaciones_medicas" class="form-label">Observaciones Médicas</label>
-        <textarea id="observaciones_medicas" class="form-control" [(ngModel)]="alumno.observaciones_medicas" name="observaciones_medicas"></textarea>
-        <div class="form-text">Opcional</div>
-      </div>
-      <div class="d-flex justify-content-end gap-3 mt-4">
-        <button type="submit" class="btn btn-success btn-lg px-4">
-          <i class="bi bi-save me-2"></i> Guardar
+      <div class="d-flex gap-2">
+        <button 
+          type="button" 
+          class="btn btn-outline-secondary" 
+          (click)="onCancel()"
+          [disabled]="submitting">
+          <svg cIcon name="cilArrowLeft" class="me-1"></svg> Volver
         </button>
-        <button type="button" class="btn btn-secondary btn-lg px-4" (click)="cancelar()">
-          <i class="bi bi-x-lg me-2"></i> Cancelar
+        <button 
+          type="button" 
+          class="btn btn-outline-primary" 
+          (click)="onVerLista()"
+          [disabled]="submitting">
+          <svg cIcon name="cilList" class="me-1"></svg> Ver Lista
         </button>
+      </div>
+    </c-card-header>
+    <c-card-body>
+      <form [formGroup]="alumnoForm" (ngSubmit)="onSubmit()">
+        <!-- Sección: Datos del Alumno -->
+        <div class="mb-4">
+          <h5 class="border-bottom pb-2 mb-3">
+            <svg cIcon name="cilUser" class="me-2"></svg>
+            Datos del Alumno
+          </h5>
+          <div [formGroupName]="'persona'">
+            <c-row>
+              <c-col md="6">
+                <div class="mb-3">
+                  <label cLabel for="nombres" class="form-label">Nombres *</label>
+                  <input 
+                    cFormControl
+                    id="nombres"
+                    formControlName="nombres"
+                    type="text"
+                    placeholder="Ingrese los nombres"
+                    [class.is-invalid]="hasError('persona.nombres')">
+                  <c-form-feedback *ngIf="hasError('persona.nombres')" [valid]="false">
+                    {{ getErrorMessage('persona.nombres') }}
+                  </c-form-feedback>
+                </div>
+              </c-col>
+              <c-col md="6">
+                <div class="mb-3">
+                  <label cLabel for="apellidos" class="form-label">Apellidos *</label>
+                  <input 
+                    cFormControl
+                    id="apellidos"
+                    formControlName="apellidos"
+                    type="text"
+                    placeholder="Ingrese los apellidos"
+                    [class.is-invalid]="hasError('persona.apellidos')">
+                  <c-form-feedback *ngIf="hasError('persona.apellidos')" [valid]="false">
+                    {{ getErrorMessage('persona.apellidos') }}
+                  </c-form-feedback>
+                </div>
+              </c-col>
+            </c-row>
+            <c-row>
+              <c-col md="3">
+                <div class="mb-3">
+                  <label cLabel for="tipoDocumento" class="form-label">Tipo de Documento *</label>
+                  <select 
+                    cSelect
+                    id="tipoDocumento"
+                    formControlName="tipoDocumento"
+                    [class.is-invalid]="hasError('persona.tipoDocumento')">
+                    <option *ngFor="let tipo of tiposDocumento" [value]="tipo.value">
+                      {{ tipo.label }}
+                    </option>
+                  </select>
+                  <c-form-feedback *ngIf="hasError('persona.tipoDocumento')" [valid]="false">
+                    {{ getErrorMessage('persona.tipoDocumento') }}
+                  </c-form-feedback>
+                </div>
+              </c-col>
+              <c-col md="3">
+                <div class="mb-3">
+                  <label cLabel for="numeroDocumento" class="form-label">Número de Documento *</label>
+                  <input 
+                    cFormControl
+                    id="numeroDocumento"
+                    formControlName="numeroDocumento"
+                    type="text"
+                    placeholder="12345678"
+                    [class.is-invalid]="hasError('persona.numeroDocumento')">
+                  <c-form-feedback *ngIf="hasError('persona.numeroDocumento')" [valid]="false">
+                    {{ getErrorMessage('persona.numeroDocumento') }}
+                  </c-form-feedback>
+                </div>
+              </c-col>
+              <c-col md="3">
+                <div class="mb-3">
+                  <label cLabel for="fechaNacimiento" class="form-label">Fecha de Nacimiento *</label>
+                  <input 
+                    cFormControl
+                    id="fechaNacimiento"
+                    type="date"
+                    formControlName="fechaNacimiento"
+                    [class.is-invalid]="hasError('persona.fechaNacimiento')"
+                    (change)="onFechaNacimientoChange()">
+                  <c-form-feedback *ngIf="hasError('persona.fechaNacimiento')" [valid]="false">
+                    {{ getErrorMessage('persona.fechaNacimiento') }}
+                  </c-form-feedback>
+                </div>
+              </c-col>
+              <c-col md="3">
+                <div class="mb-3">
+                  <label cLabel for="genero" class="form-label">Género *</label>
+                  <select 
+                    cSelect
+                    id="genero"
+                    formControlName="genero"
+                    [class.is-invalid]="hasError('persona.genero')">
+                    <option *ngFor="let genero of generos" [value]="genero.value">
+                      {{ genero.label }}
+                    </option>
+                  </select>
+                  <c-form-feedback *ngIf="hasError('persona.genero')" [valid]="false">
+                    {{ getErrorMessage('persona.genero') }}
+                  </c-form-feedback>
+                </div>
+              </c-col>
+            </c-row>
+          </div>
+
+          <!-- Número de Socio -->
+          <c-row>
+            <c-col md="6">
+              <div class="mb-3">
+                <label cLabel for="numeroSocio" class="form-label">Número de Socio *</label>
+                <input 
+                  cFormControl
+                  id="numeroSocio"
+                  formControlName="numero_socio"
+                  type="text"
+                  placeholder="Ej: SOC001"
+                  [class.is-invalid]="hasError('numero_socio')">
+                <c-form-feedback *ngIf="hasError('numero_socio')" [valid]="false">
+                  {{ getErrorMessage('numero_socio') }}
+                </c-form-feedback>
+              </div>
+            </c-col>
+
+            <!-- Estado -->
+            <c-col md="6">
+              <div class="mb-3">
+                <label cLabel for="estado" class="form-label">Estado *</label>
+                <select 
+                  cSelect
+                  id="estado"
+                  formControlName="estado"
+                  [class.is-invalid]="hasError('estado')">
+                  <option *ngFor="let estado of estadosAlumno" [value]="estado.value">
+                    {{ estado.label }}
+                  </option>
+                </select>
+                <c-form-feedback *ngIf="hasError('estado')" [valid]="false">
+                  {{ getErrorMessage('estado') }}
+                </c-form-feedback>
+              </div>
+            </c-col>
+          </c-row>
+        </div>
+
+        <!-- Tutor Responsable -->
+        <div class="mb-4">
+          <h5 class="border-bottom pb-2 mb-3">
+            <svg cIcon name="cilPeople" class="me-2"></svg>
+            Tutor Responsable
+          </h5>
+          <c-row>
+            <c-col md="8">
+              <div>
+                <label cLabel for="tutor" class="form-label">Tutor *</label>
+                <select 
+                  cSelect
+                  id="tutor"
+                  formControlName="tutor"
+                  [class.is-invalid]="hasError('tutor')">
+                  <option value="">Seleccione un tutor</option>
+                  <option *ngFor="let tutor of tutores" [value]="tutor._id">
+                    {{ tutor.nombreCompleto }} ({{ tutor.username }})
+                  </option>
+                </select>
+                <c-form-feedback *ngIf="hasError('tutor')" [valid]="false">
+                  {{ getErrorMessage('tutor') }}
+                </c-form-feedback>
+              </div>
+            </c-col>
+            <c-col md="4" class="d-flex align-items-end">
+              <button 
+                type="button" 
+                class="btn btn-outline-success ms-4"
+                (click)="openTutorModal()">
+                <i class="cil-plus"></i> Nuevo Tutor
+              </button>
+            </c-col>
+          </c-row>
+          <c-row class="mt-4">
+            <c-col md="6">
+              <div class="mb-3">
+                <label cLabel for="tutorEmail" class="form-label">Email del Tutor</label>
+                <input 
+                  cFormControl
+                  id="tutorEmail"
+                  [value]="tutorEmail"
+                  type="email"
+                  readonly
+                  disabled
+                  placeholder="Email del tutor seleccionado">
+              </div>
+            </c-col>
+            <c-col md="6">
+              <div class="mb-3">
+                <label cLabel for="tutorTelefono" class="form-label">Teléfono del Tutor</label>
+                <input 
+                  cFormControl
+                  id="tutorTelefono"
+                  [value]="tutorTelefono"
+                  type="text"
+                  readonly
+                  disabled
+                  placeholder="Teléfono del tutor seleccionado">
+              </div>
+            </c-col>
+          </c-row>
+        </div>
+
+        <!-- Categoría Principal -->
+        <div class="mb-4">
+          <h5 class="border-bottom pb-2 mb-3">
+            <svg cIcon name="cilTag" class="me-2"></svg>
+            Categoría Principal
+          </h5>
+          <c-row>
+            <c-col md="12">
+              <div class="mb-3">
+                <label cLabel for="categoriaPrincipal" class="form-label">Categoría *</label>
+                <select 
+                  cSelect
+                  id="categoriaPrincipal"
+                  formControlName="categoriaPrincipal"
+                  [class.is-invalid]="hasError('categoriaPrincipal')">
+                  <option value="">Seleccione una categoría</option>
+                  <option *ngFor="let categoria of categoriasCompatibles" [value]="categoria._id">
+                    {{ categoria.nombre }} ({{ categoria.edadMinima }}-{{ categoria.edadMaxima }} años)
+                    - Cupo: {{ categoria.alumnosActuales || 0 }}/{{ categoria.cupoMaximo }}
+                  </option>
+                </select>
+                <c-form-feedback *ngIf="hasError('categoriaPrincipal')" [valid]="false">
+                  {{ getErrorMessage('categoriaPrincipal') }}
+                </c-form-feedback>
+                <small class="form-text text-muted">
+                  Las categorías mostradas son compatibles con la edad del alumno y tienen cupo disponible.
+                </small>
+              </div>
+            </c-col>
+          </c-row>
+        </div>
+
+        <!-- Contacto de Emergencia -->
+        <div class="mb-4">
+          <h5 class="border-bottom pb-2 mb-3">
+            <svg cIcon name="cilPhone" class="me-2"></svg>
+            Contacto de Emergencia
+          </h5>
+          <c-row>
+            <c-col md="6">
+              <div class="mb-3">
+                <label cLabel for="contactoEmergencia" class="form-label">Nombre del Contacto *</label>
+                <input 
+                  cFormControl
+                  id="contactoEmergencia"
+                  formControlName="contacto_emergencia"
+                  type="text"
+                  placeholder="Nombre y apellido del contacto"
+                  [class.is-invalid]="hasError('contacto_emergencia')">
+                <c-form-feedback *ngIf="hasError('contacto_emergencia')" [valid]="false">
+                  {{ getErrorMessage('contacto_emergencia') }}
+                </c-form-feedback>
+              </div>
+            </c-col>
+
+            <c-col md="6">
+              <div class="mb-3">
+                <label cLabel for="telefonoEmergencia" class="form-label">Teléfono de Emergencia *</label>
+                <input 
+                  cFormControl
+                  id="telefonoEmergencia"
+                  formControlName="telefono_emergencia"
+                  type="text"
+                  placeholder="Ej: +54 388 1234567"
+                  [class.is-invalid]="hasError('telefono_emergencia')">
+                <c-form-feedback *ngIf="hasError('telefono_emergencia')" [valid]="false">
+                  {{ getErrorMessage('telefono_emergencia') }}
+                </c-form-feedback>
+              </div>
+            </c-col>
+          </c-row>
+        </div>
+
+        <!-- Datos Académicos -->
+        <div class="mb-4">
+          <h5 class="border-bottom pb-2 mb-3">
+            <svg cIcon name="cilEducation" class="me-2"></svg>
+            Datos Académicos
+          </h5>
+          <c-row>
+            <c-col md="12">
+              <div class="mb-3">
+                <label cLabel for="observacionesMedicas" class="form-label">Observaciones Médicas</label>
+                <textarea 
+                  cFormControl
+                  id="observacionesMedicas"
+                  rows="3"
+                  formControlName="observaciones_medicas"
+                  placeholder="Alergias, condiciones médicas, medicamentos, etc."
+                  [class.is-invalid]="hasError('observaciones_medicas')">
+                </textarea>
+                <c-form-feedback *ngIf="hasError('observaciones_medicas')" [valid]="false">
+                  {{ getErrorMessage('observaciones_medicas') }}
+                </c-form-feedback>
+              </div>
+            </c-col>
+          </c-row>
+
+          <c-row class="mt-3">
+            <c-col md="12">
+              <c-form-check>
+                <input 
+                  cFormCheckInput
+                  id="autorizaFotos"
+                  formControlName="autoriza_fotos"
+                  type="checkbox"
+                  [class.is-invalid]="hasError('autoriza_fotos')"
+                  style="width: 1.3em; height: 1.3em;"
+                >
+                <label class="fw-semibold" cFormCheckLabel for="autorizaFotos">
+                  Autorizo el uso de fotos y videos del alumno para actividades institucionales
+                </label>
+              </c-form-check>
+              <c-form-feedback *ngIf="hasError('autoriza_fotos')" [valid]="false">
+                {{ getErrorMessage('autoriza_fotos') }}
+              </c-form-feedback>
+            </c-col>
+          </c-row>
+        </div>
+
+        <!-- Dirección -->
+        <div class="mb-4">
+          <h5 class="border-bottom pb-2 mb-3">
+            <svg cIcon name="cilHome" class="me-2"></svg>
+            Dirección
+          </h5>
+          <div class="form-check mb-3">
+            <input 
+              class="form-check-input" 
+              type="checkbox" 
+              id="viveEnOtroDomicilio"
+              [checked]="viveEnOtroDomicilio"
+              (change)="onViveEnOtroDomicilioChange($event)"
+              style="width: 1.3em; height: 1.3em;"
+            >
+            <label class="form-check-label fw-semibold" for="viveEnOtroDomicilio">
+              El alumno vive en otro domicilio
+            </label>
+            <div class="form-text mt-1" style="font-size: 0.8em;">
+              Si no se marca, se usará la dirección del tutor.
+            </div>
+          </div>
+          <div [formGroupName]="'persona'">
+            <div [formGroupName]="'direccion'">
+              <c-row>
+                <c-col md="6">
+                  <div class="mb-3">
+                    <label cLabel for="calle" class="form-label">Calle</label>
+                    <input 
+                      cFormControl
+                      id="calle"
+                      formControlName="calle"
+                      type="text"
+                      placeholder="Nombre de la calle">
+                  </div>
+                </c-col>
+                <c-col md="6">
+                  <div class="mb-3">
+                    <label cLabel for="ciudad" class="form-label">Ciudad</label>
+                    <input 
+                      cFormControl
+                      id="ciudad"
+                      formControlName="ciudad"
+                      type="text"
+                      placeholder="Ciudad">
+                  </div>
+                </c-col>
+              </c-row>
+              <c-row>
+                <c-col md="4">
+                  <div class="mb-3">
+                    <label cLabel for="departamento" class="form-label">Departamento</label>
+                    <input 
+                      cFormControl
+                      id="departamento"
+                      formControlName="departamento"
+                      type="text"
+                      placeholder="Departamento">
+                  </div>
+                </c-col>
+                <c-col md="4">
+                  <div class="mb-3">
+                    <label cLabel for="codigoPostal" class="form-label">Código Postal</label>
+                    <input 
+                      cFormControl
+                      id="codigoPostal"
+                      formControlName="codigoPostal"
+                      type="text"
+                      placeholder="Código postal">
+                  </div>
+                </c-col>
+                <c-col md="4">
+                  <div class="mb-3">
+                    <label cLabel for="pais" class="form-label">País</label>
+                    <input 
+                      cFormControl
+                      id="pais"
+                      formControlName="pais"
+                      type="text"
+                      placeholder="País">
+                  </div>
+                </c-col>
+              </c-row>
+            </div>
+          </div>
+        </div>
+
+        <!-- Botones de acción -->
+        <div class="d-flex justify-content-end gap-2">
+          <button 
+            type="button" 
+            class="btn btn-secondary" 
+            (click)="onCancel()"
+            [disabled]="submitting">
+            Cancelar
+          </button>
+          <button 
+            type="submit" 
+            class="btn btn-primary"
+            [disabled]="alumnoForm.invalid || submitting">
+            <c-spinner *ngIf="submitting" size="sm" class="me-2"></c-spinner>
+            {{ submitButtonText }}
+          </button>
+        </div>
+      </form>
+    </c-card-body>
+  </c-card>
+</div>
+
+<!-- Modal para crear nuevo tutor -->
+<c-modal 
+  [visible]="showTutorModal" 
+  (visibleChange)="showTutorModal = $event"
+  size="lg">
+  <c-modal-header class="justify-content-center">
+    <h5 class="modal-title">
+      <svg cIcon name="cilUserPlus" class="me-2"></svg>
+      Crear Nuevo Tutor
+    </h5>
+  </c-modal-header>
+  
+  <c-modal-body>
+    <form [formGroup]="tutorForm">
+      <!-- Datos de Usuario -->
+      <h5 class="mb-3">
+        <svg cIcon name="cilUser" class="me-2"></svg>
+        Datos de Usuario
+      </h5>
+      <c-row>
+        <c-col md="6">
+          <div class="mb-3">
+            <label cLabel for="tutorUsername" class="form-label">Nombre de Usuario *</label>
+            <input 
+              cFormControl
+              id="tutorUsername"
+              formControlName="username"
+              type="text"
+              placeholder="usuario123"
+              [class.is-invalid]="hasTutorError('username')">
+            <c-form-feedback *ngIf="hasTutorError('username')" [valid]="false">
+              {{ getTutorErrorMessage('username') }}
+            </c-form-feedback>
+          </div>
+        </c-col>
+
+        <c-col md="6">
+          <div class="mb-3">
+            <label cLabel for="tutorRol" class="form-label">Rol *</label>
+            <input 
+              cFormControl
+              id="tutorRol"
+              formControlName="rol"
+              type="text"
+              readonly
+              [class.is-invalid]="hasTutorError('rol')">
+            <small class="form-text text-muted">Rol pre-asignado para tutores</small>
+          </div>
+        </c-col>
+      </c-row>
+
+      <c-row>
+        <c-col md="6">
+          <div class="mb-3">
+            <label cLabel for="tutorPassword" class="form-label">Contraseña *</label>
+            <input 
+              cFormControl
+              id="tutorPassword"
+              type="password"
+              formControlName="password"
+              placeholder="Mínimo 6 caracteres"
+              [class.is-invalid]="hasTutorError('password')"
+              autocomplete="off">
+            <c-form-feedback *ngIf="hasTutorError('password')" [valid]="false">
+              {{ getTutorErrorMessage('password') }}
+            </c-form-feedback>
+          </div>
+        </c-col>
+
+        <c-col md="6">
+          <div class="mb-3">
+            <label cLabel for="tutorConfirmPassword" class="form-label">Confirmar Contraseña *</label>
+            <input 
+              cFormControl
+              id="tutorConfirmPassword"
+              type="password"
+              formControlName="confirmPassword"
+              placeholder="Repita la contraseña"
+              [class.is-invalid]="hasTutorError('confirmPassword') || tutorPasswordMismatch"
+              autocomplete="off">
+            <c-form-feedback *ngIf="hasTutorError('confirmPassword') || tutorPasswordMismatch" [valid]="false">
+              {{ tutorPasswordMismatch ? 'Las contraseñas no coinciden' : getTutorErrorMessage('confirmPassword') }}
+            </c-form-feedback>
+          </div>
+        </c-col>
+      </c-row>
+
+      <!-- Datos de Persona -->
+      <h5 class="mb-3 mt-4">
+        <svg cIcon name="cilPeople" class="me-2"></svg>
+        Datos Personales
+      </h5>
+      <div [formGroupName]="'persona'">
+        <c-row>
+          <c-col md="6">
+            <div class="mb-3">
+              <label cLabel for="tutorNombres" class="form-label">Nombres *</label>
+              <input 
+                cFormControl
+                id="tutorNombres"
+                formControlName="nombres"
+                type="text"
+                placeholder="Ingrese los nombres"
+                [class.is-invalid]="hasTutorError('persona.nombres')">
+              <c-form-feedback *ngIf="hasTutorError('persona.nombres')" [valid]="false">
+                {{ getTutorErrorMessage('persona.nombres') }}
+              </c-form-feedback>
+            </div>
+          </c-col>
+          <c-col md="6">
+            <div class="mb-3">
+              <label cLabel for="tutorApellidos" class="form-label">Apellidos *</label>
+              <input 
+                cFormControl
+                id="tutorApellidos"
+                formControlName="apellidos"
+                type="text"
+                placeholder="Ingrese los apellidos"
+                [class.is-invalid]="hasTutorError('persona.apellidos')">
+              <c-form-feedback *ngIf="hasTutorError('persona.apellidos')" [valid]="false">
+                {{ getTutorErrorMessage('persona.apellidos') }}
+              </c-form-feedback>
+            </div>
+          </c-col>
+        </c-row>
+        <c-row>
+          <c-col md="4">
+            <div class="mb-3">
+              <label cLabel for="tutorTipoDocumento" class="form-label">Tipo de Documento *</label>
+              <select 
+                cSelect
+                id="tutorTipoDocumento"
+                formControlName="tipoDocumento"
+                [class.is-invalid]="hasTutorError('persona.tipoDocumento')">
+                <option *ngFor="let tipo of tiposDocumento" [value]="tipo.value">
+                  {{ tipo.label }}
+                </option>
+              </select>
+              <c-form-feedback *ngIf="hasTutorError('persona.tipoDocumento')" [valid]="false">
+                {{ getTutorErrorMessage('persona.tipoDocumento') }}
+              </c-form-feedback>
+            </div>
+          </c-col>
+          <c-col md="4">
+            <div class="mb-3">
+              <label cLabel for="tutorNumeroDocumento" class="form-label">Número de Documento *</label>
+              <input 
+                cFormControl
+                id="tutorNumeroDocumento"
+                formControlName="numeroDocumento"
+                type="text"
+                placeholder="12345678"
+                [class.is-invalid]="hasTutorError('persona.numeroDocumento')">
+              <c-form-feedback *ngIf="hasTutorError('persona.numeroDocumento')" [valid]="false">
+                {{ getTutorErrorMessage('persona.numeroDocumento') }}
+              </c-form-feedback>
+            </div>
+          </c-col>
+          <c-col md="4">
+            <div class="mb-3">
+              <label cLabel for="tutorGenero" class="form-label">Género *</label>
+              <select 
+                cSelect
+                id="tutorGenero"
+                formControlName="genero"
+                [class.is-invalid]="hasTutorError('persona.genero')">
+                <option *ngFor="let genero of generos" [value]="genero.value">
+                  {{ genero.label }}
+                </option>
+              </select>
+              <c-form-feedback *ngIf="hasTutorError('persona.genero')" [valid]="false">
+                {{ getTutorErrorMessage('persona.genero') }}
+              </c-form-feedback>
+            </div>
+          </c-col>
+        </c-row>
+        <c-row>
+          <c-col md="6">
+            <div class="mb-3">
+              <label cLabel for="tutorFechaNacimiento" class="form-label">Fecha de Nacimiento *</label>
+              <input 
+                cFormControl
+                id="tutorFechaNacimiento"
+                type="date"
+                formControlName="fechaNacimiento"
+                [class.is-invalid]="hasTutorError('persona.fechaNacimiento')">
+              <c-form-feedback *ngIf="hasTutorError('persona.fechaNacimiento')" [valid]="false">
+                {{ getTutorErrorMessage('persona.fechaNacimiento') }}
+              </c-form-feedback>
+            </div>
+          </c-col>
+          <c-col md="6">
+            <div class="mb-3">
+              <label cLabel for="tutorEmail" class="form-label">Email *</label>
+              <input 
+                cFormControl
+                id="tutorEmail"
+                type="email"
+                formControlName="email"
+                placeholder="tutor@ejemplo.com"
+                [class.is-invalid]="hasTutorError('persona.email')">
+              <c-form-feedback *ngIf="hasTutorError('persona.email')" [valid]="false">
+                {{ getTutorErrorMessage('persona.email') }}
+              </c-form-feedback>
+            </div>
+          </c-col>
+        </c-row>
+        <c-row>
+          <c-col md="6">
+            <div class="mb-3">
+              <label cLabel for="tutorTelefono" class="form-label">Teléfono</label>
+              <input 
+                cFormControl
+                id="tutorTelefono"
+                formControlName="telefono"
+                type="text"
+                placeholder="Ej: +54 388 1234567"
+                [class.is-invalid]="hasTutorError('persona.telefono')">
+              <c-form-feedback *ngIf="hasTutorError('persona.telefono')" [valid]="false">
+                {{ getTutorErrorMessage('persona.telefono') }}
+              </c-form-feedback>
+            </div>
+          </c-col>
+        </c-row>
+        <!-- Dirección -->
+        <h5 class="mb-3 mt-4">
+          <svg cIcon name="cilHome" class="me-2"></svg>
+          Dirección
+        </h5>
+        <div [formGroupName]="'direccion'">
+          <c-row>
+            <c-col md="6">
+              <div class="mb-3">
+                <label cLabel for="tutorCalle" class="form-label">Calle *</label>
+                <input 
+                  cFormControl
+                  id="tutorCalle"
+                  formControlName="calle"
+                  type="text"
+                  placeholder="Calle del tutor"
+                  [class.is-invalid]="hasTutorError('persona.direccion.calle')">
+                <c-form-feedback *ngIf="hasTutorError('persona.direccion.calle')" [valid]="false">
+                  {{ getTutorErrorMessage('persona.direccion.calle') }}
+                </c-form-feedback>
+              </div>
+            </c-col>
+            <c-col md="6">
+              <div class="mb-3">
+                <label cLabel for="tutorCiudad" class="form-label">Ciudad *</label>
+                <input 
+                  cFormControl
+                  id="tutorCiudad"
+                  formControlName="ciudad"
+                  type="text"
+                  placeholder="Ciudad del tutor"
+                  [class.is-invalid]="hasTutorError('persona.direccion.ciudad')">
+                <c-form-feedback *ngIf="hasTutorError('persona.direccion.ciudad')" [valid]="false">
+                  {{ getTutorErrorMessage('persona.direccion.ciudad') }}
+                </c-form-feedback>
+              </div>
+            </c-col>
+          </c-row>
+          <c-row>
+            <c-col md="4">
+              <div class="mb-3">
+                <label cLabel for="tutorDepartamento" class="form-label">Departamento *</label>
+                <input 
+                  cFormControl
+                  id="tutorDepartamento"
+                  formControlName="departamento"
+                  type="text"
+                  placeholder="Departamento del tutor"
+                  [class.is-invalid]="hasTutorError('persona.direccion.departamento')">
+                <c-form-feedback *ngIf="hasTutorError('persona.direccion.departamento')" [valid]="false">
+                  {{ getTutorErrorMessage('persona.direccion.departamento') }}
+                </c-form-feedback>
+              </div>
+            </c-col>
+            <c-col md="4">
+              <div class="mb-3">
+                <label cLabel for="tutorCodigoPostal" class="form-label">Código Postal *</label>
+                <input 
+                  cFormControl
+                  id="tutorCodigoPostal"
+                  formControlName="codigoPostal"
+                  type="text"
+                  placeholder="Código postal del tutor"
+                  [class.is-invalid]="hasTutorError('persona.direccion.codigoPostal')">
+                <c-form-feedback *ngIf="hasTutorError('persona.direccion.codigoPostal')" [valid]="false">
+                  {{ getTutorErrorMessage('persona.direccion.codigoPostal') }}
+                </c-form-feedback>
+              </div>
+            </c-col>
+            <c-col md="4">
+              <div class="mb-3">
+                <label cLabel for="tutorPais" class="form-label">País *</label>
+                <input 
+                  cFormControl
+                  id="tutorPais"
+                  formControlName="pais"
+                  type="text"
+                  placeholder="País del tutor"
+                  [class.is-invalid]="hasTutorError('persona.direccion.pais')">
+                <c-form-feedback *ngIf="hasTutorError('persona.direccion.pais')" [valid]="false">
+                  {{ getTutorErrorMessage('persona.direccion.pais') }}
+                </c-form-feedback>
+              </div>
+            </c-col>
+          </c-row>
+        </div>
       </div>
     </form>
-    <div *ngIf="loading">
-      <p>Cargando...</p>
-    </div>
-  </div>
-</div> 
+  </c-modal-body>
+  
+  <c-modal-footer>
+    <button 
+      type="button" 
+      class="btn btn-secondary" 
+      (click)="closeTutorModal()"
+      [disabled]="creatingTutor">
+      Cancelar
+    </button>
+    <button 
+      type="button" 
+      class="btn btn-primary"
+      (click)="createTutor()"
+      [disabled]="tutorForm.invalid || creatingTutor">
+      <c-spinner *ngIf="creatingTutor" size="sm" class="me-2"></c-spinner>
+      {{ creatingTutor ? 'Creando...' : 'Crear Tutor' }}
+    </button>
+  </c-modal-footer>
+</c-modal> 
