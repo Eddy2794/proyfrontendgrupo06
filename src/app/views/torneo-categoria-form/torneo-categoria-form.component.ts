@@ -55,6 +55,7 @@ export class TorneoCategoriaFormComponent implements OnInit {
   mostrarError: boolean = false;
   tituloForm: string = "";
   formValidado = false;
+  enviandoFormulario: boolean = false;
   @ViewChild('formTorneoCategoria') formTorneoCategoria!: NgForm;
   constructor(private activatedRoute: ActivatedRoute,
     private router: Router,
@@ -118,13 +119,14 @@ export class TorneoCategoriaFormComponent implements OnInit {
       }
     })
   }
-
+  originalTorneoCategoria!: TorneoCategoria;
   cargarTorneoCategoria(id: string) {
     this.torneoCategoriaService.getTorneoCategoria(id).subscribe({
       next: result => {
         Object.assign(this.torneoCategoria, result.data);
         this.torneoCategoria.torneo = result.data.torneo._id;
         this.torneoCategoria.categoria = result.data.categoria._id;
+        this.originalTorneoCategoria = JSON.parse(JSON.stringify(this.torneoCategoria));
       },
       error: error => {
         console.error("Error cargando torneo-categoría", error);
@@ -132,10 +134,23 @@ export class TorneoCategoriaFormComponent implements OnInit {
     });
   }
 
-
+  private torneoIgual(): boolean {
+    return JSON.stringify(this.originalTorneoCategoria) === JSON.stringify(this.torneoCategoria);
+  }
   actualizarTorneoCategoria() {
     this.formValidado = true;
-    if (this.formTorneoCategoria.invalid) return;
+    if (this.formTorneoCategoria.invalid) {
+      this.enviandoFormulario = false;
+      return
+    };
+    this.enviandoFormulario = true;
+    if (this.torneoIgual()) {
+      this.mensajeError = "No se realizaron cambios en el formulario";
+      this.mostrarError = true;
+      this.ocultarAlerta();
+      this.enviandoFormulario = false;
+      return;
+    }
     this.torneoCategoriaService.updateTorneo(this.torneoCategoria).subscribe({
       next: result => {
         if (result.success == true) {
@@ -144,14 +159,16 @@ export class TorneoCategoriaFormComponent implements OnInit {
           this.ocultarAlerta();
           setTimeout(() => {
             this.router.navigate(['torneos-categorias']);
+            return;
           }, 2000);
 
         }
       },
       error: error => {
-        this.mensajeError = "Ocurrió un error al actualizar";
+        this.mensajeError = "Ocurrió un error al actualizar: " + error.error.error;
         this.mostrarError = true;
         this.ocultarAlerta();
+        this.enviandoFormulario = false;
         console.log(error);
       }
     })
@@ -159,7 +176,11 @@ export class TorneoCategoriaFormComponent implements OnInit {
 
   agregarTorneoCategoria() {
     this.formValidado = true;
-    if (this.formTorneoCategoria.invalid) return;
+    if (this.formTorneoCategoria.invalid) {
+      this.enviandoFormulario = false;
+      return
+    };
+    this.enviandoFormulario = true;
     this.torneoCategoriaService.addTorneo(this.torneoCategoria).subscribe({
       next: result => {
         if (result.success == true) {
@@ -168,13 +189,15 @@ export class TorneoCategoriaFormComponent implements OnInit {
           this.ocultarAlerta();
           setTimeout(() => {
             this.router.navigate(['torneos-categorias']);
+            return;
           }, 2000);
         }
       },
       error: error => {
-        this.mensajeError = "Ocurrió un error al agregar";
+        this.mensajeError = "Ocurrió un error al agregar: " + error.error.error;
         this.mostrarError = true;
         this.ocultarAlerta();
+        this.enviandoFormulario = false;
         console.log(error);
       }
     })
