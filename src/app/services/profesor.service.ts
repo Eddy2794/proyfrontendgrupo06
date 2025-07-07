@@ -39,7 +39,6 @@ export class ProfesorService {
   }
 
   createProfesor(profesor: any) {
-    console.log('profesor', profesor);
     return this.http.post(`${environment.apiUrl}/profesores`, profesor);
   }
   updateProfesor(id: string, profesor: any) {
@@ -47,12 +46,6 @@ export class ProfesorService {
   }
   deleteProfesor(id: string) {
     return this.http.delete(`${environment.apiUrl}/profesores/${id}`);
-  }
-
-  validateEmailUnique(email: string, excludeId?: string) {
-    return this.http.get(`${environment.apiUrl}/profesores/validate-email`, {
-      params: { email, excludeId: excludeId || '' }
-    });
   }
 
   /**

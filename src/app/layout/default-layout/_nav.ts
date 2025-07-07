@@ -42,14 +42,14 @@ export const navItems: INavData[] = [
     children: [
       {
         name: 'Lista de Profesores',
-        url: '/profesor',
+        url: '/profesor/lista',
         iconComponent: { name: 'cil-user-follow' }
       },
       {
-        name: 'Categorías Profesor',
-        url: '/profesor-categoria',
-        iconComponent: { name: 'cil-tags' }
-      }
+        name: 'Profesores y Categorias',
+        url: '/profesor-categoria/lista',
+        iconComponent: { name: 'cil-user-follow' }
+      },
     ]
   },
   {
