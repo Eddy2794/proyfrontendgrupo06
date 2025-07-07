@@ -65,11 +65,10 @@ export class TorneoCategoriaComponent implements OnInit {
   constructor(private torneoCategoriaService: TorneoCategoriaService, private router: Router) {
     this.getTorneosCategorias();
   }
-
-  ngOnInit(): void {
+  cargarChartTorneoCategoria(){
     this.torneoCategoriaService.getTorneosCategorias().subscribe({
-      next: response => {
-        const relaciones = response.data.data; // accedemos a los items
+      next: (response: { data: { data: TorneoCategoria[] } }) => {
+        const relaciones = response.data.data.filter(tc => tc.torneo !== null && tc.categoria !== null);
         const conteoPorTorneo: { [nombreTorneo: string]: number } = {};
 
         for (let relacion of relaciones) {
@@ -97,6 +96,9 @@ export class TorneoCategoriaComponent implements OnInit {
       }
     });
   }
+  ngOnInit(): void {
+    this.cargarChartTorneoCategoria();
+  }
   ocultarAlerta() {
     setTimeout(() => {
       this.mostrarExito = false;
@@ -106,7 +108,7 @@ export class TorneoCategoriaComponent implements OnInit {
   getTorneosCategorias() {
     this.torneoCategoriaService.getTorneosCategorias().subscribe({
       next: (result: { data: { data: TorneoCategoria[] } }) => {
-        this.torneosCategorias = result.data.data.filter(tc => tc.torneo !== null);
+        this.torneosCategorias = result.data.data.filter(tc => tc.torneo !== null && tc.categoria !== null);
       },
       error: (err) => {
         console.error('Error al cargar torneos-categorias:', err);

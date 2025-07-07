@@ -1,64 +1,206 @@
-<div class="card shadow-sm">
-  <div class="card-header bg-primary text-white d-flex align-items-center justify-content-between">
-    <h4 class="mb-0">Relaciones Alumno-Categoría</h4>
-    <button class="btn btn-success btn-sm text-white ms-2 shadow" (click)="nuevo()">
-      <i class="bi bi-plus-lg me-1"></i> NUEVO
-    </button>
-  </div>
-  <div class="card-body p-0">
-    <div *ngIf="loading" class="p-3 text-center">
-      <div class="spinner-border text-primary" role="status">
-        <span class="visually-hidden">Cargando...</span>
+<c-row>
+  <c-col xs="12">
+    <c-card class="mb-4">
+      <c-card-header class="d-flex justify-content-between align-items-center">
+        <div>
+          <strong>Inscripciones de Alumnos en Categorías</strong>
+          <small class="text-body-secondary ms-2">Administrar inscripciones de alumnos en categorías</small>
+        </div>
+        <div class="text-end">
+          <small class="text-info d-block">
+            <svg cIcon name="cilInfo" size="sm" class="me-1"></svg>
+            Para crear nuevas relaciones: edite una existente y cambie la categoría
+          </small>
+        </div>
+      </c-card-header>
+      <c-card-body>
+        <!-- Barra de búsqueda y filtros -->
+        <c-row class="mb-3">
+          <c-col md="4">
+            <c-input-group>
+              <span cInputGroupText>
+                <svg cIcon name="cilSearch"></svg>
+              </span>
+              <input 
+                cFormControl 
+                placeholder="Buscar por nombre de alumno..."
+                [value]="searchTerm"
+                (input)="onSearch($any($event.target).value)"
+                type="text">
+            </c-input-group>
+          </c-col>
+          <c-col md="3">
+            <select 
+              class="form-select"
+              [value]="selectedEstado || ''"
+              (change)="onEstadoFilter($any($event.target).value || undefined)"
+              aria-label="Filtrar por estado">
+              <option value="">Todos los estados</option>
+              <option value="ACTIVO">Solo Activos</option>
+              <option value="INACTIVO">Solo Inactivos</option>
+            </select>
+          </c-col>
+          <c-col md="3">
+            <select 
+              class="form-select"
+              [value]="selectedCategoria || ''"
+              (change)="onCategoriaFilter($any($event.target).value || undefined)"
+              aria-label="Filtrar por categoría">
+              <option value="">Todas las categorías</option>
+              <option *ngFor="let categoria of categorias" [value]="categoria._id">{{ categoria.nombre }}</option>
+            </select>
+          </c-col>
+          <c-col md="2" class="text-end">
+            <button 
+              cButton 
+              color="secondary" 
+              variant="outline"
+              size="sm"
+              (click)="clearFilters()"
+              cTooltip="Limpiar filtros">
+              <svg cIcon name="cilReload" class="me-1"></svg>
+              Limpiar
+            </button>
+          </c-col>
+        </c-row>
+        <!-- Spinner de carga -->
+        <div *ngIf="loading" class="text-center py-4">
+          <c-spinner color="primary"></c-spinner>
+          <p class="mt-2 text-body-secondary">Cargando relaciones...</p>
+        </div>
+        <!-- Tabla de relaciones -->
+        <div *ngIf="!loading" class="table-responsive">
+          <table cTable [hover]="true" [striped]="true">
+            <thead>
+              <tr>
+                <th>Alumno</th>
+                <th>Categoría</th>
+                <th>Fecha de Alta</th>
+                <th>Estado</th>
+                <th class="text-center">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let r of relacionesFiltradas">
+                <td>
+                  <span *ngIf="r.alumno_datos && typeof r.alumno_datos === 'object' && r.alumno_datos.persona && typeof r.alumno_datos.persona === 'object' && r.alumno_datos.persona.nombres">
+                    <span class="fw-semibold">{{ r.alumno_datos.persona.nombres }} {{ r.alumno_datos.persona.apellidos }}</span>
+                  </span>
+                  <span *ngIf="!(r.alumno_datos && typeof r.alumno_datos === 'object' && r.alumno_datos.persona && typeof r.alumno_datos.persona === 'object' && r.alumno_datos.persona.nombres)" class="text-muted">
+                    Alumno no disponible
+                  </span>
+                </td>
+                <td>
+                  <span *ngIf="r.categoria_datos && typeof r.categoria_datos === 'object' && r.categoria_datos.nombre">
+                    <span class="fw-semibold">{{ r.categoria_datos.nombre }}</span>
+                  </span>
+                  <span *ngIf="!(r.categoria_datos && typeof r.categoria_datos === 'object' && r.categoria_datos.nombre)" class="text-muted">
+                    Categoría no disponible
+                  </span>
+                </td>
+                <td>
+                  <small>{{ r.fecha_inscripcion | date:'dd/MM/yyyy' }}</small>
+                </td>
+                <td>
+                  <c-badge [color]="r.estado === 'ACTIVO' ? 'success' : 'secondary'">
+                    {{ r.estado }}
+                  </c-badge>
+                </td>
+                <td class="text-center">
+                  <div class="btn-group" role="group">
+                    <button 
+                      cButton 
+                      size="sm" 
+                      variant="outline" 
+                      color="info"
+                      (click)="editar(r)"
+                      cTooltip="Editar relación">
+                      <svg cIcon name="cilPencil" size="sm"></svg>
+                    </button>
+                    <button 
+                      cButton 
+                      size="sm" 
+                      variant="outline" 
+                      [color]="r.estado === 'ACTIVO' ? 'warning' : 'success'"
+                      (click)="toggleEstado(r)"
+                      [cTooltip]="r.estado === 'ACTIVO' ? 'Desactivar relación' : 'Activar relación'">
+                      <svg cIcon [name]="r.estado === 'ACTIVO' ? 'cilBan' : 'cilCheckCircle'" size="sm"></svg>
+                    </button>
+                    <button 
+                      cButton 
+                      size="sm" 
+                      variant="outline" 
+                      color="danger"
+                      (click)="eliminar(r)"
+                      cTooltip="Eliminar relación">
+                      <svg cIcon name="cilTrash" size="sm"></svg>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <div *ngIf="relacionesFiltradas.length === 0" class="text-center p-4">
+            <p class="text-muted mb-0">No hay relaciones alumno-categoría registradas</p>
+          </div>
+        </div>
+      </c-card-body>
+    </c-card>
+  </c-col>
+</c-row>
+
+<!-- Modal de Desactivación -->
+<div class="modal fade show" [class.d-block]="showDesactivarModal" tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <svg cIcon name="cilWarning" class="me-2 text-warning"></svg>
+          Desactivar Relación
+        </h5>
+        <button type="button" class="btn-close" (click)="cerrarModal()"></button>
       </div>
-    </div>
-    <div class="table-responsive" *ngIf="!loading">
-      <table class="table table-striped table-hover table-bordered align-middle mb-0">
-        <thead class="table-dark">
-          <tr>
-            <th>Alumno</th>
-            <th>Categoría</th>
-            <th>Fecha de Alta</th>
-            <th>Estado</th>
-            <th>Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let r of relaciones">
-            <td>
-              <span *ngIf="r.alumno_datos && typeof r.alumno_datos === 'object' && r.alumno_datos.persona && typeof r.alumno_datos.persona === 'object' && r.alumno_datos.persona.nombres">
-                {{ r.alumno_datos.persona.nombres }} {{ r.alumno_datos.persona.apellidos }}
-              </span>
-              <span *ngIf="!(r.alumno_datos && typeof r.alumno_datos === 'object' && r.alumno_datos.persona && typeof r.alumno_datos.persona === 'object' && r.alumno_datos.persona.nombres)" class="text-muted">
-                Alumno no disponible
-              </span>
-            </td>
-            <td>
-              <span *ngIf="r.categoria_datos && typeof r.categoria_datos === 'object' && r.categoria_datos.nombre">
-                {{ r.categoria_datos.nombre }}
-              </span>
-              <span *ngIf="!(r.categoria_datos && typeof r.categoria_datos === 'object' && r.categoria_datos.nombre)" class="text-muted">
-                Categoría no disponible
-              </span>
-            </td>
-            <td>{{ r.fecha_inscripcion | date:'dd/MM/yyyy' }}</td>
-            <td>
-              <span class="badge bg-{{ r.estado === 'ACTIVO' ? 'success' : 'secondary' }}">{{ r.estado }}</span>
-            </td>
-            <td>
-              <button class="btn btn-primary btn-sm me-1" (click)="editar(r)">
-                <i class="bi bi-pencil"></i>
-              </button>
-              <button class="btn btn-danger btn-sm" (click)="eliminar(r)">
-                <i class="bi bi-trash"></i>
-              </button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-      <div *ngIf="relaciones.length === 0" class="text-center p-4">
-        <p class="text-muted mb-0">No hay relaciones alumno-categoría registradas</p>
+      <div class="modal-body">
+        <p class="mb-3">
+          Está por desactivar la relación del alumno 
+          <strong>{{ relacionADesactivar?.alumno_datos?.persona_datos?.nombres }} {{ relacionADesactivar?.alumno_datos?.persona_datos?.apellidos }}</strong> 
+          en la categoría <strong>{{ relacionADesactivar?.categoria_datos?.nombre }}</strong>.
+        </p>
+        
+        <div class="mb-3">
+          <label for="fechaBaja" class="form-label">Fecha de Baja <span class="text-danger">*</span></label>
+          <input 
+            type="date" 
+            class="form-control" 
+            id="fechaBaja"
+            [(ngModel)]="fechaBaja"
+            required>
+        </div>
+        
+        <div class="mb-3">
+          <label for="motivoBaja" class="form-label">Motivo de Baja <span class="text-danger">*</span></label>
+          <textarea 
+            class="form-control" 
+            id="motivoBaja"
+            [(ngModel)]="motivoBaja"
+            rows="3"
+            placeholder="Especifique el motivo de la desactivación..."
+            required></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="cerrarModal()">
+          Cancelar
+        </button>
+        <button type="button" class="btn btn-warning" (click)="confirmarDesactivacion()">
+          <svg cIcon name="cilBan" class="me-1"></svg>
+          Desactivar
+        </button>
       </div>
     </div>
   </div>
 </div>
+
+<!-- Backdrop del modal -->
+<div class="modal-backdrop fade show" *ngIf="showDesactivarModal"></div>
  

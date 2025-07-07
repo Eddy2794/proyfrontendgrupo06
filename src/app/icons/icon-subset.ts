@@ -90,6 +90,7 @@ import {
   cilSpreadsheet,
   cilStar,
   cilSun,
+  cilTag,
   cilTags,
   cilTask,
   cilTrash,
@@ -104,7 +105,11 @@ import {
   cilX,
   cilXCircle,
   cilPhone,
-  cilShieldAlt
+  cilShieldAlt,
+  cilEducation,
+  cilUserPlus,
+  cilBan,
+  cilCheckCircle
 } from '@coreui/icons';
 
 import { logo } from './logo';
@@ -202,6 +207,7 @@ export enum IconSubset {
   cilSpreadsheet = 'cilSpreadsheet',
   cilStar = 'cilStar',
   cilSun = 'cilSun',
+  cilTag = 'cilTag',
   cilTags = 'cilTags',
   cilTask = 'cilTask',
   cilTrash = 'cilTrash',
@@ -217,6 +223,10 @@ export enum IconSubset {
   cilXCircle = 'cilXCircle',
   cilPhone = 'cilPhone',
   cilShieldAlt = 'cilShieldAlt',
+  cilEducation = 'cilEducation',
+  cilUserPlus = 'cilUserPlus',
+  cilBan = 'cilBan',
+  cilCheckCircle = 'cilCheckCircle',
   logo = 'logo',
   signet = 'signet'
 }
@@ -313,6 +323,7 @@ export const iconSubset = {
   cilSpreadsheet,
   cilStar,
   cilSun,
+  cilTag,
   cilTags,
   cilTask,
   cilTrash,
@@ -328,6 +339,10 @@ export const iconSubset = {
   cilXCircle,
   cilPhone,
   cilShieldAlt,
+  cilEducation,
+  cilUserPlus,
+  cilBan,
+  cilCheckCircle,
   logo,
   signet
 };

@@ -41,8 +41,8 @@
               <label cLabel for="nombres">Nombres</label>
               <input cFormControl id="nombres" name="nombres" required type="text" [(ngModel)]="profesor.personaData.nombres"
                 #nombres="ngModel"/>
-                <div *ngIf="nombres.invalid && (nombres.touched || nombres.dirty || profesorFormValidated)" class="invalid-feedback d-block">
-                  El nombre es requerido.
+                <div *ngIf="!validarNombresCompleto().isValid && (nombres.touched || nombres.dirty || profesorFormValidated)" class="invalid-feedback d-block">
+                  {{ validarNombresCompleto().message }}
                 </div>
             </c-col>
 
@@ -51,8 +51,8 @@
               <label cLabel for="apellidos">Apellidos</label>
               <input cFormControl id="apellidos" name="apellidos" required type="text" [(ngModel)]="profesor.personaData.apellidos"
                 #apellidos="ngModel" />
-                <div *ngIf="apellidos.invalid && (apellidos.touched || apellidos.dirty || profesorFormValidated)" class="invalid-feedback d-block">
-                  El apellido es requerido.
+                <div *ngIf="!validarApellidosCompleto().isValid && (apellidos.touched || apellidos.dirty || profesorFormValidated)" class="invalid-feedback d-block">
+                  {{ validarApellidosCompleto().message }}
                 </div>
             </c-col>
 
@@ -64,8 +64,8 @@
                 <option value="">Seleccione...</option>
                 <option *ngFor="let tipo of tiposDocumento" [value]="tipo.value">{{ tipo.label }}</option>
               </select>
-              <div *ngIf="tipoDocumento.invalid && (tipoDocumento.touched || tipoDocumento.dirty || profesorFormValidated)" class="invalid-feedback d-block">
-                El tipo de documento es requerido.
+              <div *ngIf="!validarTipoDocumentoCompleto().isValid && (tipoDocumento.touched || tipoDocumento.dirty || profesorFormValidated)" class="invalid-feedback d-block">
+                {{ validarTipoDocumentoCompleto().message }}
               </div>
             </c-col>
 
@@ -74,9 +74,13 @@
               <label cLabel for="numeroDocumento">Número de Documento</label>
               <input cFormControl id="numeroDocumento" name="numeroDocumento" required type="text"
                 [(ngModel)]="profesor.personaData.numeroDocumento" #numeroDocumento="ngModel"
-                />
-              <div *ngIf="numeroDocumento.invalid && (numeroDocumento.touched || numeroDocumento.dirty || profesorFormValidated)" class="invalid-feedback d-block">
-                El número de documento es requerido.
+                (input)="limpiarErrorDniDuplicado()"
+                (blur)="limpiarErrorDniDuplicado()" />
+              <div *ngIf="!validarNumeroDocumentoCompleto().isValid && (numeroDocumento.touched || numeroDocumento.dirty || profesorFormValidated)" class="invalid-feedback d-block">
+                {{ validarNumeroDocumentoCompleto().message }}
+              </div>
+              <div *ngIf="dniDuplicado" class="invalid-feedback d-block">
+                {{ dniDuplicadoMsg || 'Ya existe un profesor registrado con ese número de documento.' }}
               </div>
             </c-col>
 
@@ -85,8 +89,8 @@
               <label cLabel for="fechaNacimiento">Fecha de Nacimiento</label>
               <input cFormControl id="fechaNacimiento" name="fechaNacimiento" required type="date"
                 [(ngModel)]="profesor.personaData.fechaNacimiento" #fechaNacimiento="ngModel"/>
-              <div *ngIf="fechaNacimiento.invalid && (fechaNacimiento.touched || fechaNacimiento.dirty || profesorFormValidated)" class="invalid-feedback d-block">
-                La fecha de nacimiento es requerida.
+              <div *ngIf="!validarFechaNacimientoCompleto().isValid && (fechaNacimiento.touched || fechaNacimiento.dirty || profesorFormValidated)" class="invalid-feedback d-block">
+                {{ validarFechaNacimientoCompleto().message }}
               </div>
             </c-col>
 
@@ -97,8 +101,8 @@
                 <option value="">Seleccione...</option>
                 <option *ngFor="let g of generos" [value]="g.value">{{ g.label }}</option>
               </select>
-              <div *ngIf="genero.invalid && (genero.touched || genero.dirty || profesorFormValidated)" class="invalid-feedback d-block">
-                El género es requerido.
+              <div *ngIf="!validarGeneroCompleto().isValid && (genero.touched || genero.dirty || profesorFormValidated)" class="invalid-feedback d-block">
+                {{ validarGeneroCompleto().message }}
               </div>
             </c-col>
 
@@ -106,16 +110,24 @@
             <c-col [xs]="12" [md]="4">
               <label cLabel for="email">Email</label>
               <input cFormControl id="email" name="email" required type="email" [(ngModel)]="profesor.personaData.email"
-                #email="ngModel" />
-              <div *ngIf="email.invalid && (email.touched || email.dirty || profesorFormValidated)" class="invalid-feedback d-block">
-                El email es requerido.
+                #email="ngModel" 
+                (input)="limpiarErrorEmailDuplicado()"
+                (blur)="limpiarErrorEmailDuplicado()" />
+              <div *ngIf="!validarEmailCompleto().isValid && (email.touched || email.dirty || profesorFormValidated)" class="invalid-feedback d-block">
+                {{ validarEmailCompleto().message }}
+              </div>
+              <div *ngIf="emailDuplicado" class="invalid-feedback d-block">
+                {{ emailDuplicadoMsg || 'Ya existe un profesor registrado con ese email.' }}
               </div>
             </c-col>
 
             <!-- Teléfono -->
             <c-col [xs]="12" [md]="4">
               <label cLabel for="telefono">Teléfono</label>
-              <input cFormControl id="telefono" name="telefono" type="text" [(ngModel)]="profesor.personaData.telefono" />
+              <input cFormControl id="telefono" name="telefono" type="text" [(ngModel)]="profesor.personaData.telefono" #telefono="ngModel" />
+              <div *ngIf="!validarTelefonoCompleto().isValid && (telefono.touched || telefono.dirty || profesorFormValidated)" class="invalid-feedback d-block">
+                {{ validarTelefonoCompleto().message }}
+              </div>
             </c-col>
 
             <!-- SECCIÓN: DIRECCIÓN -->
@@ -169,7 +181,7 @@
             <!-- SECCIÓN: DATOS PROFESIONALES -->
             <c-col [xs]="12">
               <h5 class="mb-3 text-primary mt-4">
-                <svg cIcon name="cilBriefcase" size="sm" class="me-2"></svg>
+                <svg cIcon name="cilTask" size="sm" class="me-2"></svg>
                 Datos Profesionales
               </h5>
             </c-col>
@@ -179,8 +191,8 @@
               <label cLabel for="titulo">Título</label>
               <input cFormControl id="titulo" name="titulo" required type="text" [(ngModel)]="profesor.titulo"
                 #titulo="ngModel" />
-              <div *ngIf="titulo.invalid && (titulo.touched || titulo.dirty || profesorFormValidated)" class="invalid-feedback d-block">
-                El título es requerido.
+              <div *ngIf="!validarTituloCompleto().isValid && (titulo.touched || titulo.dirty || profesorFormValidated)" class="invalid-feedback d-block">
+                {{ validarTituloCompleto().message }}
               </div>
             </c-col>
 
@@ -189,8 +201,8 @@
               <label cLabel for="experiencia_anios">Experiencia</label>
               <input cFormControl id="experiencia_anios" name="experiencia_anios" required type="number" min="0"
                 [(ngModel)]="profesor.experiencia_anios" #experiencia_anios="ngModel"/>
-              <div *ngIf="experiencia_anios.invalid && (experiencia_anios.touched || experiencia_anios.dirty || profesorFormValidated)" class="invalid-feedback d-block">
-                Los años de experiencia son requeridos.
+              <div *ngIf="!validarExperienciaAniosCompleto().isValid && (experiencia_anios.touched || experiencia_anios.dirty || profesorFormValidated)" class="invalid-feedback d-block">
+                {{ validarExperienciaAniosCompleto().message }}
               </div>
             </c-col>
 
@@ -199,8 +211,8 @@
               <label cLabel for="fecha_contratacion">Fecha de contratación</label>
               <input cFormControl id="fecha_contratacion" name="fecha_contratacion" required type="date"
                 [(ngModel)]="profesor.fecha_contratacion" #fecha_contratacion="ngModel"/>
-              <div *ngIf="fecha_contratacion.invalid && (fecha_contratacion.touched || fecha_contratacion.dirty || profesorFormValidated)" class="invalid-feedback d-block">
-                La fecha de contratación es requerida.
+              <div *ngIf="!validarFechaContratacionCompleto().isValid && (fecha_contratacion.touched || fecha_contratacion.dirty || profesorFormValidated)" class="invalid-feedback d-block">
+                {{ validarFechaContratacionCompleto().message }}
               </div>
             </c-col>
 
@@ -209,17 +221,17 @@
               <label cLabel for="salario">Salario</label>
               <input cFormControl id="salario" name="salario" required type="number" min="0"
                 [(ngModel)]="profesor.salario" #salario="ngModel"/>
-              <div *ngIf="salario.invalid && (salario.touched || salario.dirty || profesorFormValidated)" class="invalid-feedback d-block">
-                El salario es requerido.
+              <div *ngIf="!validarSalarioCompleto().isValid && (salario.touched || salario.dirty || profesorFormValidated)" class="invalid-feedback d-block">
+                {{ validarSalarioCompleto().message }}
               </div>
             </c-col>
 
             <!-- Botones -->
             <c-col [xs]="12" class="text-center">
-              <button cButton class="me-1" color="primary" type="submit" [disabled]="isSubmitting">
+              <button cButton class="me-1" color="primary" type="submit" [disabled]="isSubmitting || !esFormularioValido()">
                 {{ isEditing ? 'Actualizar' : 'Guardar' }}
               </button>
-              <button cButton class="me-1" color="danger" type="button" [disabled]="!isEditing || isSubmitting" (click)="editingId && deleteProfesor(editingId)" *ngIf="isEditing">
+              <button cButton class="me-1" color="danger" type="button" [disabled]="isSubmitting || !isEditing" (click)="editingId && deleteProfesor(editingId)" *ngIf="isEditing">
                 <svg cIcon name="cilTrash" size="sm"></svg>
                 Eliminar
               </button>

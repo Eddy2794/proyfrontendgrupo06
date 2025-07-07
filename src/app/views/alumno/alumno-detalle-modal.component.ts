@@ -56,19 +56,43 @@ import { CommonModule } from '@angular/common';
             <ul class="list-group list-group-flush">
               <li class="list-group-item py-2 px-3 d-flex justify-content-between align-items-center">
                 <span><i class="bi bi-person me-2"></i><b>Nombre:</b></span>
-                <span>{{ alumno.tutor_datos?.nombres }} {{ alumno.tutor_datos?.apellidos }}</span>
+                <span>
+                  {{
+                    getTutorPersona()
+                      ? (getTutorPersona().nombres + ' ' + getTutorPersona().apellidos)
+                      : '-'
+                  }}
+                </span>
               </li>
               <li class="list-group-item py-2 px-3 d-flex justify-content-between align-items-center">
                 <span><i class="bi bi-credit-card me-2"></i><b>Documento:</b></span>
-                <span>{{ alumno.tutor_datos?.numeroDocumento }}</span>
+                <span>
+                  {{
+                    getTutorPersona()
+                      ? getTutorPersona().numeroDocumento
+                      : '-'
+                  }}
+                </span>
               </li>
               <li class="list-group-item py-2 px-3 d-flex justify-content-between align-items-center">
                 <span><i class="bi bi-envelope me-2"></i><b>Email:</b></span>
-                <span>{{ alumno.tutor_datos?.email }}</span>
+                <span>
+                  {{
+                    getTutorPersona()
+                      ? getTutorPersona().email
+                      : '-'
+                  }}
+                </span>
               </li>
               <li class="list-group-item py-2 px-3 d-flex justify-content-between align-items-center">
                 <span><i class="bi bi-telephone me-2"></i><b>Teléfono:</b></span>
-                <span>{{ alumno.tutor_datos?.telefono }}</span>
+                <span>
+                  {{
+                    getTutorPersona()
+                      ? getTutorPersona().telefono
+                      : '-'
+                  }}
+                </span>
               </li>
             </ul>
           </div>
@@ -83,10 +107,17 @@ import { CommonModule } from '@angular/common';
   `
 })
 export class AlumnoDetalleModalComponent {
-  @Input() alumno!: Alumno;
+  @Input() alumno: Alumno | null = null;
   @Output() close = new EventEmitter<void>();
 
   cerrar() {
     this.close.emit();
+  }
+
+  getTutorPersona(): any | null {
+    if (this.alumno && typeof this.alumno.tutor === 'object' && this.alumno.tutor !== null && 'persona' in this.alumno.tutor) {
+      return (this.alumno.tutor as any).persona;
+    }
+    return null;
   }
 } 

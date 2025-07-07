@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { AlumnoCategoria, AlumnoCategoriaModel } from '../models/alumno-categoria.model';
+import { environment } from '../../environments/environment';
 
 // Interfaces para estadísticas
 export interface AlumnoCategoriaStats {
@@ -34,7 +35,7 @@ export interface AlumnoCategoriaStats {
 })
 export class AlumnoCategoriaService {
 
-  private apiUrl = 'http://localhost:3000/api/alumno-categorias'; 
+  private apiUrl = `${environment.apiUrl}/alumno-categorias`; 
 
   constructor(private http: HttpClient) { }
 

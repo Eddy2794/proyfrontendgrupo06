@@ -67,7 +67,7 @@
                     </c-col>
 
                     <c-col [md]="12">
-                        <button cButton color="primary" type="submit" class="mt-2">
+                        <button cButton color="primary" type="submit" class="mt-2" [disabled]="enviandoFormulario">
                             {{ accion === 'new' ? 'Guardar' : 'Actualizar' }}
                         </button>
                     </c-col>

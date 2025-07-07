@@ -1,48 +1,294 @@
-<div class="card shadow-sm">
-  <div class="card-header bg-primary text-white d-flex align-items-center justify-content-between">
-    <h4 class="mb-0">Alumnos</h4>
-    <button class="btn btn-success btn-sm text-white ms-2 shadow" (click)="onNuevoAlumno()">
-      <i class="bi bi-plus-lg me-1"></i> NUEVO ALUMNO
-    </button>
-  </div>
-  <div class="card-body p-0">
-    <div class="table-responsive">
-      <table class="table table-striped table-hover table-bordered align-middle mb-0">
-        <thead class="table-dark">
-          <tr>
-            <th scope="col">Número de Socio</th>
-            <th scope="col">Alumno</th>
-            <th scope="col">Tutor</th>
-            <th scope="col">Teléfono Emergencia</th>
-            <th scope="col">Fecha Inscripción</th>
-            <th scope="col">Estado</th>
-            <th scope="col">Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let a of alumnos">
-            <td>{{ a.numero_socio }}</td>
-            <td>{{ a.persona_datos?.nombres }} {{ a.persona_datos?.apellidos }}</td>
-            <td>{{ a.tutor_datos?.nombres }} {{ a.tutor_datos?.apellidos }}</td>
-            <td>{{ a.telefono_emergencia }}</td>
-            <td>{{ a.fecha_inscripcion | date:'dd/MM/yyyy'}}</td>
-            <td>
-              <span class="badge bg-{{ a.estado === 'ACTIVO' ? 'success' : 'secondary' }}">{{ a.estado }}</span>
-            </td>
-            <td>
-              <button class="btn btn-info btn-sm me-1" (click)="onVerDetalle(a)">
-                <i class="bi bi-search"></i>
-              </button>
-              <button class="btn btn-primary btn-sm me-1" (click)="onModificar(a)">
-                <i class="bi bi-pencil"></i>
-              </button>
-              <button class="btn btn-danger btn-sm" (click)="onEliminar(a._id!)">
-                <i class="bi bi-trash"></i>
-              </button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
-</div> 
+<c-row>
+  <c-col xs="12">
+    <c-card class="mb-4">
+      <c-card-header class="d-flex justify-content-between align-items-center">
+        <div>
+          <strong>Gestión de Alumnos</strong>
+          <small class="text-body-secondary ms-2">Administrar alumnos del sistema</small>
+        </div>
+        <button 
+          cButton 
+          color="primary" 
+          size="sm"
+          (click)="onNuevoAlumno()"
+          cTooltip="Agregar nuevo alumno">
+          <svg cIcon name="cilPlus" class="me-1"></svg>
+          Nuevo Alumno
+        </button>
+      </c-card-header>
+      
+      <c-card-body>
+        <!-- Barra de búsqueda y filtros -->
+        <c-row class="mb-3">
+          <c-col md="4">
+            <c-input-group>
+              <span cInputGroupText>
+                <svg cIcon name="cilSearch"></svg>
+              </span>
+              <input 
+                cFormControl 
+                placeholder="Buscar por número de socio..."
+                [value]="searchTerm"
+                (input)="onSearch($any($event.target).value)"
+                type="text">
+            </c-input-group>
+          </c-col>
+          <c-col md="2">
+            <select 
+              class="form-select"
+              [value]="selectedStatus || ''"
+              (change)="onStatusFilter($any($event.target).value || undefined)"
+              aria-label="Filtrar por estado">
+              <option value="">Todos los estados</option>
+              <option *ngFor="let state of alumnoStates" [value]="state">{{ state }}</option>
+            </select>
+          </c-col>
+          <c-col md="2">
+            <select 
+              class="form-select"
+              [value]="selectedTutor || ''"
+              (change)="onTutorFilter($any($event.target).value || undefined)"
+              aria-label="Filtrar por tutor">
+              <option value="">Todos los tutores</option>
+              <option *ngFor="let tutor of tutores" [value]="tutor._id">{{ tutor.nombreCompleto }}</option>
+            </select>
+          </c-col>
+          <c-col md="2">
+            <select 
+              class="form-select"
+              [value]="selectedCategoria || ''"
+              (change)="onCategoriaFilter($any($event.target).value || undefined)"
+              aria-label="Filtrar por categoría">
+              <option value="">Todas las categorías</option>
+              <option *ngFor="let categoria of categorias" [value]="categoria._id">{{ categoria.nombre }}</option>
+            </select>
+          </c-col>
+          <c-col md="2">
+            <button 
+              cButton 
+              color="secondary" 
+              variant="outline"
+              size="sm"
+              (click)="clearFilters()"
+              cTooltip="Limpiar filtros">
+              <svg cIcon name="cilReload" class="me-1"></svg>
+              Limpiar
+            </button>
+          </c-col>
+        </c-row>
+
+        <!-- Contador de resultados -->
+        <c-row class="mb-3">
+          <c-col md="12" class="text-end">
+            <small class="text-body-secondary">
+              {{ filteredAlumnos.length }} de {{ totalItems }} alumnos
+            </small>
+          </c-col>
+        </c-row>
+
+        <!-- Mensaje de error -->
+        <c-alert 
+          *ngIf="error" 
+          color="danger" 
+          [dismissible]="true"
+          (dismissed)="error = null">
+          {{ error }}
+        </c-alert>
+
+        <!-- Spinner de carga -->
+        <div *ngIf="loading" class="text-center py-4">
+          <c-spinner color="primary"></c-spinner>
+          <p class="mt-2 text-body-secondary">Cargando alumnos...</p>
+        </div>
+
+        <!-- Tabla de alumnos -->
+        <div *ngIf="!loading" class="table-responsive">
+          <table cTable [hover]="true" [striped]="true">
+            <thead>
+              <tr>
+                <th scope="col">Número de Socio</th>
+                <th scope="col">Alumno</th>
+                <th scope="col">Tutor</th>
+                <th scope="col">Categoría Principal</th>
+                <th scope="col">Teléfono Emergencia</th>
+                <th scope="col">Fecha Inscripción</th>
+                <th scope="col">Estado</th>
+                <th scope="col" class="text-center">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let alumno of filteredAlumnos; trackBy: trackByAlumnoId">
+                <!-- Número de Socio -->
+                <td>
+                  <div class="d-flex align-items-center">
+                    <div class="avatar avatar-sm rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-2" style="width: 32px; height: 32px;">
+                      <svg cIcon name="cilUser" size="sm"></svg>
+                    </div>
+                    <div class="fw-semibold">{{ alumno.numero_socio }}</div>
+                  </div>
+                </td>
+
+                <!-- Alumno -->
+                <td>
+                  <div>
+                    <div class="fw-semibold">
+                      {{ alumno.persona_datos ? (alumno.persona_datos.nombres + ' ' + alumno.persona_datos.apellidos) : 'N/A' }}
+                    </div>
+                    <small class="text-body-secondary">
+                      {{ alumno.persona_datos ? (alumno.persona_datos.tipoDocumento + ': ' + alumno.persona_datos.numeroDocumento) : 'N/A' }}
+                    </small>
+                  </div>
+                </td>
+
+                <!-- Tutor -->
+                <td>
+                  <div>
+                    <div class="fw-semibold">
+                      {{ alumno.tutor && alumno.tutor !== '' && typeof alumno.tutor === 'object' && alumno.tutor.persona && typeof alumno.tutor.persona === 'object' ? (alumno.tutor.persona.nombres + ' ' + alumno.tutor.persona.apellidos) : 'N/A' }}
+                    </div>
+                    <small class="text-body-secondary">
+                      {{ alumno.tutor && alumno.tutor !== '' && typeof alumno.tutor === 'object' && alumno.tutor.persona && typeof alumno.tutor.persona === 'object' ? (alumno.tutor.persona.tipoDocumento + ': ' + alumno.tutor.persona.numeroDocumento) : 'N/A' }}
+                    </small>
+                  </div>
+                </td>
+
+                <!-- Categoría Principal -->
+                <td>
+                  <div>
+                    <div class="fw-semibold">
+                      {{ getNombreCategoria(alumno) }}
+                    </div>
+                    <small class="text-body-secondary">
+                      {{ getRangoEdadCategoria(alumno) }}
+                    </small>
+                  </div>
+                </td>
+
+                <!-- Teléfono Emergencia -->
+                <td>
+                  <div>
+                    <div class="small">{{ alumno.contacto_emergencia }}</div>
+                    <small class="text-body-secondary">{{ alumno.telefono_emergencia }}</small>
+                  </div>
+                </td>
+
+                <!-- Fecha Inscripción -->
+                <td>
+                  <small>{{ formatDate(alumno.fecha_inscripcion) }}</small>
+                </td>
+
+                <!-- Estado -->
+                <td>
+                  <c-badge 
+                    [color]="getEstadoBadgeColor(alumno.estado || 'INACTIVO')"
+                    class="me-1">
+                    {{ alumno.estado || 'INACTIVO' }}
+                  </c-badge>
+                </td>
+
+                <!-- Acciones -->
+                <td class="text-center">
+                  <div class="btn-group" role="group">
+                    <button 
+                      cButton 
+                      size="sm" 
+                      variant="outline" 
+                      color="info"
+                      (click)="onVerDetalle(alumno)"
+                      cTooltip="Ver detalle">
+                      <svg cIcon name="cilMagnifyingGlass" size="sm"></svg>
+                    </button>
+                    
+                    <button 
+                      cButton 
+                      size="sm" 
+                      variant="outline" 
+                      color="primary"
+                      (click)="onModificar(alumno)"
+                      cTooltip="Editar alumno">
+                      <svg cIcon name="cilPencil" size="sm"></svg>
+                    </button>
+
+                    <!-- Botón Activar/Desactivar -->
+                    <button 
+                      cButton
+                      size="sm"
+                      variant="outline"
+                      [color]="alumno.estado === 'ACTIVO' ? 'warning' : 'success'"
+                      (click)="alumno.estado === 'ACTIVO' ? onDesactivarAlumno(alumno) : onActivarAlumno(alumno)"
+                      [cTooltip]="alumno.estado === 'ACTIVO' ? 'Desactivar' : 'Activar'">
+                      <svg cIcon [name]="alumno.estado === 'ACTIVO' ? 'cilBan' : 'cilCheckCircle'" size="sm"></svg>
+                    </button>
+
+                    <button 
+                      cButton 
+                      size="sm" 
+                      variant="outline" 
+                      color="danger"
+                      (click)="onEliminar(alumno)"
+                      cTooltip="Eliminar alumno">
+                      <svg cIcon name="cilTrash" size="sm"></svg>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+
+              <!-- Mensaje cuando no hay alumnos -->
+              <tr *ngIf="filteredAlumnos.length === 0">
+                <td colspan="8" class="text-center py-4">
+                  <div class="text-body-secondary">
+                    <svg cIcon name="cilPeople" size="xl" class="mb-2"></svg>
+                    <p class="mb-0">No se encontraron alumnos</p>
+                    <small>{{ searchTerm || selectedStatus || selectedTutor || selectedCategoria ? 'Intenta con otros filtros' : 'Comienza agregando un nuevo alumno' }}</small>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Paginación -->
+        <nav aria-label="Paginación de alumnos" *ngIf="totalPages > 1">
+          <c-pagination 
+            aria-label="Navegación de páginas"
+            class="justify-content-center mt-3">
+            
+            <c-page-item [disabled]="currentPage === 1">
+              <a cPageLink 
+                 (click)="onPageChange(currentPage - 1)"
+                 [class.disabled]="currentPage === 1"
+                 style="cursor: pointer;">
+                Anterior
+              </a>
+            </c-page-item>
+
+            <c-page-item 
+              *ngFor="let page of [].constructor(totalPages); let i = index"
+              [active]="currentPage === i + 1">
+              <a cPageLink 
+                 (click)="onPageChange(i + 1)"
+                 style="cursor: pointer;">
+                {{ i + 1 }}
+              </a>
+            </c-page-item>
+
+            <c-page-item [disabled]="currentPage === totalPages">
+              <a cPageLink 
+                 (click)="onPageChange(currentPage + 1)"
+                 [class.disabled]="currentPage === totalPages"
+                 style="cursor: pointer;">
+                Siguiente
+              </a>
+            </c-page-item>
+          </c-pagination>
+        </nav>
+      </c-card-body>
+    </c-card>
+  </c-col>
+</c-row>
+
+<app-alumno-detalle-modal
+  *ngIf="mostrarModalDetalle"
+  [alumno]="alumnoSeleccionado"
+  (close)="mostrarModalDetalle = false">
+</app-alumno-detalle-modal> 

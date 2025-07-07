@@ -1,57 +1,162 @@
-<div class="card shadow-sm">
-  <div class="card-header bg-primary text-white d-flex align-items-center justify-content-between">
-    <h4 class="mb-0">Cuotas</h4>
-    <button class="btn btn-success btn-sm text-white ms-2 shadow" (click)="onNuevaCuota()">
-      <i class="bi bi-plus-lg me-1"></i> NUEVA CUOTA
-    </button>
-  </div>
-  <div class="card-body p-0">
-    <div class="table-responsive">
-      <table class="table table-striped table-hover table-bordered align-middle mb-0">
-        <thead class="table-dark">
-          <tr>
-            <th scope="col">Alumno</th>
-            <th scope="col">Categoría</th>
-            <th scope="col">Período</th>
-            <th scope="col">Monto</th>
-            <th scope="col">Total</th>
-            <th scope="col">Vencimiento</th>
-            <th scope="col">Estado</th>
-            <th scope="col">Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let c of cuotas">
-            <td>
-              {{ getNombreAlumno(c) }}
-            </td>
-            <td>{{ getNombreCategoria(c) }}</td>
-            <td>{{ c.mes }} {{ c.anio }}</td>
-            <td>{{ c.montoFormateado }}</td>
-            <td>{{ c.totalFormateado }}</td>
-            <td>{{ c.fechaVencimientoFormateada }}</td>
-            <td>
-              <span [class]="getEstadoClass(c.estado!)">{{ c.estadoTexto }}</span>
-            </td>
-            <td>
-              <button class="btn btn-info btn-sm me-1" (click)="onVerDetalle(c)">
-                <i class="bi bi-search"></i>
-              </button>
-              <button class="btn btn-primary btn-sm me-1" (click)="onModificar(c)">
-                <i class="bi bi-pencil"></i>
-              </button>
-              <button class="btn btn-danger btn-sm" (click)="onEliminar(c._id!)">
-                <i class="bi bi-trash"></i>
-              </button>
-              <button class="btn btn-success btn-sm ms-2"
-                      (click)="onPagar(c)"
-                      [disabled]="c.estado === 'PAGA'">
-                Pagar
-              </button>
-            </td> 
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
-</div>
+<c-row>
+  <c-col xs="12">
+    <c-card class="mb-4">
+      <c-card-header class="d-flex justify-content-between align-items-center">
+        <div>
+          <strong>Gestión de Cuotas</strong>
+          <small class="text-body-secondary ms-2">Administrar cuotas de alumnos</small>
+        </div>
+        <button 
+          cButton 
+          color="success" 
+          size="sm"
+          (click)="onNuevaCuota()"
+          cTooltip="Registrar nueva cuota">
+          <svg cIcon name="cilPlus" class="me-1"></svg>
+          Nueva Cuota
+        </button>
+      </c-card-header>
+      <c-card-body>
+        <!-- Barra de búsqueda y filtros -->
+        <c-row class="mb-3">
+          <c-col md="4">
+            <c-input-group>
+              <span cInputGroupText>
+                <svg cIcon name="cilSearch"></svg>
+              </span>
+              <input 
+                cFormControl 
+                placeholder="Buscar por nombre de alumno..."
+                [value]="searchTerm"
+                (input)="onSearch($any($event.target).value)"
+                type="text">
+            </c-input-group>
+          </c-col>
+          <c-col md="2">
+            <select 
+              class="form-select"
+              [value]="selectedEstado || ''"
+              (change)="onEstadoFilter($any($event.target).value || undefined)"
+              aria-label="Filtrar por estado">
+              <option value="">Todos los estados</option>
+              <option value="PENDIENTE">Pendiente</option>
+              <option value="PAGA">Pagada</option>
+              <option value="VENCIDA">Vencida</option>
+            </select>
+          </c-col>
+          <c-col md="2">
+            <select 
+              class="form-select"
+              [value]="selectedCategoria || ''"
+              (change)="onCategoriaFilter($any($event.target).value || undefined)"
+              aria-label="Filtrar por categoría">
+              <option value="">Todas las categorías</option>
+              <option *ngFor="let categoria of categorias" [value]="categoria._id">{{ categoria.nombre }}</option>
+            </select>
+          </c-col>
+          <c-col md="1">
+            <select 
+              class="form-select"
+              [value]="selectedMes || ''"
+              (change)="onMesFilter($any($event.target).value || undefined)"
+              aria-label="Filtrar por mes">
+              <option value="">Mes</option>
+              <option *ngFor="let mes of meses" [value]="mes.value">{{ mes.label }}</option>
+            </select>
+          </c-col>
+          <c-col md="1">
+            <select 
+              class="form-select"
+              [value]="selectedAnio || ''"
+              (change)="onAnioFilter($any($event.target).value || undefined)"
+              aria-label="Filtrar por año">
+              <option value="">Año</option>
+              <option *ngFor="let anio of anios" [value]="anio">{{ anio }}</option>
+            </select>
+          </c-col>
+          <c-col md="2" class="text-end">
+            <button 
+              cButton 
+              color="secondary" 
+              variant="outline"
+              size="sm"
+              (click)="clearFilters()"
+              cTooltip="Limpiar filtros">
+              <svg cIcon name="cilReload" class="me-1"></svg>
+              Limpiar
+            </button>
+          </c-col>
+        </c-row>
+        <!-- Contador de resultados -->
+        <c-row class="mb-3">
+          <c-col md="12" class="text-end">
+            <small class="text-body-secondary">
+              <span *ngIf="isLoading">Cargando...</span>
+              <span *ngIf="!isLoading">{{ cuotasFiltradas.length }} de {{ cuotas.length }} cuotas</span>
+            </small>
+          </c-col>
+        </c-row>
+        <!-- Spinner de carga -->
+        <div *ngIf="isLoading" class="text-center py-4">
+          <c-spinner color="primary"></c-spinner>
+          <p class="mt-2 text-body-secondary">Cargando cuotas...</p>
+        </div>
+        <!-- Tabla de cuotas -->
+        <div *ngIf="!isLoading" class="table-responsive">
+          <table cTable [hover]="true" [striped]="true">
+            <thead>
+              <tr>
+                <th>Alumno</th>
+                <th>Categoría</th>
+                <th>Período</th>
+                <th>Monto</th>
+                <th>Total</th>
+                <th>Vencimiento</th>
+                <th>Estado</th>
+                <th class="text-center">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let c of cuotasFiltradas">
+                <td>{{ getNombreAlumno(c) }}</td>
+                <td>{{ getNombreCategoria(c) }}</td>
+                <td>{{ c.mes }} {{ c.anio }}</td>
+                <td>{{ c.montoFormateado }}</td>
+                <td>{{ c.totalFormateado }}</td>
+                <td>{{ c.fechaVencimientoFormateada }}</td>
+                <td>
+                  <c-badge [color]="c.estado === 'PAGA' ? 'success' : (c.estado === 'VENCIDA' ? 'danger' : 'secondary')">
+                    {{ c.estadoTexto }}
+                  </c-badge>
+                </td>
+                <td class="text-center">
+                  <div class="btn-group" role="group">
+                    <button cButton size="sm" variant="outline" color="info" (click)="onVerDetalle(c)" cTooltip="Ver detalle">
+                      <svg cIcon name="cilMagnifyingGlass" size="sm"></svg>
+                    </button>
+                    <button cButton size="sm" variant="outline" color="primary" (click)="onModificar(c)" cTooltip="Modificar cuota">
+                      <svg cIcon name="cilPencil" size="sm"></svg>
+                    </button>
+                    <button cButton size="sm" variant="outline" color="danger" (click)="onEliminar(c._id!)" cTooltip="Eliminar cuota">
+                      <svg cIcon name="cilTrash" size="sm"></svg>
+                    </button>
+                    <button cButton size="sm" variant="outline" color="success" class="ms-2"
+                            (click)="onPagarEfectivo(c)"
+                            [disabled]="c.estado === 'PAGA'"
+                            cTooltip="Registrar pago">
+                      <svg cIcon name="cilDollar" size="sm"></svg>
+                      Pagar
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <div *ngIf="cuotasFiltradas.length === 0" class="text-center p-4">
+            <p class="text-muted mb-0">No hay cuotas registradas</p>
+          </div>
+        </div>
+      </c-card-body>
+    </c-card>
+  </c-col>
+</c-row>
