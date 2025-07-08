@@ -5,15 +5,26 @@
         <div>
           <strong>Gestión de Profesores</strong>
         </div>
-        <button 
-          cButton 
-          color="primary" 
-          size="sm"
-          (click)="addProfesor()"
-          cTooltip="Agregar nuevo profesor">
-          <svg cIcon name="cilPlus" class="me-1"></svg>
-          Nuevo Profesor
-        </button>
+        <div class="d-flex gap-2">
+          <button 
+            cButton 
+            color="success" 
+            size="sm"
+            (click)="exportarProfesoresPDF()"
+            cTooltip="Exportar lista de profesores a PDF">
+            <svg cIcon name="cilCloudDownload" class="me-1"></svg>
+            Exportar PDF
+          </button>
+          <button 
+            cButton 
+            color="primary" 
+            size="sm"
+            (click)="addProfesor()"
+            cTooltip="Agregar nuevo profesor">
+            <svg cIcon name="cilPlus" class="me-1"></svg>
+            Nuevo Profesor
+          </button>
+        </div>
       </c-card-header>
       
       <c-card-body>
@@ -259,6 +270,15 @@
     </div>
   </c-modal-body>
   <c-modal-footer>
+    <button 
+      cButton 
+      color="success" 
+      variant="outline"
+      (click)="exportarProfesorDetallesPDF()"
+      cTooltip="Exportar detalles del profesor a PDF">
+      <svg cIcon name="cilCloudDownload" class="me-1"></svg>
+      Exportar PDF
+    </button>
     <button (click)="cerrarDetalles()" cButton color="secondary">
       Cerrar
     </button>

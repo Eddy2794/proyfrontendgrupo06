@@ -6,15 +6,26 @@
           <strong>Gestión de Alumnos</strong>
           <small class="text-body-secondary ms-2">Administrar alumnos del sistema</small>
         </div>
-        <button 
-          cButton 
-          color="primary" 
-          size="sm"
-          (click)="onNuevoAlumno()"
-          cTooltip="Agregar nuevo alumno">
-          <svg cIcon name="cilPlus" class="me-1"></svg>
-          Nuevo Alumno
-        </button>
+        <div class="d-flex gap-2">
+          <button 
+            cButton 
+            color="success" 
+            size="sm"
+            (click)="exportarAlumnosPDF()"
+            cTooltip="Exportar lista de alumnos a PDF">
+            <svg cIcon name="cilCloudDownload" class="me-1"></svg>
+            Exportar PDF
+          </button>
+          <button 
+            cButton 
+            color="primary" 
+            size="sm"
+            (click)="onNuevoAlumno()"
+            cTooltip="Agregar nuevo alumno">
+            <svg cIcon name="cilPlus" class="me-1"></svg>
+            Nuevo Alumno
+          </button>
+        </div>
       </c-card-header>
       
       <c-card-body>
@@ -291,4 +302,4 @@
   *ngIf="mostrarModalDetalle"
   [alumno]="alumnoSeleccionado"
   (close)="mostrarModalDetalle = false">
-</app-alumno-detalle-modal> 
+</app-alumno-detalle-modal>
