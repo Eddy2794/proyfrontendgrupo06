@@ -10,11 +10,20 @@
     "paths": {
       "@docs-components/*": [
         "./src/components/*"
+      ],
+      "jspdf": [
+        "./node_modules/jspdf/dist/jspdf.es.min.js"
+      ],
+      "html2canvas": [
+        "./node_modules/html2canvas/dist/html2canvas.es.js"
       ]
-    }
+    },
+    "skipLibCheck": true,
+    "allowSyntheticDefaultImports": true
   },
   "files": [
-    "src/main.ts"
+    "src/main.ts",
+    "src/typings.d.ts"
   ],
   "include": [
     "src/**/*.d.ts"

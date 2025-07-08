@@ -47,7 +47,8 @@
             ],
             "scripts": [],
             "allowedCommonJsDependencies": [
-              "crypto-js"
+              "chart.js",
+              "lodash-es"
             ],
             "stylePreprocessorOptions": {
               "sass": {
