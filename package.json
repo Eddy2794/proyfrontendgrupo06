@@ -15,8 +15,12 @@
     "start": "node server.js",
     "start:dev": "ng serve -o",
     "build": "ng build --configuration production",
+    "build:debug": "ng build --configuration production --verbose",
+    "build:render": "npx @angular/cli@latest build --configuration production --verbose",
     "postbuild": "node postbuild.js --configuration production",
-    "build:render": "npx @angular/cli@latest build --configuration production",
+    "debug": "node debug-build.js",
+    "clean": "rm -rf dist/ && rm -rf node_modules/.cache/",
+    "clean:win": "if exist dist rmdir /s /q dist && if exist node_modules\\.cache rmdir /s /q node_modules\\.cache",
     "watch": "ng build --watch --configuration development",
     "test": "ng test"
   },

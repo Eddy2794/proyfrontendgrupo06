@@ -5,7 +5,7 @@ services:
     plan: free
     buildCommand: |
       pnpm install --no-frozen-lockfile --production=false
-      ng build --configuration production
+      npx @angular/cli@latest build --configuration production
       node postbuild.js
     startCommand: node server.js
     envVars:
