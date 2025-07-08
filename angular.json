@@ -47,7 +47,8 @@
             ],
             "scripts": [],
             "allowedCommonJsDependencies": [
-              "crypto-js",
+              "chart.js",
+              "lodash-es",
               "jspdf",
               "html2canvas"
             ],
