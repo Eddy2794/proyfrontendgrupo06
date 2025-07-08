@@ -169,8 +169,8 @@ export class DashboardComponent implements OnInit {
   }
   loadInscripcionesData(): void {
     this.#alumnoCategoriaService.getInscripcionesStats('month').subscribe({
-      next: (stats: AlumnoCategoriaStats) => {
-        this.updateDashboardData(stats);
+      next: (response: any) => {
+        this.updateDashboardData(response.data);
       },
       error: (error: any) => {
         console.error('Error al cargar datos de inscripciones:', error);
@@ -180,13 +180,14 @@ export class DashboardComponent implements OnInit {
   }
 
   private updateDashboardData(stats: AlumnoCategoriaStats): void {
+    console.log('Estadísticas recibidas para el dashboard:', stats);
     // Actualizar estadísticas generales
     this.estadisticasGenerales.totalInscripciones = stats.totalInscripciones;
-    this.estadisticasGenerales.categoriasMasPopular = stats.inscripcionesPorCategoria
+    this.estadisticasGenerales.categoriasMasPopular = (stats.inscripcionesPorCategoria ?? [])
       .sort((a: any, b: any) => b.cantidad - a.cantidad)[0]?.categoria || 'N/A';
 
     // Calcular crecimiento mensual (simulado)
-    const ultimosMeses = stats.inscripcionesPorMes.slice(-2);
+    const ultimosMeses = (stats.inscripcionesPorMes ?? []).slice(-2);
     if (ultimosMeses.length === 2) {
       const diferencia = ultimosMeses[1].cantidad - ultimosMeses[0].cantidad;
       this.estadisticasGenerales.crecimientoMensual = ultimosMeses[0].cantidad > 0
@@ -197,9 +198,9 @@ export class DashboardComponent implements OnInit {
     this.estadisticasGenerales.alumnosActivos = stats.totalInscripciones;
 
     // Crear datos para las tarjetas de progreso
-    const maxInscripciones = Math.max(...stats.inscripcionesPorCategoria.map((c: any) => c.cantidad), 1);
+    const maxInscripciones = Math.max(...(stats.inscripcionesPorCategoria ?? []).map((c: any) => c.cantidad), 1);
 
-    this.inscripcionesData = stats.inscripcionesPorCategoria.map((cat: any, index: number) => ({
+    this.inscripcionesData = (stats.inscripcionesPorCategoria ?? []).map((cat: any, index: number) => ({
       categoria: cat.categoria,
       totalAlumnos: cat.cantidad,
       porcentaje: Math.round((cat.cantidad / maxInscripciones) * 100),
