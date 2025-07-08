@@ -649,36 +649,56 @@ export class AlumnoListComponent implements OnInit, OnDestroy {
           </thead>
           <tbody>
             ${this.filteredAlumnos.map((alumno, index) => {
-              const persona = typeof alumno.persona === 'object' ? alumno.persona : null;
-              
-              // Calcular edad
+              // Acceso robusto a los datos populados
+              const persona = (alumno.persona_datos && typeof alumno.persona_datos === 'object') ? alumno.persona_datos : undefined;
+              const categoria = (alumno.categoriaPrincipal && typeof alumno.categoriaPrincipal === 'object') ? alumno.categoriaPrincipal : undefined;
+              const tutor = (alumno.tutor && typeof alumno.tutor === 'object') ? alumno.tutor : undefined;
+              const tutorPersona = (tutor && tutor.persona && typeof tutor.persona === 'object') ? tutor.persona : undefined;
+
+              // Nombre completo del alumno
+              const nombreCompleto = (persona && persona.nombres && persona.apellidos)
+                ? `${persona.nombres} ${persona.apellidos}`.trim()
+                : 'N/A';
+
+              // DNI
+              const numeroDocumento = (persona && persona.numeroDocumento) ? persona.numeroDocumento : 'N/A';
+
+              // Edad
               let edad = 'N/A';
-              if (persona?.fechaNacimiento) {
+              if (persona && persona.fechaNacimiento) {
                 const fechaNac = new Date(persona.fechaNacimiento);
-                const edadCalculada = new Date().getFullYear() - fechaNac.getFullYear();
-                const mesActual = new Date().getMonth();
-                const mesNacimiento = fechaNac.getMonth();
-                if (mesActual < mesNacimiento || (mesActual === mesNacimiento && new Date().getDate() < fechaNac.getDate())) {
-                  edad = (edadCalculada - 1).toString();
-                } else {
-                  edad = edadCalculada.toString();
+                const hoy = new Date();
+                let edadCalculada = hoy.getFullYear() - fechaNac.getFullYear();
+                const m = hoy.getMonth() - fechaNac.getMonth();
+                if (m < 0 || (m === 0 && hoy.getDate() < fechaNac.getDate())) {
+                  edadCalculada--;
                 }
+                edad = edadCalculada.toString();
               }
 
+              // Categoría
+              const nombreCategoria = (categoria && categoria.nombre) ? categoria.nombre : 'N/A';
+
+              // Tutor (nombre completo o username)
+              const nombreTutor = (tutorPersona && tutorPersona.nombres && tutorPersona.apellidos)
+                ? `${tutorPersona.nombres} ${tutorPersona.apellidos}`.trim()
+                : (tutor && tutor.username ? tutor.username : 'N/A');
+
+              // Fecha de inscripción
               const fechaInscripcion = alumno.fecha_inscripcion
                 ? new Date(alumno.fecha_inscripcion).toLocaleDateString('es-ES')
                 : 'N/A';
 
-              const nombreCompleto = persona ? `${persona.nombres || ''} ${persona.apellidos || ''}`.trim() : 'N/A';
-              const numeroDocumento = persona?.numeroDocumento || 'N/A';
-              const nombreCategoria = (typeof alumno.categoriaPrincipal === 'object' && alumno.categoriaPrincipal?.nombre) ? alumno.categoriaPrincipal.nombre : 'N/A';
-              const nombreTutor = (typeof alumno.tutor === 'object' && alumno.tutor) ? 
-                (alumno.tutor.username || 'N/A') : 'N/A';
+              // Estado
+              const estado = alumno.estado || 'N/A';
+
+              // Número de socio
+              const numeroSocio = alumno.numero_socio || 'N/A';
 
               return `
                 <tr style="background-color: ${index % 2 === 0 ? '#f9f9f9' : 'white'};">
                   <td style="padding: 6px; border: 1px solid #ddd; font-weight: bold;">
-                    ${alumno.numero_socio || 'N/A'}
+                    ${numeroSocio}
                   </td>
                   <td style="padding: 6px; border: 1px solid #ddd;">
                     ${nombreCompleto}
@@ -699,8 +719,8 @@ export class AlumnoListComponent implements OnInit, OnDestroy {
                     ${fechaInscripcion}
                   </td>
                   <td style="padding: 6px; border: 1px solid #ddd; text-align: center;">
-                    <span style="padding: 2px 6px; border-radius: 3px; font-size: 9px; color: white; background: ${alumno.estado === 'ACTIVO' ? '#28a745' : '#dc3545'};">
-                      ${alumno.estado}
+                    <span style="padding: 2px 6px; border-radius: 3px; font-size: 9px; color: white; background: ${estado === 'ACTIVO' ? '#28a745' : '#dc3545'};">
+                      ${estado}
                     </span>
                   </td>
                 </tr>
