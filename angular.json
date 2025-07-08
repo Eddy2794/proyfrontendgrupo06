@@ -45,15 +45,10 @@
             "styles": [
               "src/scss/styles.scss"
             ],
-            "scripts": [
-              "node_modules/jspdf/dist/jspdf.umd.min.js",
-              "node_modules/html2canvas/dist/html2canvas.min.js"
-            ],
+            "scripts": [],
             "allowedCommonJsDependencies": [
               "chart.js",
-              "lodash-es",
-              "jspdf",
-              "html2canvas"
+              "lodash-es"
             ],
             "stylePreprocessorOptions": {
               "sass": {
