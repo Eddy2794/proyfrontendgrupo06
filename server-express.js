@@ -8,11 +8,15 @@ const port = process.env.PORT || 3000;
 // Crear app Express
 const app = express();
 
-// Logging middleware
+// Configurar trust proxy para Render
+app.set('trust proxy', 1);
+
+// Logging middleware mejorado
 app.use((req, res, next) => {
   const timestamp = new Date().toISOString();
   const userAgent = req.headers['user-agent'] || 'Unknown';
-  console.log(`${timestamp} - ${req.method} ${req.url} - ${userAgent.substring(0, 50)}...`);
+  const realIp = req.ip || req.connection.remoteAddress || 'Unknown';
+  console.log(`${timestamp} - ${req.method} ${req.url} - ${userAgent.substring(0, 50)}... - IP: ${realIp}`);
   next();
 });
 
@@ -124,8 +128,18 @@ app.use((req, res, next) => {
   res.setHeader('X-Frame-Options', 'DENY');
   res.setHeader('X-XSS-Protection', '1; mode=block');
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  
+  // Headers para permitir hash routing
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  
   next();
 });
+
+// Middleware para parsear el cuerpo de las peticiones
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 // Servir archivos estáticos desde el directorio dist
 app.use(express.static(distPath, {
@@ -185,10 +199,38 @@ app.get('/debug', (req, res) => {
 // Catch-all handler: enviar index.html para todas las rutas que no coincidan
 // Esto es necesario para que funcione el routing de Angular
 app.get('*', (req, res) => {
+  // Log para debugging de rutas específicas
+  if (req.url.includes('/login') || req.url.includes('token=')) {
+    console.log(`🔐 Auth route requested: ${req.url}`);
+  }
+  
+  // Configurar headers apropiados para SPA
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  
   res.sendFile(indexPath, (err) => {
     if (err) {
       console.error('Error serving index.html:', err);
-      res.status(500).send('Error loading application');
+      res.status(500).send(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>Error - Angular App</title>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1">
+          <style>
+            body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
+            .error { color: red; }
+          </style>
+        </head>
+        <body>
+          <h1 class="error">Error loading application</h1>
+          <p>Please refresh the page or try again later.</p>
+          <p>Error: ${err.message}</p>
+        </body>
+        </html>
+      `);
     }
   });
 });
@@ -216,10 +258,27 @@ app.listen(port, () => {
 // Manejo de errores global
 process.on('uncaughtException', (error) => {
   console.error('Uncaught Exception:', error);
-  process.exit(1);
+  // No hacer exit en producción para evitar que se cierre el servidor
+  if (process.env.NODE_ENV !== 'production') {
+    process.exit(1);
+  }
 });
 
 process.on('unhandledRejection', (reason, promise) => {
   console.error('Unhandled Rejection at:', promise, 'reason:', reason);
-  process.exit(1);
+  // No hacer exit en producción para evitar que se cierre el servidor
+  if (process.env.NODE_ENV !== 'production') {
+    process.exit(1);
+  }
+});
+
+// Manejo de señales para cierre graceful
+process.on('SIGINT', () => {
+  console.log('Received SIGINT, shutting down gracefully...');
+  process.exit(0);
+});
+
+process.on('SIGTERM', () => {
+  console.log('Received SIGTERM, shutting down gracefully...');
+  process.exit(0);
 });

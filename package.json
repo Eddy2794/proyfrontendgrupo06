@@ -12,7 +12,7 @@
   },
   "scripts": {
     "ng": "ng",
-    "start": "node server.js",
+    "start": "node server-express.js",
     "start:dev": "ng serve -o",
     "build": "ng build --configuration production",
     "build:debug": "ng build --configuration production --verbose",

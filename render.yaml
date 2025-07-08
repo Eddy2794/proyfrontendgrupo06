@@ -1,6 +1,7 @@
 services:
   - type: web
-    name: proyfrontendgrupo06
+    name: pro      - key: FRONTEND_URL
+        value: https://proyfrontendgrupo06-1.onrender.comrontendgrupo06
     env: node
     plan: free
     buildCommand: |
@@ -33,11 +34,11 @@ services:
       echo "🔧 Running postbuild script..."
       node postbuild.js
       echo "✅ Build process completed"
-    startCommand: node server-express.js
+    startCommand: bash start-server.sh
     envVars:
       - key: NODE_ENV
         value: production
       - key: FRONTEND_URL
-        value: https://proyfrontendgrupo06.onrender.com
+        value: https://proyfrontendgrupo06-1.onrender.com
       - key: BACKEND_URL
         value: https://trabajo-final-psw.onrender.com
