@@ -61,11 +61,11 @@ export class DashboardChartsData {
     let datasets: ChartDataset[] = [];
 
     if (period === 'Day') {
-      labels = stats.inscripcionesPorDia.map((item: any) => item.fecha);
+      labels = (stats.inscripcionesPorDia ?? []).map((item: any) => item.fecha);
       
       // Crear dataset por cada categoría
-      stats.categorias.forEach((categoria: any, index: number) => {
-        const categoriaData = labels.map(() => {
+      (stats.categorias ?? []).forEach((categoria: any, index: number) => {
+        const categoriaData = (stats.inscripcionesPorDia ?? []).map(() => {
           // Calcular inscripciones por día para esta categoría específica
           return this.random(0, 20); // Por ahora usamos datos aleatorios, se puede mejorar con datos reales
         });
@@ -81,31 +81,24 @@ export class DashboardChartsData {
         });
       });
     } else if (period === 'Month') {
-      labels = stats.inscripcionesPorMes.map((item: any) => this.getShortMonthName(item.mes));
-      
-      // Crear dataset por cada categoría
-      stats.categorias.forEach((categoria: any, index: number) => {
-        const categoriaData = stats.inscripcionesPorMes.map(() => {
-          // Calcular inscripciones por mes para esta categoría específica
-          return this.random(5, 50); // Por ahora usamos datos aleatorios
-        });
-        
-        datasets.push({
-          data: categoriaData,
-          label: categoria.nombre,
-          backgroundColor: index === 0 ? brandInfoBg : 'transparent',
-          borderColor: categoria.color || this.getCategoryColor(index),
-          pointHoverBackgroundColor: categoria.color || this.getCategoryColor(index),
+      labels = (stats.inscripcionesPorMes ?? []).map((item: any) => this.getShortMonthName(item.mes));
+      datasets = [
+        {
+          data: (stats.inscripcionesPorMes ?? []).map((item: any) => item.cantidad),
+          label: 'Inscripciones',
+          backgroundColor: brandInfoBg,
+          borderColor: brandInfo,
+          pointHoverBackgroundColor: brandInfo,
           borderWidth: 2,
-          fill: index === 0
-        });
-      });
+          fill: true
+        }
+      ];
     } else { // Year
-      labels = stats.inscripcionesPorAno.map((item: any) => item.ano);
+      labels = (stats.inscripcionesPorAno ?? []).map((item: any) => item.ano);
       
       // Crear dataset por cada categoría
-      stats.categorias.forEach((categoria: any, index: number) => {
-        const categoriaData = stats.inscripcionesPorAno.map(() => {
+      (stats.categorias ?? []).forEach((categoria: any, index: number) => {
+        const categoriaData = (stats.inscripcionesPorAno ?? []).map(() => {
           // Calcular inscripciones por año para esta categoría específica
           return this.random(50, 300); // Por ahora usamos datos aleatorios
         });

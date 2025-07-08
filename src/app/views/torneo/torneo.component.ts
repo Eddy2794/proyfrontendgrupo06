@@ -27,9 +27,11 @@ import {
   ModalComponent,
   ModalFooterComponent,
   ModalHeaderComponent,
-  ModalTitleDirective
+  ModalTitleDirective,
+  TooltipDirective
 } from '@coreui/angular';
 import { type ChartData } from 'chart.js';
+import { IconDirective } from '@coreui/icons-angular';
 import { ChartjsComponent } from '@coreui/angular-chartjs';
 @Component({
   selector: 'app-torneo',
@@ -48,7 +50,9 @@ import { ChartjsComponent } from '@coreui/angular-chartjs';
     ModalFooterComponent,
     ModalHeaderComponent,
     ModalTitleDirective,
-    ChartjsComponent
+    ChartjsComponent,
+    IconDirective,
+    TooltipDirective
   ],
   templateUrl: './torneo.component.html',
   styleUrl: './torneo.component.scss'

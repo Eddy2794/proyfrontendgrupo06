@@ -18,10 +18,12 @@ import {
   ModalComponent,
   ModalFooterComponent,
   ModalHeaderComponent,
-  ModalTitleDirective
+  ModalTitleDirective,
+  TooltipDirective
 } from '@coreui/angular';
 import { type ChartData } from 'chart.js';
 import { ChartjsComponent } from '@coreui/angular-chartjs';
+import { IconDirective } from '@coreui/icons-angular';
 @Component({
   selector: 'app-torneo-categoria',
   imports: [FormsModule, CommonModule,
@@ -40,7 +42,9 @@ import { ChartjsComponent } from '@coreui/angular-chartjs';
     ModalFooterComponent,
     ModalHeaderComponent,
     ModalTitleDirective,
-    ChartjsComponent
+    ChartjsComponent,
+    TooltipDirective,
+    IconDirective
   ],
   templateUrl: './torneo-categoria.component.html',
   styleUrl: './torneo-categoria.component.scss'

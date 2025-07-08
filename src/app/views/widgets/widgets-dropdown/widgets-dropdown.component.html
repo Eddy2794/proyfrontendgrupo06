@@ -24,7 +24,7 @@
           </button>
           <ul cDropdownMenu>
             <li><a [routerLink]="['/alumno']" cDropdownItem>Ver Alumnos</a></li>
-            <li><a [routerLink]="['/alumno/alumno-form/0']" cDropdownItem>Agregar Alumno</a></li>
+            <li><a [routerLink]="['/alumno/crear']" cDropdownItem>Agregar Alumno</a></li>
           </ul>
         </c-dropdown>
       </ng-template>
@@ -57,9 +57,7 @@
             <svg cIcon name="cilOptions"></svg>
           </button>
           <ul cDropdownMenu>
-            <li><a [routerLink]="['/cuota/list']" cDropdownItem>Ver Cuotas</a></li>
-            <li><a [routerLink]="[]" cDropdownItem>Generar Cuotas</a></li>
-            <li><a [routerLink]="[]" cDropdownItem>Reportes</a></li>
+            <li><a [routerLink]="['/cuota']" cDropdownItem>Ver Cuotas</a></li>
           </ul>
         </c-dropdown>
       </ng-template>

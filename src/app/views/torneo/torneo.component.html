@@ -3,11 +3,13 @@
         <c-card class="mb-4">
             <c-card-header class="d-flex justify-content-between align-items-center">
                 <div>
-                    <strong><h3 class="mb-3">Cantidad de torneos por mes</h3></strong>
+                    <strong>
+                        <h3 class="mb-3">Cantidad de torneos por mes</h3>
+                    </strong>
                 </div>
             </c-card-header>
             <c-card-body>
-                <c-chart [data]="data" type="bar"/>
+                <c-chart [data]="data" type="bar" />
             </c-card-body>
         </c-card>
     </c-col>
@@ -20,14 +22,10 @@
                     <strong>Torneos</strong>
                 </div>
                 <div class="d-flex gap-2">
-                    <button 
-                      cButton 
-                      color="success" 
-                      size="sm"
-                      (click)="exportarTorneosPDF()"
-                      cTooltip="Exportar lista de torneos a PDF">
-                      <svg cIcon name="cilCloudDownload" class="me-1"></svg>
-                      Exportar PDF
+                    <button cButton color="success" size="sm" (click)="exportarTorneosPDF()"
+                        cTooltip="Exportar lista de torneos a PDF">
+                        <svg cIcon name="cilCloudDownload" class="me-1"></svg>
+                        Exportar PDF
                     </button>
                     <button class="btn btn-primary" (click)="agregar()">NUEVO TORNEO</button>
                 </div>
@@ -54,8 +52,14 @@
                             <td>{{ t.lugar}} - {{ t.direccion}}</td>
                             <td>{{ t.costo_inscripcion | currency}}</td>
                             <td>
-                                <button class="btn btn-primary mb-1" (click)="modificar(t)">Modificar</button>
-                                <button (click)="toggleLiveDemo(t)" cButton>Eliminar</button>
+                                <button cButton size="sm" variant="outline" color="primary" (click)="modificar(t)"
+                                    cTooltip="Editar torneo">
+                                    <svg cIcon name="cilPencil" size="sm"></svg>
+                                </button>
+                                <button cButton size="sm" variant="outline" color="danger"
+                                    (click)="toggleLiveDemo(t)" cTooltip="Eliminar torneo">
+                                    <svg cIcon name="cilTrash" size="sm"></svg>
+                                </button>
                             </td>
                         </tr>
                     </tbody>

@@ -47,8 +47,14 @@
                             <td>{{ t.torneo.fecha_inicio | date:'dd/MM/yyyy' }}</td>
                             <td>{{ t.categoria.nombre }}</td>
                             <td>
-                                <button class="btn btn-primary mb-1" (click)="modificar(t)">Modificar</button>
-                                <button (click)="toggleLiveDemo(t)" cButton>Eliminar</button>
+                                <button cButton size="sm" variant="outline" color="primary" (click)="modificar(t)"
+                                    cTooltip="Editar torneo categoria">
+                                    <svg cIcon name="cilPencil" size="sm"></svg>
+                                </button>
+                                <button cButton size="sm" variant="outline" color="danger"
+                                    (click)="toggleLiveDemo(t)" cTooltip="Eliminar torneo categoria">
+                                    <svg cIcon name="cilTrash" size="sm"></svg>
+                                </button>
                             </td>
                         </tr>
                     </tbody>
