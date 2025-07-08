@@ -8,7 +8,9 @@ const filesToFix = [
   'src/app/views/categoria/categoria.component.ts',
   'src/app/views/perfil/perfil.component.ts',
   'src/app/views/profesor-list/profesor-list.component.ts',
-  'src/app/views/torneo/torneo.component.ts'
+  'src/app/views/torneo/torneo.component.ts',
+  'src/app/views/alumno/alumno-list/alumno-list.component.ts',
+  'src/app/views/alumno/alumno-detalle-modal.component.ts'
 ];
 
 // Función para corregir un archivo
@@ -22,8 +24,13 @@ function fixFile(filePath) {
   
   let content = fs.readFileSync(fullPath, 'utf8');
   
-  // Corregir importaciones
-  content = content.replace(/import jsPDF from 'jspdf';/g, "import { jsPDF } from 'jspdf';");
+  // Comentar imports de ES6
+  content = content.replace(/import { jsPDF } from 'jspdf';/g, "// import { jsPDF } from 'jspdf'; // Usando versión global");
+  content = content.replace(/import html2canvas from 'html2canvas';/g, "// import html2canvas from 'html2canvas'; // Usando versión global");
+  
+  // Reemplazar llamadas por versiones globales
+  content = content.replace(/new jsPDF\(/g, 'new (window as any).jspdf.jsPDF(');
+  content = content.replace(/html2canvas\(/g, '(window as any).html2canvas(');
   
   // Corregir parámetros sin tipo
   content = content.replace(/\.then\(canvas => \{/g, '.then((canvas: HTMLCanvasElement) => {');

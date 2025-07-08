@@ -2,8 +2,12 @@ import { Component, Input, Output, EventEmitter, inject } from '@angular/core';
 import { Alumno } from '../../models/alumno.model';
 import { CommonModule } from '@angular/common';
 import { NotificationService } from '../../services/notification.service';
-import { jsPDF } from 'jspdf';
-import html2canvas from 'html2canvas';
+// Importaciones comentadas - usando versiones globales
+// // import { jsPDF } from 'jspdf'; // Usando versión global
+// // import html2canvas from 'html2canvas'; // Usando versión global
+// Declaración de variables globales para las librerías PDF
+declare var jsPDF: any;
+declare var html2canvas: any;
 
 @Component({
   standalone: true,
@@ -149,9 +153,52 @@ export class AlumnoDetalleModalComponent {
   }
 
   /**
+   * Carga las librerías PDF de forma dinámica
+   */
+  private async loadPDFLibraries(): Promise<void> {
+    // Verificar si las librerías ya están cargadas
+    if (typeof (window as any).jspdf !== 'undefined' && typeof (window as any).html2canvas !== 'undefined') {
+      return Promise.resolve();
+    }
+
+    const promises: Promise<void>[] = [];
+    
+    if (typeof (window as any).jspdf === 'undefined') {
+      promises.push(this.loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js'));
+    }
+    
+    if (typeof (window as any).html2canvas === 'undefined') {
+      promises.push(this.loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js'));
+    }
+
+    await Promise.all(promises);
+  }
+
+  /**
+   * Carga un script de forma dinámica
+   */
+  private loadScript(src: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const script = document.createElement('script');
+      script.src = src;
+      script.onload = () => resolve();
+      script.onerror = () => reject(new Error(`Failed to load script: ${src}`));
+      document.head.appendChild(script);
+    });
+  }
+
+  /**
    * Exportar detalles de un alumno específico a PDF
    */
-  exportarAlumnoDetallesPDF(): void {
+  async exportarAlumnoDetallesPDF(): Promise<void> {
+    try {
+      // Cargar librerías PDF dinámicamente
+      await this.loadPDFLibraries();
+    } catch (error) {
+      console.error('Error cargando librerías PDF:', error);
+      this.notificationService.showError('Error', 'No se pudieron cargar las librerías necesarias para generar el PDF');
+      return;
+    }
     if (!this.alumno) {
       this.notificationService.showWarning('Advertencia', 'No hay alumno seleccionado para exportar');
       return;
@@ -380,11 +427,23 @@ export class AlumnoDetalleModalComponent {
       height: elementoTemporal.scrollHeight
     };
 
-    html2canvas(elementoTemporal, opciones).then((canvas: HTMLCanvasElement) => {
+    // Obtener referencias locales a las librerías
+    const jsPDFLib = (window as any).jspdf?.jsPDF || (window as any).jsPDF;
+    const html2canvasLib = (window as any).html2canvas;
+
+    if (!jsPDFLib) {
+      throw new Error('jsPDF no está disponible');
+    }
+
+    if (!html2canvasLib) {
+      throw new Error('html2canvas no está disponible');
+    }
+
+    html2canvasLib(elementoTemporal, opciones).then((canvas: HTMLCanvasElement) => {
       document.body.removeChild(elementoTemporal);
 
       const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pdf = new jsPDFLib('p', 'mm', 'a4');
       const imgWidth = 190;
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
       const pageHeight = 280;

@@ -37,8 +37,10 @@ import { NotificationService } from '../../services/notification.service';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { debounceTime, Subject } from 'rxjs';
-import { jsPDF } from 'jspdf';
-import html2canvas from 'html2canvas';
+
+// Importaciones dinámicas para compatibilidad
+declare var jsPDF: any;
+declare var html2canvas: any;
 
 
 
@@ -730,6 +732,49 @@ export class CategoriaComponent implements OnInit {
       return;
     }
 
+    // Cargar bibliotecas dinámicamente si no están disponibles globalmente
+    this.loadPDFLibraries().then(() => {
+      this.generatePDF();
+    }).catch(error => {
+      console.error('Error al cargar bibliotecas PDF:', error);
+      this.notificationService.showError('Error', 'No se pudieron cargar las bibliotecas necesarias para generar el PDF');
+    });
+  }
+
+  private async loadPDFLibraries(): Promise<void> {
+    // Verificar si las bibliotecas ya están disponibles globalmente
+    if (typeof (window as any).jspdf !== 'undefined' && typeof (window as any).html2canvas !== 'undefined') {
+      return Promise.resolve();
+    }
+
+    // Si no están disponibles, cargar dinámicamente
+    const promises: Promise<void>[] = [];
+
+    if (typeof (window as any).jspdf === 'undefined') {
+      promises.push(this.loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js'));
+    }
+
+    if (typeof (window as any).html2canvas === 'undefined') {
+      promises.push(this.loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js'));
+    }
+
+    return Promise.all(promises).then(() => {});
+  }
+
+  private loadScript(src: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const script = document.createElement('script');
+      script.src = src;
+      script.onload = () => resolve();
+      script.onerror = () => reject(new Error(`Failed to load script: ${src}`));
+      document.head.appendChild(script);
+    });
+  }
+
+  private generatePDF(): void {
+    if (!this.categoriaSeleccionada) return;
+
+    const categoria = this.categoriaSeleccionada; // Variable local para evitar null safety issues
     const elementoTemporal = document.createElement('div');
     elementoTemporal.style.position = 'absolute';
     elementoTemporal.style.left = '-9999px';
@@ -771,11 +816,9 @@ export class CategoriaComponent implements OnInit {
     const edadMinima = edades.length > 0 ? Math.min(...edades) : 0;
     const edadMaxima = edades.length > 0 ? Math.max(...edades) : 0;
 
-
-
     // Formatear horarios
-    const horariosTexto = this.categoriaSeleccionada.horarios && this.categoriaSeleccionada.horarios.length > 0
-      ? this.categoriaSeleccionada.horarios.map(h => `${h.dia}: ${h.hora_inicio || h.horaInicio} - ${h.hora_fin || h.horaFin}`).join(', ')
+    const horariosTexto = categoria.horarios && categoria.horarios.length > 0
+      ? categoria.horarios.map(h => `${h.dia}: ${h.hora_inicio || h.horaInicio} - ${h.hora_fin || h.horaFin}`).join(', ')
       : 'No definidos';
 
     elementoTemporal.innerHTML = `
@@ -792,7 +835,7 @@ export class CategoriaComponent implements OnInit {
             </div>
           </div>
           <h2 style="color: #333; font-size: 20px; margin: 10px 0;">Reporte de Alumnos por Categoría</h2>
-          <h3 style="color: #28a745; font-size: 18px; margin: 5px 0;">${this.categoriaSeleccionada.nombre}</h3>
+          <h3 style="color: #28a745; font-size: 18px; margin: 5px 0;">${categoria.nombre}</h3>
           <p style="color: #666; font-size: 12px; margin: 5px 0;">Generado el: ${fechaActual} a las ${horaActual}</p>
         </div>
         
@@ -800,12 +843,12 @@ export class CategoriaComponent implements OnInit {
         <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #28a745;">
           <h4 style="color: #28a745; margin: 0 0 10px 0; font-size: 16px;">📋 Información de la Categoría</h4>
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 12px;">
-            <div><strong>Descripción:</strong> ${this.categoriaSeleccionada.descripcion || 'No especificada'}</div>
-            <div><strong>Tipo:</strong> ${this.categoriaSeleccionada.tipo}</div>
-            <div><strong>Rango de edad:</strong> ${this.categoriaSeleccionada.edadMinima} - ${this.categoriaSeleccionada.edadMaxima} años</div>
-            <div><strong>Cuota mensual:</strong> $${this.categoriaSeleccionada.precio?.cuotaMensual || 0}</div>
+            <div><strong>Descripción:</strong> ${categoria.descripcion || 'No especificada'}</div>
+            <div><strong>Tipo:</strong> ${categoria.tipo}</div>
+            <div><strong>Rango de edad:</strong> ${categoria.edadMinima} - ${categoria.edadMaxima} años</div>
+            <div><strong>Cuota mensual:</strong> $${categoria.precio?.cuotaMensual || 0}</div>
 
-            <div><strong>Estado:</strong> ${this.categoriaSeleccionada.estado}</div>
+            <div><strong>Estado:</strong> ${categoria.estado}</div>
           </div>
           <div style="margin-top: 10px;"><strong>Horarios:</strong> ${horariosTexto}</div>
         </div>
@@ -917,7 +960,7 @@ export class CategoriaComponent implements OnInit {
           <h4 style="color: #856404; margin: 0 0 10px 0; font-size: 14px;">📄 Información del Reporte</h4>
           <div style="font-size: 12px; color: #856404;">
             <p style="margin: 5px 0;"><strong>Total de registros:</strong> ${this.alumnosCategoria.length} alumnos</p>
-            <p style="margin: 5px 0;"><strong>Filtros aplicados:</strong> Categoría: ${this.categoriaSeleccionada.nombre}</p>
+            <p style="margin: 5px 0;"><strong>Filtros aplicados:</strong> Categoría: ${categoria.nombre}</p>
             <p style="margin: 5px 0;"><strong>Propósito:</strong> Reporte administrativo y de gestión deportiva</p>
             <p style="margin: 5px 0;"><strong>Generado por:</strong> Sistema de Gestión Club 9 de Julio</p>
           </div>
@@ -961,11 +1004,21 @@ export class CategoriaComponent implements OnInit {
       height: elementoTemporal.scrollHeight
     };
 
-    html2canvas(elementoTemporal, opciones).then((canvas: HTMLCanvasElement) => {
+    const html2canvasLib = (window as any).html2canvas || (window as any).default?.html2canvas;
+    const jsPDFLib = (window as any).jspdf?.jsPDF || (window as any).jsPDF;
+
+    if (!html2canvasLib) {
+      throw new Error('html2canvas no está disponible');
+    }
+    if (!jsPDFLib) {
+      throw new Error('jsPDF no está disponible');
+    }
+
+    html2canvasLib(elementoTemporal, opciones).then((canvas: HTMLCanvasElement) => {
       document.body.removeChild(elementoTemporal);
 
       const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pdf = new jsPDFLib('p', 'mm', 'a4');
       const imgWidth = 190;
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
       const pageHeight = 280;
@@ -982,7 +1035,7 @@ export class CategoriaComponent implements OnInit {
         heightLeft -= pageHeight;
       }
 
-      const nombreArchivo = `reporte-alumnos-${this.categoriaSeleccionada?.nombre?.replace(/[^a-zA-Z0-9]/g, '-')}-${new Date().toISOString().split('T')[0]}.pdf`;
+      const nombreArchivo = `reporte-alumnos-${categoria.nombre?.replace(/[^a-zA-Z0-9]/g, '-')}-${new Date().toISOString().split('T')[0]}.pdf`;
       pdf.save(nombreArchivo);
 
       this.notificationService.showSuccess('Éxito', 'Reporte PDF generado correctamente con información completa');
