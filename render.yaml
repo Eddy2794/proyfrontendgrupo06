@@ -5,7 +5,7 @@ services:
     plan: free
     buildCommand: |
       pnpm install --no-frozen-lockfile --production=false
-      pnpm build --configuration=production
+      ng build --configuration production
       node postbuild.js
     startCommand: node server.js
     envVars:
