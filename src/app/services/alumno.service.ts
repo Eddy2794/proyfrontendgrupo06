@@ -150,7 +150,7 @@ export class AlumnoService {
 
   // Obtener alumnos por mes
   getAlumnosPorMes(): Observable<any> {
-    return this.getAllAlumnos({}, 1, 999).pipe(
+    return this.getAllAlumnos({}, 1, 100).pipe(
       map((response: any) => this.processAlumnosPorMes(response))
     );
   }
@@ -159,8 +159,8 @@ export class AlumnoService {
    * Procesar datos de alumnos para obtener estadísticas por mes
    */
   private processAlumnosPorMes(response: any): any {
-    const alumnos = response.data?.docs || response.data || [];
-    
+    // Ajusta aquí para que tome el array correcto
+    const alumnos = response.data?.alumnos || response.data?.docs || response.data || [];
     return {
       success: true,
       data: {
@@ -218,5 +218,13 @@ export class AlumnoService {
       })
     }
     return this.http.patch(this.apiUrl + '/restaurar/' + id, {}, httpOption);
+  }
+
+  // Obtener solo el listado simple de alumnos (sin populate) para el dashboard
+  getAlumnosSimple(): Observable<any> {
+    let httpOptions = {
+      headers: new HttpHeaders()
+    }
+    return this.http.get<any>(this.apiUrl + '/', httpOptions);
   }
 }

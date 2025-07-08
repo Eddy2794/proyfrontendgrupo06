@@ -177,7 +177,7 @@ export class WidgetsDropdownComponent implements OnInit, AfterContentInit, OnDes
    */
   private loadDashboardData(): void {
     forkJoin({
-      alumnos: this.alumnoService.getAlumnos(),
+      alumnos: this.alumnoService.getAlumnosSimple(),
       alumnosPorMes: this.alumnoService.getAlumnosPorMes(),
       cuotasPendientes: this.cuotaService.getCuotasPendientesAnioActual(),
       cuotasPorMes: this.cuotaService.getCuotasPorMes(),
@@ -227,10 +227,15 @@ export class WidgetsDropdownComponent implements OnInit, AfterContentInit, OnDes
    * Procesar datos de alumnos - SOLO datos reales
    */
   private processAlumnosData(alumnos: any, alumnosPorMes: any): void {
-    // Solo asignar si hay datos reales
-    const totalReal = alumnos?.data?.pagination?.total || alumnos?.pagination?.total;
-    this.alumnosData.total = totalReal !== undefined ? totalReal : null;
+    // Obtener el array real de alumnos
+    const alumnosArray = alumnos?.data?.alumnos || [];
+    // Contar solo los alumnos activos
+    const totalActivos = alumnosArray.filter((a: any) => a.estado === 'ACTIVO' || a.status === 'ACTIVO').length;
+    this.alumnosData.total = totalActivos;
     
+    console.log('Alumnos recibidos:', alumnos?.data?.alumnos);
+    console.log('Total activos:', totalActivos);
+
     // Procesar datos para gráfico solo si existen
     if (alumnosPorMes && Array.isArray(alumnosPorMes)) {
       this.alumnosChartData = this.processMonthlyData(alumnosPorMes, 'cantidad');
