@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { ProfesorService } from '../../services/profesor.service';
 import { NotificationService } from '../../services/notification.service';
-import jsPDF from 'jspdf';
+import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
 import { 
   RowComponent,
@@ -422,7 +422,7 @@ export class ProfesorListComponent implements OnInit {
       height: elementoTemporal.scrollHeight
     };
 
-    html2canvas(elementoTemporal, opciones).then(canvas => {
+    html2canvas(elementoTemporal, opciones).then((canvas: HTMLCanvasElement) => {
       document.body.removeChild(elementoTemporal);
 
       const imgData = canvas.toDataURL('image/png');
@@ -447,7 +447,7 @@ export class ProfesorListComponent implements OnInit {
       pdf.save(nombreArchivo);
 
       this.notificationService.showSuccess('Éxito', 'Reporte PDF generado correctamente');
-    }).catch(error => {
+    }).catch((error: any) => {
       document.body.removeChild(elementoTemporal);
       console.error('Error al generar PDF:', error);
       this.notificationService.showError('Error', 'No se pudo generar el PDF');
@@ -628,7 +628,7 @@ export class ProfesorListComponent implements OnInit {
       height: elementoTemporal.scrollHeight
     };
 
-    html2canvas(elementoTemporal, opciones).then(canvas => {
+    html2canvas(elementoTemporal, opciones).then((canvas: HTMLCanvasElement) => {
       document.body.removeChild(elementoTemporal);
 
       const imgData = canvas.toDataURL('image/png');
@@ -653,7 +653,7 @@ export class ProfesorListComponent implements OnInit {
       pdf.save(nombreArchivo);
 
       this.notificationService.showSuccess('Éxito', 'Detalles del profesor exportados a PDF correctamente');
-    }).catch(error => {
+    }).catch((error: any) => {
       document.body.removeChild(elementoTemporal);
       console.error('Error al generar PDF:', error);
       this.notificationService.showError('Error', 'No se pudo generar el PDF de los detalles del profesor');

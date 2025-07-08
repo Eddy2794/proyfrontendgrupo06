@@ -37,7 +37,7 @@ import { NotificationService } from '../../services/notification.service';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { debounceTime, Subject } from 'rxjs';
-import jsPDF from 'jspdf';
+import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
 
 
@@ -151,7 +151,7 @@ export class CategoriaComponent implements OnInit {
     Promise.all([
       this.cargarAlumnosCategoriaPromise(),
       // Si falla la carga de torneos-categoría, no detiene el flujo
-      this.cargarTorneosCategoriasPromise().catch(error => {
+      this.cargarTorneosCategoriasPromise().catch((error: any) => {
         console.error('Error al cargar torneos-categorías:', error);
         this.torneosCategoria = [];
         return;
@@ -159,7 +159,7 @@ export class CategoriaComponent implements OnInit {
     ]).then(() => {
       // Después cargar categorías y calcular campos
       this.loadCategorias();
-    }).catch(error => {
+    }).catch((error: any) => {
       // Solo mostrar error si falla cargar alumnos-categoría
       console.error('Error al cargar datos iniciales:', error);
       this.loading = false;
@@ -961,7 +961,7 @@ export class CategoriaComponent implements OnInit {
       height: elementoTemporal.scrollHeight
     };
 
-    html2canvas(elementoTemporal, opciones).then(canvas => {
+    html2canvas(elementoTemporal, opciones).then((canvas: HTMLCanvasElement) => {
       document.body.removeChild(elementoTemporal);
 
       const imgData = canvas.toDataURL('image/png');
@@ -986,7 +986,7 @@ export class CategoriaComponent implements OnInit {
       pdf.save(nombreArchivo);
 
       this.notificationService.showSuccess('Éxito', 'Reporte PDF generado correctamente con información completa');
-    }).catch(error => {
+    }).catch((error: any) => {
       document.body.removeChild(elementoTemporal);
       console.error('Error al generar PDF:', error);
       this.notificationService.showError('Error', 'No se pudo generar el PDF');

@@ -5,7 +5,7 @@ import { Torneo } from '../../models/torneo';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import jsPDF from 'jspdf';
+import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
 import {
   TableDirective,
@@ -344,7 +344,7 @@ export class TorneoComponent implements OnInit {
       height: elementoTemporal.scrollHeight
     };
 
-    html2canvas(elementoTemporal, opciones).then(canvas => {
+    html2canvas(elementoTemporal, opciones).then((canvas: HTMLCanvasElement) => {
       document.body.removeChild(elementoTemporal);
 
       const imgData = canvas.toDataURL('image/png');
@@ -369,7 +369,7 @@ export class TorneoComponent implements OnInit {
       pdf.save(nombreArchivo);
 
       this.notificationService.showSuccess('Éxito', 'Reporte PDF generado correctamente');
-    }).catch(error => {
+    }).catch((error: any) => {
       document.body.removeChild(elementoTemporal);
       console.error('Error al generar PDF:', error);
       this.notificationService.showError('Error', 'No se pudo generar el PDF');

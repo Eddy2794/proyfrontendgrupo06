@@ -2,7 +2,7 @@ import { Component, Input, Output, EventEmitter, inject } from '@angular/core';
 import { Alumno } from '../../models/alumno.model';
 import { CommonModule } from '@angular/common';
 import { NotificationService } from '../../services/notification.service';
-import jsPDF from 'jspdf';
+import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
 
 @Component({
@@ -380,7 +380,7 @@ export class AlumnoDetalleModalComponent {
       height: elementoTemporal.scrollHeight
     };
 
-    html2canvas(elementoTemporal, opciones).then(canvas => {
+    html2canvas(elementoTemporal, opciones).then((canvas: HTMLCanvasElement) => {
       document.body.removeChild(elementoTemporal);
 
       const imgData = canvas.toDataURL('image/png');
@@ -405,7 +405,7 @@ export class AlumnoDetalleModalComponent {
       pdf.save(nombreArchivo);
 
       this.notificationService.showSuccess('Éxito', 'Detalles del alumno exportados a PDF correctamente');
-    }).catch(error => {
+    }).catch((error: any) => {
       document.body.removeChild(elementoTemporal);
       console.error('Error al generar PDF:', error);
       this.notificationService.showError('Error', 'No se pudo generar el PDF de los detalles del alumno');

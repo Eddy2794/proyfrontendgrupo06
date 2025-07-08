@@ -47,7 +47,9 @@
             ],
             "scripts": [],
             "allowedCommonJsDependencies": [
-              "crypto-js"
+              "crypto-js",
+              "jspdf",
+              "html2canvas"
             ],
             "stylePreprocessorOptions": {
               "sass": {
