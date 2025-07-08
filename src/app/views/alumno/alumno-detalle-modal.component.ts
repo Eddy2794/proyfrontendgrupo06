@@ -168,15 +168,54 @@ export class AlumnoDetalleModalComponent {
     const fechaActual = new Date().toLocaleDateString('es-ES');
     const horaActual = new Date().toLocaleTimeString('es-ES');
     const alumno = this.alumno;
-    const tutorPersona = this.getTutorPersona();
 
-    // Calcular información adicional
-    const fechaNacimiento = 'No especificada';
-    const edad = 'N/A';
-    
+    // Acceso robusto a los datos populados
+    const persona = (alumno.persona_datos && typeof alumno.persona_datos === 'object') ? alumno.persona_datos : undefined;
+    const tutor = (alumno.tutor && typeof alumno.tutor === 'object') ? alumno.tutor : undefined;
+    const tutorPersona = (tutor && tutor.persona && typeof tutor.persona === 'object') ? tutor.persona : undefined;
+
+    // Nombre completo
+    const nombreCompleto = (persona && persona.nombres && persona.apellidos)
+      ? `${persona.nombres} ${persona.apellidos}`.trim()
+      : 'N/A';
+
+    // Documento
+    const numeroDocumento = (persona && persona.numeroDocumento) ? persona.numeroDocumento : 'N/A';
+
+    // Fecha de nacimiento y edad
+    let fechaNacimiento = 'No especificada';
+    let edad = 'N/A';
+    if (persona && persona.fechaNacimiento) {
+      fechaNacimiento = new Date(persona.fechaNacimiento).toLocaleDateString('es-ES');
+      const fechaNac = new Date(persona.fechaNacimiento);
+      const hoy = new Date();
+      let edadCalculada = hoy.getFullYear() - fechaNac.getFullYear();
+      const m = hoy.getMonth() - fechaNac.getMonth();
+      if (m < 0 || (m === 0 && hoy.getDate() < fechaNac.getDate())) {
+        edadCalculada--;
+      }
+      edad = edadCalculada.toString();
+    }
+
+    // Email
+    const email = (persona && persona.email) ? persona.email : 'N/A';
+
+    // Tutor nombre completo
+    const nombreTutor = (tutorPersona && tutorPersona.nombres && tutorPersona.apellidos)
+      ? `${tutorPersona.nombres} ${tutorPersona.apellidos}`.trim()
+      : (tutor && tutor.username ? tutor.username : 'N/A');
+
+    // Documento tutor
+    const documentoTutor = (tutorPersona && tutorPersona.numeroDocumento) ? tutorPersona.numeroDocumento : 'No especificado';
+
+    // Email tutor
+    const emailTutor = (tutorPersona && tutorPersona.email) ? tutorPersona.email : 'No disponible';
+
+    // Teléfono tutor
+    const telefonoTutor = (tutorPersona && tutorPersona.telefono) ? tutorPersona.telefono : 'No disponible';
+
     const fechaInscripcion = alumno.fecha_inscripcion ? 
       new Date(alumno.fecha_inscripcion).toLocaleDateString('es-ES') : 'No especificada';
-    
     const tiempoEnClub = alumno.fecha_inscripcion ? 
       new Date().getFullYear() - new Date(alumno.fecha_inscripcion).getFullYear() : 0;
 
@@ -203,7 +242,7 @@ export class AlumnoDetalleModalComponent {
           <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; font-size: 12px;">
             <div style="background: white; padding: 15px; border-radius: 5px;">
               <strong style="color: #28a745;">Nombre Completo:</strong><br>
-              <span style="font-size: 14px;">${alumno.persona_datos?.nombres || 'N/A'} ${alumno.persona_datos?.apellidos || ''}</span>
+              <span style="font-size: 14px;">${nombreCompleto}</span>
             </div>
             <div style="background: white; padding: 15px; border-radius: 5px;">
               <strong style="color: #28a745;">Número de Socio:</strong><br>
@@ -211,11 +250,13 @@ export class AlumnoDetalleModalComponent {
             </div>
             <div style="background: white; padding: 15px; border-radius: 5px;">
               <strong style="color: #28a745;">Documento:</strong><br>
-              <span style="font-size: 14px;">N/A</span>
+              <span style="font-size: 14px;">${numeroDocumento}</span>
             </div>
             <div style="background: white; padding: 15px; border-radius: 5px;">
               <strong style="color: #28a745;">Estado:</strong><br>
-              <span style="padding: 4px 8px; border-radius: 3px; font-size: 12px; color: white; background: ${alumno.estado === 'ACTIVO' ? '#28a745' : '#dc3545'};">${alumno.estado || 'N/A'}</span>
+              <span style="display: inline-block; margin-top: 8px; padding: 4px 8px; border-radius: 3px; font-size: 12px; color: white; background: ${alumno.estado === 'ACTIVO' ? '#28a745' : '#dc3545'};">
+                ${alumno.estado || 'N/A'}
+              </span>
             </div>
             <div style="background: white; padding: 15px; border-radius: 5px;">
               <strong style="color: #28a745;">Fecha de Nacimiento:</strong><br>
@@ -223,7 +264,7 @@ export class AlumnoDetalleModalComponent {
             </div>
             <div style="background: white; padding: 15px; border-radius: 5px;">
               <strong style="color: #28a745;">Email:</strong><br>
-              <span style="font-size: 14px;">N/A</span>
+              <span style="font-size: 14px;">${email}</span>
             </div>
           </div>
         </div>
@@ -242,7 +283,9 @@ export class AlumnoDetalleModalComponent {
             </div>
             <div style="background: white; padding: 15px; border-radius: 5px;">
               <strong style="color: #ffc107;">Autoriza Fotos:</strong><br>
-              <span style="padding: 4px 8px; border-radius: 3px; font-size: 12px; color: white; background: ${alumno.autoriza_fotos ? '#28a745' : '#dc3545'};">${alumno.autoriza_fotos ? 'SÍ' : 'NO'}</span>
+              <span style="display: inline-block; margin-top: 8px; padding: 4px 8px; border-radius: 3px; font-size: 12px; color: white; background: ${alumno.autoriza_fotos ? '#28a745' : '#dc3545'};">
+                ${alumno.autoriza_fotos ? 'SÍ' : 'NO'}
+              </span>
             </div>
             <div style="background: white; padding: 15px; border-radius: 5px;">
               <strong style="color: #ffc107;">Observaciones Médicas:</strong><br>
@@ -267,34 +310,34 @@ export class AlumnoDetalleModalComponent {
         </div>
         
         <!-- Información del tutor -->
-        <div style="background: #d4edda; padding: 20px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #28a745;">
+        <div style="background: #d4edda; padding: 20px; border-radius: 8px; margin-bottom: 128px; border-left: 4px solid #28a745;">
           <h3 style="color: #155724; margin: 0 0 15px 0; font-size: 18px;">👨‍👩‍👧‍👦 Información del Tutor</h3>
           <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; font-size: 12px;">
             <div style="background: white; padding: 15px; border-radius: 5px;">
               <strong style="color: #28a745;">Nombre Completo:</strong><br>
-              <span style="font-size: 14px;">${this.tutorInfo}</span>
+              <span style="font-size: 14px;">${nombreTutor}</span>
             </div>
             <div style="background: white; padding: 15px; border-radius: 5px;">
               <strong style="color: #28a745;">Documento:</strong><br>
-              <span style="font-size: 14px;">${tutorPersona?.numeroDocumento || 'No especificado'}</span>
+              <span style="font-size: 14px;">${documentoTutor}</span>
             </div>
             <div style="background: white; padding: 15px; border-radius: 5px;">
               <strong style="color: #28a745;">Email:</strong><br>
-              <span style="font-size: 14px;">${this.tutorEmail}</span>
+              <span style="font-size: 14px;">${emailTutor}</span>
             </div>
             <div style="background: white; padding: 15px; border-radius: 5px;">
               <strong style="color: #28a745;">Teléfono:</strong><br>
-              <span style="font-size: 14px;">${this.tutorTelefono}</span>
+              <span style="font-size: 14px;">${telefonoTutor}</span>
             </div>
           </div>
         </div>
         
         <!-- Información del reporte -->
-        <div style="background: #e2e3e5; padding: 15px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #6c757d;">
+        <div style="background: #e2e3e5; padding: 15px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #6c757d; page-break-before: always;">
           <h4 style="color: #495057; margin: 0 0 10px 0; font-size: 14px;">📄 Información del Reporte</h4>
           <div style="font-size: 12px; color: #495057;">
             <p style="margin: 5px 0;"><strong>Tipo de reporte:</strong> Perfil Detallado de Alumno</p>
-            <p style="margin: 5px 0;"><strong>Alumno:</strong> ${alumno.persona_datos?.nombres || 'N/A'} ${alumno.persona_datos?.apellidos || ''}</p>
+            <p style="margin: 5px 0;"><strong>Alumno:</strong> ${nombreCompleto}</p>
             <p style="margin: 5px 0;"><strong>Número de Socio:</strong> ${alumno.numero_socio || 'N/A'}</p>
             <p style="margin: 5px 0;"><strong>Propósito:</strong> Documento oficial de información personal y deportiva</p>
             <p style="margin: 5px 0;"><strong>Generado por:</strong> Sistema de Gestión Club 9 de Julio</p>
