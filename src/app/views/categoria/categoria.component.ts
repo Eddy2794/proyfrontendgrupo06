@@ -150,13 +150,21 @@ export class CategoriaComponent implements OnInit {
     // Primero cargar datos relacionados
     Promise.all([
       this.cargarAlumnosCategoriaPromise(),
-      this.cargarTorneosCategoriasPromise()
+      // Si falla la carga de torneos-categoría, no detiene el flujo
+      this.cargarTorneosCategoriasPromise().catch(error => {
+        console.error('Error al cargar torneos-categorías:', error);
+        this.torneosCategoria = [];
+        return;
+      })
     ]).then(() => {
       // Después cargar categorías y calcular campos
       this.loadCategorias();
     }).catch(error => {
+      // Solo mostrar error si falla cargar alumnos-categoría
       console.error('Error al cargar datos iniciales:', error);
       this.loading = false;
+      // Si quieres ser aún más tolerante, puedes descomentar la siguiente línea:
+      // this.loadCategorias();
     });
   }
 
