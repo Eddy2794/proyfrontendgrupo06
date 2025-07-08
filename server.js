@@ -114,12 +114,19 @@ const mimeTypes = {
 };
 
 const server = http.createServer((req, res) => {
-  console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
+  const timestamp = new Date().toISOString();
+  const userAgent = req.headers['user-agent'] || 'Unknown';
+  console.log(`${timestamp} - ${req.method} ${req.url} - ${userAgent.substring(0, 50)}...`);
   
   // Headers de seguridad básicos
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('X-Frame-Options', 'DENY');
   res.setHeader('X-XSS-Protection', '1; mode=block');
+  
+  // CORS headers for development/production
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   
   const parsedUrl = url.parse(req.url);
   let pathName = parsedUrl.pathname;
@@ -127,6 +134,37 @@ const server = http.createServer((req, res) => {
   // Si es root, servir index.html
   if (pathName === '/') {
     pathName = '/index.html';
+  }
+  
+  // Manejar favicon.ico específicamente
+  if (pathName === '/favicon.ico') {
+    // Buscar favicon en diferentes ubicaciones
+    const faviconPaths = [
+      path.join(distPath, 'favicon.ico'),
+      path.join(distPath, 'assets', 'favicon.ico'),
+      path.join(__dirname, 'src', 'assets', 'favicon.ico')
+    ];
+    
+    for (const faviconPath of faviconPaths) {
+      if (fs.existsSync(faviconPath)) {
+        return fs.readFile(faviconPath, (err, content) => {
+          if (err) {
+            console.error('Error reading favicon:', err);
+            res.writeHead(404);
+            res.end();
+          } else {
+            res.writeHead(200, { 'Content-Type': 'image/x-icon' });
+            res.end(content);
+          }
+        });
+      }
+    }
+    
+    // Si no se encuentra favicon, devolver 204 (No Content) en lugar de 404
+    console.log('Favicon not found, returning 204');
+    res.writeHead(204);
+    res.end();
+    return;
   }
   
   const filePath = path.join(distPath, pathName);

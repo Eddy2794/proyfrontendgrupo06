@@ -426,16 +426,25 @@ export class AuthService {
       this.validateTokenWithBackend().then(isValid => {
         if (isValid) {
           console.log('Token OAuth validado exitosamente');
+          this.notificationService.showSuccess('Autenticación exitosa', 'Bienvenido, has iniciado sesión con Google');
         } else {
           console.log('No se pudo validar el perfil, pero continuando con el token');
+          this.notificationService.showWarning('Advertencia', 'Sesión iniciada pero no se pudo cargar el perfil completo');
         }
         
         // Navegar al dashboard independientemente de la validación del perfil
         // El token viene del backend OAuth, por lo que es válido
         setTimeout(() => {
           try {
+            // Limpiar los parámetros de la URL antes de navegar
+            const currentUrl = window.location.href;
+            const baseUrl = currentUrl.split('?')[0].split('#')[0];
+            
             this.router.navigate(['/dashboard']).then(success => {
-              if (!success) {
+              if (success) {
+                // Actualizar la URL para eliminar los parámetros del token
+                window.history.replaceState({}, '', `${baseUrl}#/dashboard`);
+              } else {
                 window.location.href = '/#/dashboard';
               }
               resolve(true);
@@ -444,6 +453,7 @@ export class AuthService {
               resolve(true);
             });
           } catch (error) {
+            console.error('Error navigating after OAuth:', error);
             window.location.href = '/#/dashboard';
             resolve(true);
           }
