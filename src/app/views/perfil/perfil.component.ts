@@ -36,6 +36,11 @@ import { User, UserModel, USER_ROLES, USER_STATES } from '../../models/user.mode
 import { Persona, PersonaModel, TIPOS_DOCUMENTO, GENEROS } from '../../models/persona.model';
 import { AuthService } from '../../services/auth.service';
 import { UserService, UpdateProfileRequest, ChangePasswordRequest } from '../../services/user.service';
+import { NotificationService } from '../../services/notification.service';
+
+// Librerías para PDF
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
 @Component({
   selector: 'app-perfil',
@@ -100,7 +105,8 @@ export class PerfilComponent implements OnInit, OnDestroy {
   constructor(
     private authService: AuthService,
     private userService: UserService,
-    private fb: FormBuilder
+    private fb: FormBuilder,
+    private notificationService: NotificationService
   ) {
     this.profileForm = this.createProfileForm();
     this.passwordForm = this.createPasswordForm();
@@ -673,5 +679,223 @@ export class PerfilComponent implements OnInit, OnDestroy {
   triggerFileInput(): void {
     const fileInput = document.getElementById('profileImageInput') as HTMLInputElement;
     fileInput?.click();
+  }
+
+  /**
+   * Exportar perfil de usuario a PDF
+   */
+  exportarPerfilPDF(): void {
+    if (!this.currentUser || !this.currentPersona) {
+      this.notificationService.showWarning('Advertencia', 'No hay información de perfil para exportar');
+      return;
+    }
+
+    const elementoTemporal = document.createElement('div');
+    elementoTemporal.style.position = 'absolute';
+    elementoTemporal.style.left = '-9999px';
+    elementoTemporal.style.top = '0';
+    elementoTemporal.style.backgroundColor = 'white';
+    elementoTemporal.style.padding = '20px';
+    elementoTemporal.style.width = '900px';
+
+    const fechaActual = new Date().toLocaleDateString('es-ES');
+    const horaActual = new Date().toLocaleTimeString('es-ES');
+
+    // Calcular información adicional
+    const fechaNacimiento = this.currentPersona.fechaNacimiento ? 
+      new Date(this.currentPersona.fechaNacimiento).toLocaleDateString('es-ES') : 'No especificada';
+    
+    const edad = this.currentPersona.fechaNacimiento ? 
+      new Date().getFullYear() - new Date(this.currentPersona.fechaNacimiento).getFullYear() : 'N/A';
+    
+    const tipoDocLabel = this.tiposDocumento.find(t => t.value === this.currentPersona?.tipoDocumento)?.label || 'N/A';
+    const generoLabel = this.generos.find(g => g.value === this.currentPersona?.genero)?.label || 'N/A';
+    const rolLabel = this.userRoles.find(r => r.value === this.currentUser?.rol)?.label || 'N/A';
+    const estadoLabel = this.userStates.find(s => s.value === this.currentUser?.estado)?.label || 'N/A';
+
+    // Información de dirección
+    const direccion = this.currentPersona.direccion;
+    const direccionCompleta = direccion ? 
+      `${direccion.calle || ''}, ${direccion.ciudad || ''}, ${direccion.departamento || ''}, ${direccion.pais || ''}`.replace(/,\s*,/g, ',').replace(/^,\s*|,\s*$/g, '') || 'No especificada' 
+      : 'No especificada';
+
+    elementoTemporal.innerHTML = `
+      <div style="font-family: Arial, sans-serif; background: white; padding: 20px; line-height: 1.4;">
+        <!-- Header con logo prominente -->
+        <div style="text-align: center; margin-bottom: 30px; border-bottom: 3px solid #28a745; padding-bottom: 20px;">
+          <div style="display: flex; align-items: center; justify-content: center; margin-bottom: 15px;">
+            <div style="width: 80px; height: 80px; background: #28a745; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 20px;">
+              <span style="color: white; font-size: 24px; font-weight: bold;">9J</span>
+            </div>
+            <div>
+              <h1 style="color: #28a745; margin: 0; font-size: 28px; font-weight: bold;">Club 9 de Julio</h1>
+              <p style="color: #666; margin: 5px 0; font-size: 14px;">Institución Deportiva</p>
+            </div>
+          </div>
+          <h2 style="color: #333; font-size: 20px; margin: 10px 0;">Perfil de Usuario</h2>
+          <p style="color: #666; font-size: 12px; margin: 5px 0;">Generado el: ${fechaActual} a las ${horaActual}</p>
+        </div>
+        
+        <!-- Información personal principal -->
+        <div style="background: #e8f4fd; padding: 20px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #17a2b8;">
+          <h3 style="color: #17a2b8; margin: 0 0 15px 0; font-size: 18px;">👤 Información Personal</h3>
+          <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; font-size: 12px;">
+            <div style="background: white; padding: 15px; border-radius: 5px;">
+              <strong style="color: #28a745;">Nombre Completo:</strong><br>
+              <span style="font-size: 14px;">${this.currentPersona.nombres} ${this.currentPersona.apellidos}</span>
+            </div>
+            <div style="background: white; padding: 15px; border-radius: 5px;">
+              <strong style="color: #28a745;">Documento:</strong><br>
+              <span style="font-size: 14px;">${tipoDocLabel}: ${this.currentPersona.numeroDocumento}</span>
+            </div>
+            <div style="background: white; padding: 15px; border-radius: 5px;">
+              <strong style="color: #28a745;">Fecha de Nacimiento:</strong><br>
+              <span style="font-size: 14px;">${fechaNacimiento} (${edad} años)</span>
+            </div>
+            <div style="background: white; padding: 15px; border-radius: 5px;">
+              <strong style="color: #28a745;">Género:</strong><br>
+              <span style="font-size: 14px;">${generoLabel}</span>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Información de contacto -->
+        <div style="background: #fff3cd; padding: 20px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #ffc107;">
+          <h3 style="color: #856404; margin: 0 0 15px 0; font-size: 18px;">📞 Información de Contacto</h3>
+          <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; font-size: 12px;">
+            <div style="background: white; padding: 15px; border-radius: 5px;">
+              <strong style="color: #ffc107;">Email:</strong><br>
+              <span style="font-size: 14px;">${this.currentPersona.email}</span>
+            </div>
+            <div style="background: white; padding: 15px; border-radius: 5px;">
+              <strong style="color: #ffc107;">Teléfono:</strong><br>
+              <span style="font-size: 14px;">${this.currentPersona.telefono || 'No especificado'}</span>
+            </div>
+            <div style="background: white; padding: 15px; border-radius: 5px; grid-column: 1 / -1;">
+              <strong style="color: #ffc107;">Dirección:</strong><br>
+              <span style="font-size: 14px;">${direccionCompleta}</span>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Información del sistema -->
+        <div style="background: #d1ecf1; padding: 20px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #17a2b8;">
+          <h3 style="color: #0c5460; margin: 0 0 15px 0; font-size: 18px;">⚙️ Información del Sistema</h3>
+          <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; font-size: 12px;">
+            <div style="background: white; padding: 15px; border-radius: 5px;">
+              <strong style="color: #17a2b8;">Usuario:</strong><br>
+              <span style="font-size: 14px;">${this.currentUser.username}</span>
+            </div>
+            <div style="background: white; padding: 15px; border-radius: 5px;">
+              <strong style="color: #17a2b8;">Rol:</strong><br>
+              <span style="padding: 4px 8px; border-radius: 3px; font-size: 12px; color: white; background: #28a745;">${rolLabel}</span>
+            </div>
+            <div style="background: white; padding: 15px; border-radius: 5px;">
+              <strong style="color: #17a2b8;">Estado:</strong><br>
+              <span style="padding: 4px 8px; border-radius: 3px; font-size: 12px; color: white; background: ${this.currentUser.estado === 'ACTIVO' ? '#28a745' : '#dc3545'};">${estadoLabel}</span>
+            </div>
+            <div style="background: white; padding: 15px; border-radius: 5px;">
+              <strong style="color: #17a2b8;">Fecha de Registro:</strong><br>
+              <span style="font-size: 14px;">${this.currentUser.createdAt ? new Date(this.currentUser.createdAt).toLocaleDateString('es-ES') : 'N/A'}</span>
+            </div>
+          </div>
+        </div>
+        
+        ${this.isTutor && this.alumnosACargo.length > 0 ? `
+        <!-- Información de tutoría -->
+        <div style="background: #d4edda; padding: 20px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #28a745;">
+          <h3 style="color: #155724; margin: 0 0 15px 0; font-size: 18px;">👨‍🏫 Alumnos a Cargo</h3>
+          <div style="background: white; padding: 15px; border-radius: 5px;">
+            <p style="margin: 0 0 10px 0; font-size: 14px;"><strong>Total de alumnos:</strong> ${this.alumnosACargo.length}</p>
+            <div style="font-size: 12px;">
+              ${this.alumnosACargo.map(alumno => `
+                <div style="padding: 8px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between;">
+                  <span><strong>${typeof alumno.persona === 'object' ? (alumno.persona?.nombres || '') : ''} ${typeof alumno.persona === 'object' ? (alumno.persona?.apellidos || '') : ''}</strong></span>
+                  <span style="color: #666;">${typeof alumno.persona === 'object' ? (alumno.persona?.email || 'N/A') : 'N/A'}</span>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        </div>
+        ` : ''}
+        
+        <!-- Información del reporte -->
+        <div style="background: #f8d7da; padding: 15px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #dc3545;">
+          <h4 style="color: #721c24; margin: 0 0 10px 0; font-size: 14px;">📄 Información del Reporte</h4>
+          <div style="font-size: 12px; color: #721c24;">
+            <p style="margin: 5px 0;"><strong>Tipo de reporte:</strong> Perfil de Usuario Individual</p>
+            <p style="margin: 5px 0;"><strong>Usuario:</strong> ${this.currentPersona.nombres} ${this.currentPersona.apellidos}</p>
+            <p style="margin: 5px 0;"><strong>Rol específico:</strong> ${this.getSpecificRoleInfo()}</p>
+            <p style="margin: 5px 0;"><strong>Propósito:</strong> Documento oficial de información personal y del sistema</p>
+            <p style="margin: 5px 0;"><strong>Generado por:</strong> Sistema de Gestión Club 9 de Julio</p>
+          </div>
+        </div>
+        
+        <!-- Footer con información de contacto -->
+        <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 2px solid #28a745; color: #666; font-size: 11px; background: #f8f9fa; padding: 15px; border-radius: 8px;">
+          <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 10px;">
+            <div>
+              <strong style="color: #28a745;">📍 Dirección</strong><br>
+              CALLE Africa s/n Barrio 9 de julio<br>
+              Palpalá, Argentina
+            </div>
+            <div>
+              <strong style="color: #28a745;">📞 Contacto</strong><br>
+              Tel: 0388 15-472-6885<br>
+              Email: info@club9dejulio.com
+            </div>
+            <div>
+              <strong style="color: #28a745;">🌐 Web</strong><br>
+              www.club9dejulio.com<br>
+              @club9dejulio
+            </div>
+          </div>
+          <hr style="border: none; border-top: 1px solid #ddd; margin: 15px 0;">
+          <p style="margin: 0; font-style: italic;">"Formando campeones dentro y fuera del campo" - Club 9 de Julio</p>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(elementoTemporal);
+
+    const opciones = {
+      scale: 1.5,
+      useCORS: true,
+      allowTaint: true,
+      backgroundColor: '#ffffff',
+      width: 900,
+      height: elementoTemporal.scrollHeight
+    };
+
+    html2canvas(elementoTemporal, opciones).then(canvas => {
+      document.body.removeChild(elementoTemporal);
+
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const imgWidth = 190;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      const pageHeight = 280;
+      let heightLeft = imgHeight;
+      let position = 10;
+
+      pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+
+      while (heightLeft >= 0) {
+        position = heightLeft - imgHeight + 10;
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+      }
+
+      const nombreArchivo = `perfil-${this.currentPersona?.nombres}-${this.currentPersona?.apellidos}-${new Date().toISOString().split('T')[0]}.pdf`;
+      pdf.save(nombreArchivo);
+
+      this.notificationService.showSuccess('Éxito', 'Perfil exportado a PDF correctamente');
+    }).catch(error => {
+      document.body.removeChild(elementoTemporal);
+      console.error('Error al generar PDF:', error);
+      this.notificationService.showError('Error', 'No se pudo generar el PDF del perfil');
+    });
   }
 }
