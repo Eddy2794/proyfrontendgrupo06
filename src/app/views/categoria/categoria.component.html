@@ -111,7 +111,7 @@
 
                 <!-- Cuota Mensual -->
                 <td>
-                  <span class="fw-semibold">${{ categoria.precio?.cuotaMensual ? (categoria.precio.cuotaMensual |
+                  <span class="fw-semibold">${{ categoria.precio.cuotaMensual ? (categoria.precio.cuotaMensual |
                     number:'1.0-0') : '0' }}</span>
                 </td>
 
@@ -353,7 +353,7 @@
                 <div class="d-flex justify-content-between align-items-center">
                   <span>Potencial Máximo:</span>
                   <span class="fw-bold text-info">${{ (categoriaSeleccionada.cupoMaximo || 0) *
-                    (categoriaSeleccionada.precio?.cuotaMensual || 0) | number:'1.0-0' }}</span>
+                    (categoriaSeleccionada.precio.cuotaMensual || 0) | number:'1.0-0' }}</span>
                 </div>
               </div>
               <div class="progress" style="height: 8px;">
