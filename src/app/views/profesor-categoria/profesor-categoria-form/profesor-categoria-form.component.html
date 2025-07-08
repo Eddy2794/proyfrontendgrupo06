@@ -67,7 +67,7 @@
             <!-- SECCIÓN: ESTADO -->
             <c-col [xs]="12">
               <h5 class="mb-3 text-primary mt-4">
-                <svg cIcon name="cilCheckCircle" size="sm" class="me-2"></svg>
+                <svg cIcon name="cilCheck" size="sm" class="me-2"></svg>
                 Estado
               </h5>
             </c-col>
@@ -89,7 +89,7 @@
             <!-- SECCIÓN: OBSERVACIONES -->
             <c-col [xs]="12">
               <h5 class="mb-3 text-primary mt-4">
-                <svg cIcon name="cilNote" size="sm" class="me-2"></svg>
+                <svg cIcon name="cilNotes" size="sm" class="me-2"></svg>
                 Observaciones
               </h5>
             </c-col>
@@ -108,14 +108,20 @@
             <!-- Botones -->
             <c-col [xs]="12" class="text-center">
               <button cButton class="me-1" color="primary" type="submit" [disabled]="isSubmitting">
-                {{ isEditing ? 'Actualizar' : 'Asignar Categoría' }}
+                <span *ngIf="isSubmitting">
+                  <svg cIcon name="cilLoop" size="sm" class="me-1"></svg>
+                  Procesando...
+                </span>
+                <span *ngIf="!isSubmitting">
+                  {{ isEditing ? 'Actualizar' : 'Asignar Categoría' }}
+                </span>
               </button>
               <button cButton class="me-1" color="danger" type="button" [disabled]="!isEditing || isSubmitting" 
                 (click)="editingId && deleteProfesorCategoria()" *ngIf="isEditing">
                 <svg cIcon name="cilTrash" size="sm"></svg>
                 Eliminar
               </button>
-              <button (click)="onReset()" cButton color="secondary" type="reset" [disabled]="isSubmitting">
+              <button cButton color="secondary" type="reset" [disabled]="isSubmitting">
                 {{ isEditing ? 'Cancelar' : 'Limpiar' }}
               </button>
             </c-col>

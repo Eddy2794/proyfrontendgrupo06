@@ -1,111 +1,306 @@
-<div class="card shadow-sm mb-5">
-  <div class="card-header bg-primary text-white">
-    <h4 class="mb-0">{{ isEdit ? 'Editar Cuota' : 'Nueva Cuota' }}</h4>
-  </div>
-  <div class="card-body">
-    <form (ngSubmit)="guardar()" *ngIf="!loading">
-      <div class="row">
-        <div class="col-md-6 mb-3">
-          <label for="alumno_categoria_id" class="form-label">Alumno - Categoría</label>
-          <select id="alumno_categoria_id" class="form-select" [(ngModel)]="cuota.alumno_categoria_id" name="alumno_categoria_id" required [disabled]="isEdit" #alumno_categoria_id="ngModel">
-            <option [ngValue]="''">Seleccione una relación alumno-categoría</option>
-            <option *ngFor="let r of relacionesAlumnoCategoria" [ngValue]="r._id">{{ getNombreRelacion(r) }}</option>
-          </select>
-          <div *ngIf="alumno_categoria_id.invalid && alumno_categoria_id.touched" class="text-danger small">
-            La relación alumno-categoría es obligatoria.
-          </div>
+<c-row>
+  <c-col xs="12">
+    <c-card class="mb-4">
+      <c-card-header class="d-flex justify-content-between align-items-center">
+        <div>
+          <strong>
+            <svg cIcon name="cilDollar" class="me-2"></svg>
+            {{ isEdit ? 'Editar Cuota' : 'Nueva Cuota' }}
+          </strong>
+          <small class="text-body-secondary ms-2">
+            {{ isEdit ? 'Modificar datos de la cuota' : 'Completar datos de la nueva cuota' }}
+          </small>
         </div>
-        <div class="col-md-6 mb-3">
-          <label for="estado" class="form-label">Estado</label>
-          <select id="estado" class="form-select" [(ngModel)]="cuota.estado" name="estado" required [disabled]="true" #estado="ngModel">
-            <option *ngFor="let e of estados" [ngValue]="e.value">{{ e.label }}</option>
-          </select>
-          <div *ngIf="estado.invalid && estado.touched" class="text-danger small">
-            El estado es obligatorio.
-          </div>
-        </div>
-      </div>
-      <div class="row">
-        <div class="col-md-4 mb-3">
-          <label for="mes" class="form-label">Mes</label>
-          <select id="mes" class="form-select" [(ngModel)]="cuota.mes" name="mes" required #mes="ngModel">
-            <option [ngValue]="''">Seleccione un mes</option>
-            <option *ngFor="let m of meses" [ngValue]="m.value">{{ m.label }}</option>
-          </select>
-          <div *ngIf="mes.invalid && mes.touched" class="text-danger small">
-            El mes es obligatorio.
-          </div>
-        </div>
-        <div class="col-md-4 mb-3">
-          <label for="anio" class="form-label">Año</label>
-          <input id="anio" type="number" class="form-control" [(ngModel)]="cuota.anio" name="anio" required min="2020" max="2030" #anio="ngModel" />
-          <div *ngIf="anio.invalid && anio.touched" class="text-danger small">
-            El año es obligatorio y debe estar entre 2020 y 2030.
-          </div>
-        </div>
-        <div class="col-md-4 mb-3">
-          <label for="fecha_vencimiento" class="form-label">Fecha de Vencimiento</label>
-          <input id="fecha_vencimiento" type="date" class="form-control" [(ngModel)]="cuota.fecha_vencimiento" name="fecha_vencimiento" required #fecha_vencimiento="ngModel" />
-          <div *ngIf="fecha_vencimiento.invalid && fecha_vencimiento.touched" class="text-danger small">
-            La fecha de vencimiento es obligatoria.
-          </div>
-        </div>
-      </div>
-      <div class="row">
-        <div class="col-md-4 mb-3">
-          <label for="monto" class="form-label">Monto</label>
-          <input id="monto" type="number" class="form-control" [(ngModel)]="cuota.monto" name="monto" required min="0" step="0.01" #monto="ngModel" />
-          <div *ngIf="monto.invalid && monto.touched" class="text-danger small">
-            El monto es obligatorio y debe ser mayor o igual a 0.
-          </div>
-        </div>
-        <div class="col-md-4 mb-3">
-          <label for="descuento" class="form-label">Descuento</label>
-          <input id="descuento" type="number" class="form-control" [(ngModel)]="cuota.descuento" name="descuento" min="0" step="0.01" />
-        </div>
-        <div class="col-md-4 mb-3">
-          <label for="recargo" class="form-label">Recargo</label>
-          <input id="recargo" type="number" class="form-control" [(ngModel)]="cuota.recargo" name="recargo" min="0" step="0.01" />
-        </div>
-      </div>
-      <div class="row">
-        <div class="col-md-6 mb-3">
-          <label for="metodo_pago" class="form-label">Método de Pago</label>
-          <input id="metodo_pago" class="form-control" [(ngModel)]="cuota.metodo_pago" name="metodo_pago" />
-        </div>
-        <div class="col-md-6 mb-3">
-          <label for="comprobante_numero" class="form-label">Número de Comprobante</label>
-          <input id="comprobante_numero" class="form-control" [(ngModel)]="cuota.comprobante_numero" name="comprobante_numero" />
-        </div>
-      </div>
-      <div class="row">
-        <div class="col-md-6 mb-3">
-          <label for="fecha_pago" class="form-label">Fecha de Pago</label>
-          <input id="fecha_pago" type="date" class="form-control" [(ngModel)]="cuota.fecha_pago" name="fecha_pago" />
-        </div>
-        <div class="col-md-6 mb-3">
-          <label class="form-label">Total a Pagar</label>
-          <div class="form-control-plaintext fw-bold text-success">
-            {{ calcularTotal() | number:'1.2-2' }}&nbsp;ARS
-          </div>
-        </div>
-      </div>
-      <div class="mb-3">
-        <label for="observaciones" class="form-label">Observaciones</label>
-        <textarea id="observaciones" class="form-control" [(ngModel)]="cuota.observaciones" name="observaciones" rows="3"></textarea>
-        <div class="form-text">Opcional</div>
-      </div>
-      <div class="d-flex justify-content-end gap-3 mt-4">
-        <button type="submit" class="btn btn-success btn-lg px-4">
-          <i class="bi bi-save me-2"></i> Guardar
+        <button 
+          cButton 
+          color="secondary" 
+          variant="outline"
+          size="sm"
+          (click)="cancelar()">
+          <svg cIcon name="cilArrowLeft" class="me-1"></svg>
+          Volver
         </button>
-        <button type="button" class="btn btn-secondary btn-lg px-4" (click)="cancelar()">
-          <i class="bi bi-x-lg me-2"></i> Cancelar
-        </button>
-      </div>
-    </form>
-    <div *ngIf="loading">
-      <p>Cargando...</p>
-    </div>
-  </div>
-</div>
+      </c-card-header>
+      <c-card-body>
+        <!-- Spinner de carga -->
+        <div *ngIf="loading" class="text-center py-4">
+          <c-spinner color="primary"></c-spinner>
+          <p class="mt-2 text-body-secondary">Cargando datos de la cuota...</p>
+        </div>
+
+        <!-- Formulario -->
+        <form *ngIf="!loading && !bloqueoPagada" (ngSubmit)="guardar()" novalidate>
+          <!-- Sección: Datos de la Cuota -->
+          <div class="mb-4">
+            <h5 class="border-bottom pb-2 mb-3">
+              <svg cIcon name="cilDescription" class="me-2"></svg>
+              Datos de la Cuota
+            </h5>
+            <c-row>
+              <c-col md="6">
+                <div class="mb-3">
+                  <label cLabel for="alumno_categoria_id" class="form-label">
+                    Alumno-Categoría <span class="text-danger">*</span>
+                  </label>
+                  <select 
+                    cSelect 
+                    id="alumno_categoria_id" 
+                    [(ngModel)]="cuota.alumno_categoria_id" 
+                    name="alumno_categoria_id" 
+                    required 
+                    [disabled]="isEdit" 
+                    #alumno_categoria_id="ngModel"
+                    [ngClass]="{'is-invalid': alumno_categoria_id.invalid && (alumno_categoria_id.touched || submitted)}">
+                    <option [ngValue]="''">Seleccione una relación alumno-categoría</option>
+                    <option *ngFor="let r of relacionesAlumnoCategoria" [ngValue]="r._id">{{ getNombreRelacion(r) }}</option>
+                  </select>
+                  <c-form-feedback *ngIf="alumno_categoria_id.invalid && (alumno_categoria_id.touched || submitted)" [valid]="false">
+                    La relación alumno-categoría es obligatoria.
+                  </c-form-feedback>
+                </div>
+              </c-col>
+              <c-col md="6">
+                <div class="mb-3">
+                  <label cLabel for="estado" class="form-label">
+                    Estado <span class="text-danger">*</span>
+                  </label>
+                  <select 
+                    cSelect 
+                    id="estado" 
+                    [(ngModel)]="cuota.estado" 
+                    name="estado" 
+                    required 
+                    [disabled]="true" 
+                    #estado="ngModel"
+                    [ngClass]="{'is-invalid': estado.invalid && (estado.touched || submitted)}">
+                    <option *ngFor="let e of estados" [ngValue]="e.value">{{ e.label }}</option>
+                  </select>
+                  <c-form-feedback *ngIf="estado.invalid && (estado.touched || submitted)" [valid]="false">
+                    El estado es obligatorio.
+                  </c-form-feedback>
+                </div>
+              </c-col>
+            </c-row>
+            <c-row>
+              <c-col md="4">
+                <div class="mb-3">
+                  <label cLabel for="mes" class="form-label">
+                    Mes <span class="text-danger">*</span>
+                  </label>
+                  <select 
+                    cSelect 
+                    id="mes" 
+                    [(ngModel)]="cuota.mes" 
+                    name="mes" 
+                    required 
+                    #mes="ngModel"
+                    [ngClass]="{'is-invalid': mes.invalid && (mes.touched || submitted)}">
+                    <option [ngValue]="''">Seleccione un mes</option>
+                    <option *ngFor="let m of meses" [ngValue]="m.value">{{ m.label }}</option>
+                  </select>
+                  <c-form-feedback *ngIf="mes.invalid && (mes.touched || submitted)" [valid]="false">
+                    El mes es obligatorio.
+                  </c-form-feedback>
+                </div>
+              </c-col>
+              <c-col md="4">
+                <div class="mb-3">
+                  <label cLabel for="anio" class="form-label">
+                    Año <span class="text-danger">*</span>
+                  </label>
+                  <input 
+                    cFormControl 
+                    id="anio" 
+                    type="number" 
+                    [(ngModel)]="cuota.anio" 
+                    name="anio" 
+                    required 
+                    min="2020" max="2030" 
+                    #anio="ngModel"
+                    [ngClass]="{'is-invalid': anio.invalid && (anio.touched || submitted)}" />
+                  <c-form-feedback *ngIf="anio.invalid && (anio.touched || submitted)" [valid]="false">
+                    El año es obligatorio y debe estar entre 2020 y 2030.
+                  </c-form-feedback>
+                </div>
+              </c-col>
+              <c-col md="4">
+                <div class="mb-3">
+                  <label cLabel for="fecha_vencimiento" class="form-label">
+                    Fecha de Vencimiento <span class="text-danger">*</span>
+                  </label>
+                  <input 
+                    cFormControl 
+                    id="fecha_vencimiento" 
+                    type="date" 
+                    [(ngModel)]="cuota.fecha_vencimiento" 
+                    name="fecha_vencimiento" 
+                    required 
+                    #fecha_vencimiento="ngModel"
+                    [ngClass]="{'is-invalid': fecha_vencimiento.invalid && (fecha_vencimiento.touched || submitted)}" />
+                  <c-form-feedback *ngIf="fecha_vencimiento.invalid && (fecha_vencimiento.touched || submitted)" [valid]="false">
+                    La fecha de vencimiento es obligatoria.
+                  </c-form-feedback>
+                </div>
+              </c-col>
+            </c-row>
+          </div>
+
+          <!-- Sección: Valores -->
+          <div class="mb-4">
+            <h5 class="border-bottom pb-2 mb-3">
+              <svg cIcon name="cilCalculator" class="me-2"></svg>
+              Valores de la Cuota
+            </h5>
+            <c-row>
+              <c-col md="4">
+                <div class="mb-3">
+                  <label cLabel for="monto" class="form-label">
+                    Monto <span class="text-danger">*</span>
+                  </label>
+                  <input 
+                    cFormControl 
+                    id="monto" 
+                    type="number" 
+                    [(ngModel)]="cuota.monto" 
+                    name="monto" 
+                    required 
+                    min="0" step="0.01" 
+                    #monto="ngModel"
+                    [ngClass]="{'is-invalid': monto.invalid && (monto.touched || submitted)}" />
+                  <c-form-feedback *ngIf="monto.invalid && (monto.touched || submitted)" [valid]="false">
+                    El monto es obligatorio y debe ser mayor o igual a 0.
+                  </c-form-feedback>
+                </div>
+              </c-col>
+              <c-col md="4">
+                <div class="mb-3">
+                  <label cLabel for="descuento" class="form-label">Descuento</label>
+                  <input 
+                    cFormControl 
+                    id="descuento" 
+                    type="number" 
+                    [(ngModel)]="cuota.descuento" 
+                    name="descuento" 
+                    min="0" step="0.01" />
+                </div>
+              </c-col>
+              <c-col md="4">
+                <div class="mb-3">
+                  <label cLabel for="recargo" class="form-label">Recargo</label>
+                  <input 
+                    cFormControl 
+                    id="recargo" 
+                    type="number" 
+                    [(ngModel)]="cuota.recargo" 
+                    name="recargo" 
+                    min="0" step="0.01" />
+                </div>
+              </c-col>
+            </c-row>
+            <c-row *ngIf="cuota.estado === 'PAGA'">
+              <c-col md="6">
+                <div class="mb-3">
+                  <label cLabel for="metodo_pago" class="form-label">Método de Pago</label>
+                  <input 
+                    cFormControl 
+                    id="metodo_pago" 
+                    [(ngModel)]="cuota.metodo_pago" 
+                    name="metodo_pago" />
+                </div>
+              </c-col>
+              <c-col md="6">
+                <div class="mb-3">
+                  <label cLabel for="comprobante_numero" class="form-label">Número de Comprobante</label>
+                  <input 
+                    cFormControl 
+                    id="comprobante_numero" 
+                    [(ngModel)]="cuota.comprobante_numero" 
+                    name="comprobante_numero" />
+                </div>
+              </c-col>
+            </c-row>
+            <c-row *ngIf="cuota.estado === 'PAGA'">
+              <c-col md="6">
+                <div class="mb-3">
+                  <label cLabel for="fecha_pago" class="form-label">Fecha de Pago</label>
+                  <input 
+                    cFormControl 
+                    id="fecha_pago" 
+                    type="date" 
+                    [(ngModel)]="cuota.fecha_pago" 
+                    name="fecha_pago" />
+                </div>
+              </c-col>
+              <c-col md="6">
+                <div class="mb-3">
+                  <label cLabel class="form-label">Total a Pagar</label>
+                  <div class="form-control-plaintext fw-bold text-success">
+                    {{ calcularTotal() | number:'1.2-2' }}&nbsp;ARS
+                  </div>
+                </div>
+              </c-col>
+            </c-row>
+            <c-row *ngIf="cuota.estado !== 'PAGA'">
+              <c-col md="6">
+                <div class="mb-3">
+                  <label cLabel class="form-label">Total a Pagar</label>
+                  <div class="form-control-plaintext fw-bold text-success">
+                    {{ calcularTotal() | number:'1.2-2' }}&nbsp;ARS
+                  </div>
+                </div>
+              </c-col>
+            </c-row>
+          </div>
+
+          <!-- Sección: Observaciones -->
+          <div class="mb-4">
+            <h5 class="border-bottom pb-2 mb-3">
+              <svg cIcon name="cilNote" class="me-2"></svg>
+              Observaciones <small class="text-body-secondary">(Opcional)</small>
+            </h5>
+            <c-row>
+              <c-col md="12">
+                <div class="mb-3">
+                  <label cLabel for="observaciones" class="form-label">Observaciones</label>
+                  <textarea 
+                    cFormControl 
+                    id="observaciones" 
+                    [(ngModel)]="cuota.observaciones" 
+                    name="observaciones"
+                    rows="3"
+                    placeholder="Ingrese observaciones adicionales sobre la cuota..."></textarea>
+                  <div class="form-text">Información adicional relevante sobre la cuota.</div>
+                </div>
+              </c-col>
+            </c-row>
+          </div>
+
+          <!-- Botones de acción -->
+          <div class="d-flex justify-content-end gap-2 pt-3 border-top">
+            <button 
+              type="button"
+              cButton 
+              color="secondary" 
+              (click)="cancelar()">
+              <svg cIcon name="cilX" class="me-1"></svg>
+              Cancelar
+            </button>
+            <button 
+              type="submit"
+              cButton 
+              color="primary"
+              [disabled]="!isFormChanged()"
+            >
+              <svg cIcon name="cilSave" class="me-1"></svg>
+              Guardar
+            </button>
+          </div>
+        </form>
+        <div *ngIf="bloqueoPagada" class="alert alert-warning text-center my-4" role="alert">
+          <svg cIcon name="cilLockLocked" class="me-2"></svg>
+          No se puede editar una cuota que ya está pagada. Serás redirigido automáticamente.
+        </div>
+      </c-card-body>
+    </c-card>
+  </c-col>
+</c-row>

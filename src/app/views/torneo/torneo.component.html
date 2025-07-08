@@ -19,8 +19,17 @@
                 <div>
                     <strong>Torneos</strong>
                 </div>
-                <div>
-                    <button class=" btn btn-primary" (click)="agregar()">NUEVO TORNEO</button>
+                <div class="d-flex gap-2">
+                    <button 
+                      cButton 
+                      color="success" 
+                      size="sm"
+                      (click)="exportarTorneosPDF()"
+                      cTooltip="Exportar lista de torneos a PDF">
+                      <svg cIcon name="cilCloudDownload" class="me-1"></svg>
+                      Exportar PDF
+                    </button>
+                    <button class="btn btn-primary" (click)="agregar()">NUEVO TORNEO</button>
                 </div>
             </c-card-header>
             <c-card-body>

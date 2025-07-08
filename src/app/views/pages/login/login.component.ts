@@ -40,6 +40,16 @@ export class LoginComponent implements OnInit {
     // Manejar token OAuth desde query params
     this.route.queryParams.subscribe(params => {
       const token = params['token'];
+      const error = params['error'];
+      const method = params['method'];
+      const message = params['message'];
+      
+      if (error) {
+        console.error('Error OAuth recibido:', error, message);
+        this.error = message || 'Error en la autenticación con Google.';
+        return;
+      }
+      
       if (token) {
         console.log('Token OAuth recibido en URL');
         // Limpiar cualquier error previo
@@ -52,6 +62,9 @@ export class LoginComponent implements OnInit {
             this.error = 'Error en la autenticación con Google. El token no es válido.';
           }
           // Si success es true, la navegación ya se manejó en el servicio
+        }).catch(error => {
+          console.error('Error en setOAuthToken:', error);
+          this.error = 'Error procesando la autenticación con Google.';
         });
       }
     });

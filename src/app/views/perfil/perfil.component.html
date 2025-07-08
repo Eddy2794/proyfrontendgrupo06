@@ -63,6 +63,18 @@
               {{ isEditing ? 'Cancelar Edición' : 'Editar Perfil' }}
             </button>
             
+            <!-- Botón de exportar perfil -->
+            <button 
+              cButton 
+              color="success" 
+              variant="outline"
+              size="sm"
+              (click)="exportarPerfilPDF()"
+              class="mt-2">
+              <svg cIcon name="cilCloudDownload" class="me-2"></svg>
+              Exportar Perfil PDF
+            </button>
+            
             <!-- Botones de imagen de perfil (solo visible en modo edición) -->
             <div *ngIf="isEditing" class="d-grid gap-2 mt-2">
               <button 

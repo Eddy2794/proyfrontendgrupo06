@@ -1,7 +1,7 @@
 <div class="container-fluid">
   <!-- Componente de notificaciones -->
-<app-notifications></app-notifications>
-  
+  <app-notifications></app-notifications>
+
   <div class="row">
     <div class="col-12">
       <div class="card" [class.border-primary]="!isDarkTheme">
@@ -13,7 +13,8 @@
             </h4>
           </div>
           <small class="d-block mt-1 opacity-75">
-            {{ accion === 'new' ? 'Crear una nueva categoría para la escuela de fútbol' : 'Editar información de la categoría existente' }}
+            {{ accion === 'new' ? 'Crear una nueva categoría para la escuela de fútbol' : 'Editar información de la
+            categoría existente' }}
           </small>
         </div>
         <div class="card-body">
@@ -23,7 +24,8 @@
             </div>
           </div>
 
-          <form #categoriaFormNg="ngForm" (ngSubmit)="guardar()" [validated]="categoriaFormValidated" novalidate cForm *ngIf="!loading">
+          <form #categoriaFormNg="ngForm" (ngSubmit)="guardar()" [validated]="categoriaFormValidated" novalidate cForm
+            *ngIf="!loading">
             <div class="row">
               <!-- Información Básica -->
               <div class="col-md-6">
@@ -31,17 +33,17 @@
                   <svg cIcon name="cil-school" class="me-2 text-primary" size="lg"></svg>
                   <h5 class="mb-0">Información Básica</h5>
                 </div>
-                
+
                 <div class="mb-3">
                   <label for="idNombre" class="form-label">
                     <svg cIcon name="cil-football" class="me-1" size="sm"></svg>
                     Nombre de la Categoría *
                   </label>
-                  <input cFormControl name="nombre" type="text" class="form-control" id="idNombre" 
-                         [(ngModel)]="categoria.nombre" required
-                         #nombre="ngModel"
-                         placeholder="Ej: Sub-10, Infantil, Juvenil A">
-                  <div *ngIf="nombre.invalid && (nombre.touched || nombre.dirty || categoriaFormValidated)" class="invalid-feedback d-block">
+                  <input cFormControl name="nombre" type="text" class="form-control" id="idNombre"
+                    [(ngModel)]="categoria.nombre" required #nombre="ngModel"
+                    [placeholder]="accion === 'new' ? 'Ej: Sub-10, Infantil, Juvenil A' : ''">
+                  <div *ngIf="nombre.invalid && (nombre.touched || nombre.dirty || categoriaFormValidated)"
+                    class="invalid-feedback d-block">
                     El nombre de la categoría es requerido.
                   </div>
                   <div class="form-text">Nombre que identifica la categoría formativa</div>
@@ -50,12 +52,15 @@
                 <div class="mb-3">
                   <label for="idDescripcion" class="form-label">
                     <svg cIcon name="cil-info" class="me-1" size="sm"></svg>
-                    Descripción
+                    Descripción *
                   </label>
-                  <textarea name="descripcion" class="form-control" id="idDescripcion" 
-                            [(ngModel)]="categoria.descripcion" rows="3" 
-                            maxlength="500"
-                            placeholder="Describe los objetivos y características de esta categoría formativa..."></textarea>
+                  <textarea name="descripcion" class="form-control" id="idDescripcion"
+                    [(ngModel)]="categoria.descripcion" rows="3" maxlength="500" required #descripcion="ngModel"
+                    [placeholder]="accion === 'new' ? 'Describe los objetivos y características de esta categoría formativa...' : ''"></textarea>
+                  <div *ngIf="descripcion.invalid && (descripcion.touched || descripcion.dirty || categoriaFormValidated)"
+                    class="invalid-feedback d-block">
+                    La descripción es requerida.
+                  </div>
                   <div class="form-text">Máximo 500 caracteres - Describe el enfoque formativo de la categoría</div>
                 </div>
 
@@ -64,13 +69,13 @@
                     <svg cIcon name="cil-settings" class="me-1" size="sm"></svg>
                     Nivel Formativo *
                   </label>
-                  <select cSelect name="nivel" class="form-select" id="idNivel" 
-                          [(ngModel)]="categoria.nivel" required
-                          #nivel="ngModel">
-                    <option value="" disabled>Selecciona el nivel formativo</option>
+                  <select cSelect name="nivel" class="form-select" id="idNivel" [(ngModel)]="categoria.nivel" required
+                    #nivel="ngModel">
+                    <option value="" disabled>{{ accion === 'new' ? 'Selecciona el nivel formativo' : 'Selecciona el nivel formativo' }}</option>
                     <option *ngFor="let nivel of niveles" [value]="nivel">{{ nivel }}</option>
                   </select>
-                  <div *ngIf="nivel.invalid && (nivel.touched || nivel.dirty || categoriaFormValidated)" class="invalid-feedback d-block">
+                  <div *ngIf="nivel.invalid && (nivel.touched || nivel.dirty || categoriaFormValidated)"
+                    class="invalid-feedback d-block">
                     El nivel formativo es requerido.
                   </div>
                   <div class="form-text">Nivel de desarrollo futbolístico de la categoría</div>
@@ -81,51 +86,34 @@
                     <svg cIcon name="cil-tags" class="me-1" size="sm"></svg>
                     Tipo de Categoría *
                   </label>
-                  <select cSelect name="tipo" class="form-select" id="idTipo" 
-                          [(ngModel)]="categoria.tipo" required
-                          #tipo="ngModel">
-                    <option value="" disabled>Selecciona el tipo de categoría</option>
+                  <select cSelect name="tipo" class="form-select" id="idTipo" [(ngModel)]="categoria.tipo" required
+                    #tipo="ngModel">
+                    <option value="" disabled>{{ accion === 'new' ? 'Selecciona el tipo de categoría' : 'Selecciona el tipo de categoría' }}</option>
                     <option *ngFor="let tipo of tiposCategoria" [value]="tipo">{{ tipo }}</option>
                   </select>
-                  <div *ngIf="tipo.invalid && (tipo.touched || tipo.dirty || categoriaFormValidated)" class="invalid-feedback d-block">
+                  <div *ngIf="tipo.invalid && (tipo.touched || tipo.dirty || categoriaFormValidated)"
+                    class="invalid-feedback d-block">
                     El tipo de categoría es requerido.
                   </div>
                   <div class="form-text">Clasificación de la categoría según edad y enfoque</div>
                 </div>
 
-                <div class="mb-3">
-                  <label for="idProfesor" class="form-label">
-                    <svg cIcon name="cil-user" class="me-1" size="sm"></svg>
-                    Profesor a Cargo
-                  </label>
-                  <select name="profesor" class="form-select" id="idProfesor" 
-                          [(ngModel)]="categoria.profesor">
-                    <option value="" disabled>Selecciona un profesor</option>
-                    <option *ngFor="let profesor of profesores" [value]="profesor._id">
-                      {{ profesor.persona?.nombres }} {{ profesor.persona?.apellidos }}
-                    </option>
-                  </select>
-                  <div class="form-text">Profesor responsable de esta categoría</div>
-                  <div *ngIf="loadingProfesores" class="text-muted small">
-                    <div class="spinner-border spinner-border-sm me-1" role="status"></div>
-                    Cargando profesores...
-                  </div>
-                </div>
+
 
                 <div class="mb-3">
                   <label for="idEstado" class="form-label">
                     <svg cIcon name="cil-group" class="me-1" size="sm"></svg>
                     Estado de la Categoría *
                   </label>
-                  <select cSelect name="estado" class="form-select" id="idEstado" 
-                          [(ngModel)]="categoria.estado" required
-                          #estado="ngModel">
+                  <select cSelect name="estado" class="form-select" id="idEstado" [(ngModel)]="categoria.estado"
+                    required #estado="ngModel">
                     <option value="" disabled>Selecciona el estado</option>
                     <option value="ACTIVA">ACTIVA</option>
                     <option value="INACTIVA">INACTIVA</option>
                     <option value="SUSPENDIDA">SUSPENDIDA</option>
                   </select>
-                  <div *ngIf="estado.invalid && (estado.touched || estado.dirty || categoriaFormValidated)" class="invalid-feedback d-block">
+                  <div *ngIf="estado.invalid && (estado.touched || estado.dirty || categoriaFormValidated)"
+                    class="invalid-feedback d-block">
                     El estado de la categoría es requerido.
                   </div>
                   <div class="form-text">Estado actual de la categoría para inscripciones</div>
@@ -138,7 +126,7 @@
                   <svg cIcon name="cil-settings" class="me-2 text-success" size="lg"></svg>
                   <h5 class="mb-0">Configuración de la Categoría</h5>
                 </div>
-                
+
                 <div class="row">
                   <div class="col-6">
                     <div class="mb-3">
@@ -146,11 +134,12 @@
                         <svg cIcon name="cil-user" class="me-1" size="sm"></svg>
                         Edad Mínima *
                       </label>
-                      <input cFormControl name="edadMinima" type="number" class="form-control" id="idEdadMin" 
-                             [(ngModel)]="categoria.edadMinima" min="3" max="100" required
-                             #edadMinima="ngModel"
-                             placeholder="6">
-                      <div *ngIf="edadMinima.invalid && (edadMinima.touched || edadMinima.dirty || categoriaFormValidated)" class="invalid-feedback d-block">
+                      <input cFormControl name="edadMinima" type="number" class="form-control" id="idEdadMin"
+                        [(ngModel)]="categoria.edadMinima" min="3" max="100" required #edadMinima="ngModel"
+                        [placeholder]="accion === 'new' ? '6' : ''">
+                      <div
+                        *ngIf="edadMinima.invalid && (edadMinima.touched || edadMinima.dirty || categoriaFormValidated)"
+                        class="invalid-feedback d-block">
                         La edad mínima es requerida.
                       </div>
                       <div class="form-text">Años mínimos para ingresar</div>
@@ -162,11 +151,12 @@
                         <svg cIcon name="cil-user" class="me-1" size="sm"></svg>
                         Edad Máxima *
                       </label>
-                      <input cFormControl name="edadMaxima" type="number" class="form-control" id="idEdadMax" 
-                             [(ngModel)]="categoria.edadMaxima" min="3" max="100" required
-                             #edadMaxima="ngModel"
-                             placeholder="10">
-                      <div *ngIf="edadMaxima.invalid && (edadMaxima.touched || edadMaxima.dirty || categoriaFormValidated)" class="invalid-feedback d-block">
+                      <input cFormControl name="edadMaxima" type="number" class="form-control" id="idEdadMax"
+                        [(ngModel)]="categoria.edadMaxima" min="3" max="100" required #edadMaxima="ngModel"
+                        [placeholder]="accion === 'new' ? '10' : ''">
+                      <div
+                        *ngIf="edadMaxima.invalid && (edadMaxima.touched || edadMaxima.dirty || categoriaFormValidated)"
+                        class="invalid-feedback d-block">
                         La edad máxima es requerida.
                       </div>
                       <div class="form-text">Años máximos permitidos</div>
@@ -184,15 +174,32 @@
                       <svg cIcon name="cil-money" size="sm"></svg>
                       $
                     </span>
-                    <input cFormControl name="cuotaMensual" type="number" class="form-control" id="idCuotaMensual" 
-                           [(ngModel)]="categoria.precio.cuotaMensual" min="0" step="0.01" required
-                           #cuotaMensual="ngModel"
-                           placeholder="15000.00">
+                    <input cFormControl name="cuotaMensual" type="number" class="form-control" id="idCuotaMensual"
+                      [(ngModel)]="categoria.precio.cuotaMensual" min="0" step="0.01" required #cuotaMensual="ngModel"
+                      [placeholder]="accion === 'new' ? '15000.00' : ''">
                   </div>
-                  <div *ngIf="cuotaMensual.invalid && (cuotaMensual.touched || cuotaMensual.dirty || categoriaFormValidated)" class="invalid-feedback d-block">
+                  <div
+                    *ngIf="cuotaMensual.invalid && (cuotaMensual.touched || cuotaMensual.dirty || categoriaFormValidated)"
+                    class="invalid-feedback d-block">
                     La cuota mensual es requerida.
                   </div>
                   <div class="form-text">Costo mensual de la categoría formativa</div>
+                </div>
+
+                <div class="mb-3" *ngIf="categoria.precio.descuentos">
+                  <label for="idDescuentoPagoAnual" class="form-label">
+                    <svg cIcon name="cil-dollar" class="me-1" size="sm"></svg>
+                    Descuento Pago Anual (%)
+                  </label>
+                  <div class="input-group">
+                    <input cFormControl name="descuentoPagoAnual" type="number" class="form-control" id="idDescuentoPagoAnual"
+                      [(ngModel)]="categoria.precio.descuentos.pagoAnual" min="0" max="100" step="0.01" #descuentoPagoAnual="ngModel"
+                      [placeholder]="accion === 'new' ? '12.00' : ''">
+                    <span class="input-group-text">
+                      <svg cIcon name="cil-percent" size="sm"></svg>
+                    </span>
+                  </div>
+                  <div class="form-text">Porcentaje de descuento por pago anual anticipado</div>
                 </div>
 
                 <div class="mb-3">
@@ -200,15 +207,17 @@
                     <svg cIcon name="cil-people" class="me-1" size="sm"></svg>
                     Capacidad Máxima *
                   </label>
-                  <input cFormControl name="cupoMaximo" type="number" class="form-control" id="idMaxAlumnos" 
-                         [(ngModel)]="categoria.cupoMaximo" min="1" max="100" required
-                         #cupoMaximo="ngModel"
-                         placeholder="20">
-                  <div *ngIf="cupoMaximo.invalid && (cupoMaximo.touched || cupoMaximo.dirty || categoriaFormValidated)" class="invalid-feedback d-block">
+                  <input cFormControl name="cupoMaximo" type="number" class="form-control" id="idMaxAlumnos"
+                    [(ngModel)]="categoria.cupoMaximo" min="1" max="100" required #cupoMaximo="ngModel"
+                    [placeholder]="accion === 'new' ? '20' : ''">
+                  <div *ngIf="cupoMaximo.invalid && (cupoMaximo.touched || cupoMaximo.dirty || categoriaFormValidated)"
+                    class="invalid-feedback d-block">
                     La capacidad máxima es requerida.
                   </div>
                   <div class="form-text">Número máximo de jugadores por categoría</div>
                 </div>
+
+
               </div>
             </div>
 
@@ -222,8 +231,7 @@
                         <svg cIcon name="cil-clock" class="me-2 text-warning" size="lg"></svg>
                         <h5 class="mb-0">Horarios de Entrenamiento</h5>
                       </div>
-                      <button type="button" class="btn btn-outline-primary btn-sm" 
-                              (click)="agregarHorario()">
+                      <button type="button" class="btn btn-outline-primary btn-sm" (click)="agregarHorario()">
                         <svg cIcon name="cil-plus" class="me-1" size="sm"></svg>
                         Agregar Horario
                       </button>
@@ -232,9 +240,10 @@
                       Define los días y horarios de entrenamiento para esta categoría
                     </small>
                   </div>
-                  
+
                   <div class="card-body">
-                    <div *ngIf="(categoria?.horarios?.length || 0) === 0" class="alert alert-info d-flex align-items-center">
+                    <div *ngIf="(categoria?.horarios?.length || 0) === 0"
+                      class="alert alert-info d-flex align-items-center">
                       <svg cIcon name="cil-info" class="me-2" size="lg"></svg>
                       <div>
                         <strong>No hay horarios configurados</strong><br>
@@ -242,8 +251,8 @@
                       </div>
                     </div>
 
-                    <div *ngFor="let horario of categoria?.horarios; let i = index" 
-                         class="card mb-3 border-start border-warning border-3">
+                    <div *ngFor="let horario of categoria?.horarios; let i = index"
+                      class="card mb-3 border-start border-warning border-3">
                       <div class="card-body">
                         <div class="row align-items-end">
                           <div class="col-md-3">
@@ -251,32 +260,30 @@
                               <svg cIcon name="cil-clock" class="me-1" size="sm"></svg>
                               Día de la Semana
                             </label>
-                            <select class="form-select" [(ngModel)]="horario.dia" 
-                                    [name]="'dia_' + i">
+                            <select class="form-select" [(ngModel)]="horario.dia" [name]="'dia_' + i">
                               <option value="" disabled>Selecciona el día</option>
                               <option *ngFor="let dia of diasSemana" [value]="dia">{{ dia }}</option>
                             </select>
                           </div>
                           <div class="col-md-3">
                             <label class="form-label">
-                               <svg cIcon name="cil-clock" class="me-1" size="sm"></svg>
-                               Hora de Inicio
-                             </label>
-                            <input type="time" class="form-control" [(ngModel)]="horario.hora_inicio" 
-                                   [name]="'hora_inicio_' + i" placeholder="09:00">
+                              <svg cIcon name="cil-clock" class="me-1" size="sm"></svg>
+                              Hora de Inicio
+                            </label>
+                            <input type="time" class="form-control" [(ngModel)]="horario.hora_inicio"
+                              [name]="'hora_inicio_' + i" [placeholder]="accion === 'new' ? '09:00' : ''">
                           </div>
                           <div class="col-md-3">
                             <label class="form-label">
-                               <svg cIcon name="cil-clock" class="me-1" size="sm"></svg>
-                               Hora de Fin
-                             </label>
-                            <input type="time" class="form-control" [(ngModel)]="horario.hora_fin" 
-                                   [name]="'hora_fin_' + i" placeholder="10:00">
+                              <svg cIcon name="cil-clock" class="me-1" size="sm"></svg>
+                              Hora de Fin
+                            </label>
+                            <input type="time" class="form-control" [(ngModel)]="horario.hora_fin"
+                              [name]="'hora_fin_' + i" [placeholder]="accion === 'new' ? '10:00' : ''">
                           </div>
                           <div class="col-md-3">
                             <div class="d-grid">
-                              <button type="button" class="btn btn-outline-danger btn-sm" 
-                                      (click)="eliminarHorario(i)">
+                              <button type="button" class="btn btn-outline-danger btn-sm" (click)="eliminarHorario(i)">
                                 <svg cIcon name="cil-trash" class="me-1" size="sm"></svg>
                                 Eliminar Horario
                               </button>
@@ -289,6 +296,8 @@
                 </div>
               </div>
             </div>
+
+
 
             <!-- Botones de Acción -->
             <div class="row mt-4">
@@ -304,17 +313,16 @@
                         </div>
                       </div>
                       <div class="d-flex gap-2">
-                        <button type="submit" class="btn btn-success" *ngIf="accion == 'new'"
-                                [disabled]="loading">
+                        <button type="submit" class="btn btn-success" *ngIf="accion == 'new'" [disabled]="!canSave">
                           <svg cIcon name="cil-save" class="me-1" size="sm"></svg>
                           {{ loading ? 'Guardando...' : 'Crear Categoría' }}
                         </button>
-                        <button type="submit" class="btn btn-primary" *ngIf="accion == 'update'"
-                                [disabled]="loading">
+                        <button type="submit" class="btn btn-primary" *ngIf="accion == 'update'" [disabled]="!canSave">
                           <svg cIcon name="cil-save" class="me-1" size="sm"></svg>
                           {{ loading ? 'Actualizando...' : 'Actualizar Categoría' }}
                         </button>
-                        <button type="button" class="btn btn-outline-secondary" (click)="cancelar()" [disabled]="loading">
+                        <button type="button" class="btn btn-outline-secondary" (click)="cancelar()"
+                          [disabled]="loading">
                           <svg cIcon name="cil-x" class="me-1" size="sm"></svg>
                           Cancelar
                         </button>

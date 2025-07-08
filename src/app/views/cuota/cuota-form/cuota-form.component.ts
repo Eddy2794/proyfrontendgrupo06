@@ -6,13 +6,38 @@ import { Cuota, CuotaModel, ESTADOS_CUOTA } from '../../../models/cuota.model';
 import { AlumnoCategoria, AlumnoCategoriaModel } from '../../../models/alumno-categoria.model';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
+import { DecimalPipe } from '@angular/common';
+import {
+  RowComponent,
+  ColComponent,
+  CardComponent,
+  CardHeaderComponent,
+  CardBodyComponent,
+  SpinnerComponent,
+  ButtonDirective,
+  FormModule
+} from '@coreui/angular';
+import { IconDirective } from '@coreui/icons-angular';
 
 @Component({
   standalone: true,
   selector: 'app-cuota-form',
   templateUrl: './cuota-form.component.html',
   styleUrls: ['./cuota-form.component.scss'],
-  imports: [FormsModule, CommonModule]
+  imports: [
+    CommonModule,
+    RowComponent,
+    ColComponent,
+    CardComponent,
+    CardHeaderComponent,
+    CardBodyComponent,
+    SpinnerComponent,
+    ButtonDirective,
+    FormModule,
+    IconDirective,
+    FormsModule,
+    DecimalPipe
+  ]
 })
 export class CuotaFormComponent implements OnInit {
   cuota: CuotaModel = new CuotaModel();
@@ -34,6 +59,9 @@ export class CuotaFormComponent implements OnInit {
   ];
   isEdit = false;
   loading = false;
+  originalCuota: any = null;
+  bloqueoPagada = false;
+  submitted = false;
 
   constructor(
     private route: ActivatedRoute,
@@ -43,18 +71,29 @@ export class CuotaFormComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    this.loading = true;
     const id = this.route.snapshot.paramMap.get('id');
     
     // Cargar primero las relaciones alumno-categoría, luego la cuota si es edición
     this.cargarRelacionesAlumnoCategoria().then(() => {
       if (id && id !== '0') {
         this.isEdit = true;
-        this.loading = true;
         this.cuotaService.getCuota(id).subscribe({
           next: (result) => {
             console.log('Datos de la cuota recibidos:', result.data);
             
             this.cuota = CuotaModel.fromJSON(result.data);
+            // Guardar copia original para comparar cambios
+            this.originalCuota = JSON.parse(JSON.stringify(this.cuota));
+            // Si la cuota está pagada, mostrar mensaje visual y redirigir
+            if (this.cuota.estado && this.cuota.estado.toUpperCase() === 'PAGA') {
+              this.loading = false;
+              this.bloqueoPagada = true;
+              setTimeout(() => {
+                this.router.navigate(['/cuota']);
+              }, 2000);
+              return;
+            }
             // Normalizar fecha de vencimiento para el input type="date"
             if (this.cuota.fecha_vencimiento) {
               const fecha = new Date(this.cuota.fecha_vencimiento);
@@ -95,6 +134,7 @@ export class CuotaFormComponent implements OnInit {
         this.cuota.anio = new Date().getFullYear();
         // Estado por defecto
         this.cuota.estado = 'PENDIENTE';
+        this.loading = false;
       }
     });
   }
@@ -124,7 +164,33 @@ export class CuotaFormComponent implements OnInit {
     return (this.cuota.monto - (this.cuota.descuento || 0) + (this.cuota.recargo || 0));
   }
 
+  private normalizarCuota(obj: any): any {
+    return {
+      alumno_categoria_id: obj.alumno_categoria_id || '',
+      mes: (obj.mes || '').toString().toUpperCase(),
+      anio: obj.anio ? obj.anio.toString() : '',
+      monto: obj.monto ? Number(obj.monto) : 0,
+      estado: (obj.estado || '').toString().toUpperCase(),
+      fecha_vencimiento: obj.fecha_vencimiento ? new Date(obj.fecha_vencimiento).toISOString().substring(0, 10) : '',
+      fecha_pago: obj.fecha_pago ? new Date(obj.fecha_pago).toISOString().substring(0, 10) : '',
+      metodo_pago: obj.metodo_pago || '',
+      descuento: obj.descuento ? Number(obj.descuento) : 0,
+      recargo: obj.recargo ? Number(obj.recargo) : 0,
+      observaciones: obj.observaciones ? obj.observaciones.trim() : '',
+      comprobante_numero: obj.comprobante_numero || ''
+    };
+  }
+
   guardar() {
+    this.submitted = true;
+    if (this.isEdit) {
+      const actual = JSON.stringify(this.normalizarCuota(this.cuota));
+      const original = JSON.stringify(this.normalizarCuota(this.originalCuota));
+      if (actual === original) {
+        alert('No se detectaron cambios para guardar.');
+        return;
+      }
+    }
     if (this.isEdit) {
       this.cuotaService.updateCuota(this.cuota).subscribe({
         next: () => {
@@ -150,6 +216,24 @@ export class CuotaFormComponent implements OnInit {
 
   cancelar() {
     this.router.navigate(['/cuota']);
+  }
+
+  isFormChanged(): boolean {
+    if (!this.isEdit || !this.originalCuota) return true;
+    // Compara los campos relevantes
+    const campos = [
+      'alumno_categoria_id', 'mes', 'anio', 'monto', 'estado', 'fecha_vencimiento',
+      'fecha_pago', 'metodo_pago', 'descuento', 'recargo', 'observaciones', 'comprobante_numero'
+    ];
+    for (const campo of campos) {
+      let actual = (this.cuota as any)[campo];
+      let original = (this.originalCuota as any)[campo];
+      // Normalizar fechas a string para comparar
+      if (actual instanceof Date) actual = actual.toISOString();
+      if (original instanceof Date) original = original.toISOString();
+      if ((actual || '') !== (original || '')) return true;
+    }
+    return false;
   }
 
   getNombreRelacion(relacion: any): string {

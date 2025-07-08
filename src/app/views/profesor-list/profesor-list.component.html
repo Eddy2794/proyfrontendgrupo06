@@ -1,30 +1,68 @@
-<!-- Alertas de éxito y error -->
-<c-alert *ngIf="successMessage" color="success" dismissible>
-  {{ successMessage }}
-</c-alert>
-
-<c-alert *ngIf="errorMessage" color="danger" dismissible>
-  {{ errorMessage }}
-</c-alert>
-
-<!-- Tabla de Profesores -->
-<c-row class="mt-5">
-  <c-col [xs]="12">
-    <c-card>
-      <c-card-header>
-        <div class="d-flex justify-content-between align-items-center">
-          <h4>
-            <svg cIcon name="cilList" size="sm"></svg>
-            Lista de Profesores
-          </h4>
-          <button cButton color="primary" (click)="addProfesor()">
-            <svg cIcon name="cilPlus" size="sm" class="me-2"></svg>
+<c-row>
+  <c-col xs="12">
+    <c-card class="mb-4">
+      <c-card-header class="d-flex justify-content-between align-items-center">
+        <div>
+          <strong>Gestión de Profesores</strong>
+        </div>
+        <div class="d-flex gap-2">
+          <button 
+            cButton 
+            color="success" 
+            size="sm"
+            (click)="exportarProfesoresPDF()"
+            cTooltip="Exportar lista de profesores a PDF">
+            <svg cIcon name="cilCloudDownload" class="me-1"></svg>
+            Exportar PDF
+          </button>
+          <button 
+            cButton 
+            color="primary" 
+            size="sm"
+            (click)="addProfesor()"
+            cTooltip="Agregar nuevo profesor">
+            <svg cIcon name="cilPlus" class="me-1"></svg>
             Nuevo Profesor
           </button>
         </div>
       </c-card-header>
+      
       <c-card-body>
-        <div class="table-responsive">
+        <!-- Contador de elementos -->
+        <c-row class="mb-3">
+          <c-col md="12" class="text-end">
+            <small class="text-body-secondary">
+              {{ paginatedItems.length }} de {{ totalItems }} profesores
+            </small>
+          </c-col>
+        </c-row>
+
+        <!-- Mensaje de error -->
+        <c-alert 
+          *ngIf="errorMessage" 
+          color="danger" 
+          [dismissible]="true"
+          (dismissed)="clearMessages()">
+          {{ errorMessage }}
+        </c-alert>
+
+        <!-- Mensaje de éxito -->
+        <c-alert 
+          *ngIf="successMessage" 
+          color="success" 
+          [dismissible]="true"
+          (dismissed)="clearMessages()">
+          {{ successMessage }}
+        </c-alert>
+
+        <!-- Spinner de carga -->
+        <div *ngIf="loading" class="text-center py-4">
+          <c-spinner color="primary"></c-spinner>
+          <p class="mt-2 text-body-secondary">Cargando profesores...</p>
+        </div>
+
+        <!-- Tabla de profesores -->
+        <div *ngIf="!loading" class="table-responsive">
           <table cTable [hover]="true" [striped]="true">
             <thead>
               <tr>
@@ -33,34 +71,249 @@
                 <th scope="col">Nombres</th>
                 <th scope="col">Email</th>
                 <th scope="col">Teléfono</th>
-                <th scope="col">Acciones</th>
+                <th scope="col" class="text-center">Acciones</th>
               </tr>
             </thead>
             <tbody>
-              <tr *ngFor="let profesor of profesores; let i = index">
-                <th scope="row">{{ i + 1 }}</th>
-                <td>{{ profesor.personaData.apellidos}}</td>
-                <td>{{ profesor.personaData.nombres}}</td>
-                <td>{{ profesor.personaData.email}}</td>
-                <td>{{ profesor.personaData.telefono}}</td>
+              <tr *ngFor="let profesor of paginatedItems; trackBy: trackByProfesor; let i = index">
+                <!-- Número -->
+                <th scope="row">{{ (currentPage - 1) * itemsPerPage + i + 1 }}</th>
+
+                <!-- Apellidos -->
                 <td>
-                  <button cButton color="primary" size="sm" class="me-1" (click)="editProfesor(profesor)">
-                    <svg cIcon name="cilPencil" size="sm"></svg>
-                    Actualizar
-                  </button>
-                  <button cButton color="danger" size="sm" (click)="deleteProfesor(profesor._id)">
-                    <svg cIcon name="cilTrash" size="sm"></svg>
-                    Eliminar
-                  </button>
+                  <div class="fw-semibold">{{ profesor.personaData.apellidos }}</div>
+                </td>
+
+                <!-- Nombres -->
+                <td>
+                  <div class="fw-semibold">{{ profesor.personaData.nombres }}</div>
+                </td>
+
+                <!-- Email -->
+                <td>
+                  <div>
+                    <span class="text-primary">{{ profesor.personaData.email }}</span>
+                  </div>
+                </td>
+
+                <!-- Teléfono -->
+                <td>
+                  <div>
+                    <span>{{ profesor.personaData.telefono || 'Sin teléfono' }}</span>
+                  </div>
+                </td>
+
+                <!-- Acciones -->
+                <td class="text-center">
+                  <div class="btn-group" role="group">
+                    <button 
+                      cButton 
+                      size="sm" 
+                      variant="outline" 
+                      color="info"
+                      (click)="abrirDetalles(profesor)"
+                      cTooltip="Ver detalles">
+                      <svg cIcon name="cilInfo" size="sm"></svg>
+                    </button>
+                    
+                    <button 
+                      cButton 
+                      size="sm" 
+                      variant="outline" 
+                      color="primary"
+                      (click)="editProfesor(profesor)"
+                      cTooltip="Editar profesor">
+                      <svg cIcon name="cilPencil" size="sm"></svg>
+                    </button>
+                    
+                    <button 
+                      cButton 
+                      size="sm" 
+                      variant="outline" 
+                      color="danger"
+                      (click)="confirmarEliminacion(profesor)"
+                      cTooltip="Eliminar profesor">
+                      <svg cIcon name="cilTrash" size="sm"></svg>
+                    </button>
+                  </div>
                 </td>
               </tr>
-              <tr *ngIf="profesores.length === 0">
-                <td colspan="6" class="text-center">No hay profesores registrados</td>
+
+              <!-- Mensaje cuando no hay profesores -->
+              <tr *ngIf="paginatedItems.length === 0">
+                <td colspan="6" class="text-center py-4">
+                  <div class="text-body-secondary">
+                    <svg cIcon name="cilUser" size="xl" class="mb-2"></svg>
+                    <p class="mb-0">No se encontraron profesores</p>
+                    <small>Comienza agregando un nuevo profesor</small>
+                  </div>
+                </td>
               </tr>
             </tbody>
           </table>
         </div>
+
+        <!-- Paginación -->
+         <div *ngIf="totalPages > 1" class="d-flex justify-content-center mt-3">
+           <nav aria-label="Paginación de profesores">
+             <ul class="pagination">
+               <li class="page-item" [class.disabled]="currentPage === 1">
+                 <a class="page-link" 
+                    (click)="currentPage > 1 && onPageChange(currentPage - 1)"
+                    style="cursor: pointer;">
+                   Anterior
+                 </a>
+               </li>
+               
+               <li class="page-item" 
+                   *ngFor="let page of [].constructor(totalPages); let i = index"
+                   [class.active]="currentPage === i + 1">
+                 <a class="page-link" 
+                    (click)="onPageChange(i + 1)"
+                    style="cursor: pointer;">
+                   {{ i + 1 }}
+                 </a>
+               </li>
+               
+               <li class="page-item" [class.disabled]="currentPage === totalPages">
+                 <a class="page-link" 
+                    (click)="currentPage < totalPages && onPageChange(currentPage + 1)"
+                    style="cursor: pointer;">
+                   Siguiente
+                 </a>
+               </li>
+             </ul>
+           </nav>
+         </div>
       </c-card-body>
     </c-card>
   </c-col>
 </c-row>
+
+<!-- Modal de detalles de profesor -->
+<c-modal 
+  [visible]="modalDetallesVisible" 
+  (visibleChange)="onModalDetallesChange($event)"
+  size="lg"
+  scrollable="true"
+  id="modalDetallesProfesor">
+  <c-modal-header>
+    <h5 cModalTitle>Detalles del Profesor</h5>
+    <button (click)="cerrarDetalles()" cButtonClose></button>
+  </c-modal-header>
+  <c-modal-body>
+    <div *ngIf="loadingDetalles" class="text-center py-4">
+      <c-spinner color="primary"></c-spinner>
+      <p class="mt-2 text-body-secondary">Cargando detalles...</p>
+    </div>
+    
+    <div *ngIf="!loadingDetalles && profesorSeleccionado">
+      <!-- Información básica -->
+      <div class="row mb-4">
+        <div class="col-md-6">
+          <h6 class="text-body-secondary mb-2">INFORMACIÓN PERSONAL</h6>
+          <div class="mb-3">
+            <strong>Nombre completo:</strong> {{ profesorSeleccionado.personaData.nombres }} {{ profesorSeleccionado.personaData.apellidos }}
+          </div>
+          <div class="mb-3">
+            <strong>Documento:</strong> {{ profesorSeleccionado.personaData.tipoDocumento }} - {{ profesorSeleccionado.personaData.numeroDocumento }}
+          </div>
+          <div class="mb-3">
+            <strong>Fecha de nacimiento:</strong> {{ (profesorSeleccionado.personaData.fechaNacimiento | date:'dd/MM/yyyy') || 'N/A' }}
+          </div>
+          <div class="mb-3">
+            <strong>Género:</strong> {{ profesorSeleccionado.personaData.genero }}
+          </div>
+        </div>
+        <div class="col-md-6">
+          <h6 class="text-body-secondary mb-2">INFORMACIÓN DE CONTACTO</h6>
+          <div class="mb-3">
+            <strong>Email:</strong> {{ profesorSeleccionado.personaData.email }}
+          </div>
+          <div class="mb-3">
+            <strong>Teléfono:</strong> {{ profesorSeleccionado.personaData.telefono || 'No especificado' }}
+          </div>
+          <div class="mb-3">
+            <strong>Dirección:</strong> {{ getDireccionCompleta(profesorSeleccionado) || 'No especificada' }}
+          </div>
+        </div>
+      </div>
+      
+      <!-- Información profesional -->
+      <div class="row mb-4">
+        <div class="col-md-6">
+          <h6 class="text-body-secondary mb-2">INFORMACIÓN PROFESIONAL</h6>
+          <div class="mb-3">
+            <strong>Título:</strong> {{ profesorSeleccionado.titulo }}
+          </div>
+          <div class="mb-3">
+            <strong>Años de experiencia:</strong> 
+            <c-badge [color]="getExperienceBadgeColor(profesorSeleccionado.experiencia_anios)">
+              {{ profesorSeleccionado.experiencia_anios }} años
+            </c-badge>
+          </div>
+          <div class="mb-3">
+            <strong>Fecha de contratación:</strong> {{ (profesorSeleccionado.fecha_contratacion | date:'dd/MM/yyyy') || 'N/A' }}
+          </div>
+          <div class="mb-3">
+            <strong>Salario:</strong> ${{ (profesorSeleccionado.salario || 0) | number:'1.0-0' }}
+          </div>
+        </div>
+        <div class="col-md-6">
+          <h6 class="text-body-secondary mb-2">ESTADÍSTICAS</h6>
+          <div class="mb-3">
+            <strong>Estado:</strong> 
+            <c-badge color="success">Activo</c-badge>
+          </div>
+        </div>
+      </div>
+    </div>
+  </c-modal-body>
+  <c-modal-footer>
+    <button 
+      cButton 
+      color="success" 
+      variant="outline"
+      (click)="exportarProfesorDetallesPDF()"
+      cTooltip="Exportar detalles del profesor a PDF">
+      <svg cIcon name="cilCloudDownload" class="me-1"></svg>
+      Exportar PDF
+    </button>
+    <button (click)="cerrarDetalles()" cButton color="secondary">
+      Cerrar
+    </button>
+  </c-modal-footer>
+</c-modal>
+
+<!-- Modal de confirmación de eliminación -->
+<c-modal 
+  [visible]="modalEliminarVisible" 
+  (visibleChange)="onModalEliminarChange($event)"
+  size="sm"
+  alignment="center"
+  id="modalEliminarProfesor">
+  <c-modal-header>
+    <h5 cModalTitle>Confirmar Eliminación</h5>
+    <button (click)="cerrarModalEliminar()" cButtonClose></button>
+  </c-modal-header>
+  <c-modal-body>
+    <div class="text-center">
+      <svg cIcon name="cilWarning" size="3xl" class="text-warning mb-3"></svg>
+      <h6>¿Está seguro que desea eliminar el profesor?</h6>
+      <p class="text-body-secondary mb-0" *ngIf="profesorAEliminar">
+        <strong>"{{ profesorAEliminar.personaData.nombres }} {{ profesorAEliminar.personaData.apellidos }}"</strong>
+      </p>
+      <p class="text-danger small mt-2">
+        Esta acción no se puede deshacer.
+      </p>
+    </div>
+  </c-modal-body>
+  <c-modal-footer>
+    <button (click)="cerrarModalEliminar()" cButton color="secondary">
+      Cancelar
+    </button>
+    <button (click)="confirmarEliminarProfesor()" cButton color="danger">
+      Eliminar
+    </button>
+  </c-modal-footer>
+</c-modal>
