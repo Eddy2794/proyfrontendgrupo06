@@ -41,7 +41,7 @@
                   </label>
                   <input cFormControl name="nombre" type="text" class="form-control" id="idNombre"
                     [(ngModel)]="categoria.nombre" required #nombre="ngModel"
-                    placeholder="Ej: Sub-10, Infantil, Juvenil A">
+                    [placeholder]="accion === 'new' ? 'Ej: Sub-10, Infantil, Juvenil A' : ''">
                   <div *ngIf="nombre.invalid && (nombre.touched || nombre.dirty || categoriaFormValidated)"
                     class="invalid-feedback d-block">
                     El nombre de la categoría es requerido.
@@ -52,11 +52,15 @@
                 <div class="mb-3">
                   <label for="idDescripcion" class="form-label">
                     <svg cIcon name="cil-info" class="me-1" size="sm"></svg>
-                    Descripción
+                    Descripción *
                   </label>
                   <textarea name="descripcion" class="form-control" id="idDescripcion"
-                    [(ngModel)]="categoria.descripcion" rows="3" maxlength="500"
-                    placeholder="Describe los objetivos y características de esta categoría formativa..."></textarea>
+                    [(ngModel)]="categoria.descripcion" rows="3" maxlength="500" required #descripcion="ngModel"
+                    [placeholder]="accion === 'new' ? 'Describe los objetivos y características de esta categoría formativa...' : ''"></textarea>
+                  <div *ngIf="descripcion.invalid && (descripcion.touched || descripcion.dirty || categoriaFormValidated)"
+                    class="invalid-feedback d-block">
+                    La descripción es requerida.
+                  </div>
                   <div class="form-text">Máximo 500 caracteres - Describe el enfoque formativo de la categoría</div>
                 </div>
 
@@ -67,7 +71,7 @@
                   </label>
                   <select cSelect name="nivel" class="form-select" id="idNivel" [(ngModel)]="categoria.nivel" required
                     #nivel="ngModel">
-                    <option value="" disabled>Selecciona el nivel formativo</option>
+                    <option value="" disabled>{{ accion === 'new' ? 'Selecciona el nivel formativo' : 'Selecciona el nivel formativo' }}</option>
                     <option *ngFor="let nivel of niveles" [value]="nivel">{{ nivel }}</option>
                   </select>
                   <div *ngIf="nivel.invalid && (nivel.touched || nivel.dirty || categoriaFormValidated)"
@@ -84,7 +88,7 @@
                   </label>
                   <select cSelect name="tipo" class="form-select" id="idTipo" [(ngModel)]="categoria.tipo" required
                     #tipo="ngModel">
-                    <option value="" disabled>Selecciona el tipo de categoría</option>
+                    <option value="" disabled>{{ accion === 'new' ? 'Selecciona el tipo de categoría' : 'Selecciona el tipo de categoría' }}</option>
                     <option *ngFor="let tipo of tiposCategoria" [value]="tipo">{{ tipo }}</option>
                   </select>
                   <div *ngIf="tipo.invalid && (tipo.touched || tipo.dirty || categoriaFormValidated)"
@@ -94,23 +98,7 @@
                   <div class="form-text">Clasificación de la categoría según edad y enfoque</div>
                 </div>
 
-                <div class="mb-3">
-                  <label for="idProfesor" class="form-label">
-                    <svg cIcon name="cil-user" class="me-1" size="sm"></svg>
-                    Profesor a Cargo
-                  </label>
-                  <select name="profesor" class="form-select" id="idProfesor" [(ngModel)]="categoria.profesor">
-                    <option value="" disabled>Selecciona un profesor</option>
-                    <option *ngFor="let profesor of profesores" [value]="profesor._id">
-                      {{ profesor.persona?.nombres }} {{ profesor.persona?.apellidos }}
-                    </option>
-                  </select>
-                  <div class="form-text">Profesor responsable de esta categoría</div>
-                  <div *ngIf="loadingProfesores" class="text-muted small">
-                    <div class="spinner-border spinner-border-sm me-1" role="status"></div>
-                    Cargando profesores...
-                  </div>
-                </div>
+
 
                 <div class="mb-3">
                   <label for="idEstado" class="form-label">
@@ -148,7 +136,7 @@
                       </label>
                       <input cFormControl name="edadMinima" type="number" class="form-control" id="idEdadMin"
                         [(ngModel)]="categoria.edadMinima" min="3" max="100" required #edadMinima="ngModel"
-                        placeholder="6">
+                        [placeholder]="accion === 'new' ? '6' : ''">
                       <div
                         *ngIf="edadMinima.invalid && (edadMinima.touched || edadMinima.dirty || categoriaFormValidated)"
                         class="invalid-feedback d-block">
@@ -165,7 +153,7 @@
                       </label>
                       <input cFormControl name="edadMaxima" type="number" class="form-control" id="idEdadMax"
                         [(ngModel)]="categoria.edadMaxima" min="3" max="100" required #edadMaxima="ngModel"
-                        placeholder="10">
+                        [placeholder]="accion === 'new' ? '10' : ''">
                       <div
                         *ngIf="edadMaxima.invalid && (edadMaxima.touched || edadMaxima.dirty || categoriaFormValidated)"
                         class="invalid-feedback d-block">
@@ -188,7 +176,7 @@
                     </span>
                     <input cFormControl name="cuotaMensual" type="number" class="form-control" id="idCuotaMensual"
                       [(ngModel)]="categoria.precio.cuotaMensual" min="0" step="0.01" required #cuotaMensual="ngModel"
-                      placeholder="15000.00">
+                      [placeholder]="accion === 'new' ? '15000.00' : ''">
                   </div>
                   <div
                     *ngIf="cuotaMensual.invalid && (cuotaMensual.touched || cuotaMensual.dirty || categoriaFormValidated)"
@@ -198,6 +186,22 @@
                   <div class="form-text">Costo mensual de la categoría formativa</div>
                 </div>
 
+                <div class="mb-3" *ngIf="categoria.precio.descuentos">
+                  <label for="idDescuentoPagoAnual" class="form-label">
+                    <svg cIcon name="cil-dollar" class="me-1" size="sm"></svg>
+                    Descuento Pago Anual (%)
+                  </label>
+                  <div class="input-group">
+                    <input cFormControl name="descuentoPagoAnual" type="number" class="form-control" id="idDescuentoPagoAnual"
+                      [(ngModel)]="categoria.precio.descuentos.pagoAnual" min="0" max="100" step="0.01" #descuentoPagoAnual="ngModel"
+                      [placeholder]="accion === 'new' ? '12.00' : ''">
+                    <span class="input-group-text">
+                      <svg cIcon name="cil-percent" size="sm"></svg>
+                    </span>
+                  </div>
+                  <div class="form-text">Porcentaje de descuento por pago anual anticipado</div>
+                </div>
+
                 <div class="mb-3">
                   <label for="idMaxAlumnos" class="form-label">
                     <svg cIcon name="cil-people" class="me-1" size="sm"></svg>
@@ -205,7 +209,7 @@
                   </label>
                   <input cFormControl name="cupoMaximo" type="number" class="form-control" id="idMaxAlumnos"
                     [(ngModel)]="categoria.cupoMaximo" min="1" max="100" required #cupoMaximo="ngModel"
-                    placeholder="20">
+                    [placeholder]="accion === 'new' ? '20' : ''">
                   <div *ngIf="cupoMaximo.invalid && (cupoMaximo.touched || cupoMaximo.dirty || categoriaFormValidated)"
                     class="invalid-feedback d-block">
                     La capacidad máxima es requerida.
@@ -267,7 +271,7 @@
                               Hora de Inicio
                             </label>
                             <input type="time" class="form-control" [(ngModel)]="horario.hora_inicio"
-                              [name]="'hora_inicio_' + i" placeholder="09:00">
+                              [name]="'hora_inicio_' + i" [placeholder]="accion === 'new' ? '09:00' : ''">
                           </div>
                           <div class="col-md-3">
                             <label class="form-label">
@@ -275,7 +279,7 @@
                               Hora de Fin
                             </label>
                             <input type="time" class="form-control" [(ngModel)]="horario.hora_fin"
-                              [name]="'hora_fin_' + i" placeholder="10:00">
+                              [name]="'hora_fin_' + i" [placeholder]="accion === 'new' ? '10:00' : ''">
                           </div>
                           <div class="col-md-3">
                             <div class="d-grid">
@@ -293,136 +297,7 @@
               </div>
             </div>
 
-            <!-- Configuración Avanzada -->
-            <div class="row mt-4">
-              <div class="col-12">
-                <div class="card" [ngClass]="isDarkTheme ? 'bg-dark border-secondary' : 'bg-light border-success'">
-                  <div class="card-header" [ngClass]="isDarkTheme ? 'bg-secondary text-light' : 'bg-light text-dark'">
-                    <div class="d-flex align-items-center">
-                      <svg cIcon name="cil-settings" class="me-2 text-success" size="lg"></svg>
-                      <h5 class="mb-0">Configuración Avanzada</h5>
-                    </div>
-                    <small class="d-block mt-1 opacity-75">
-                      Configuración de descuentos, equipamiento y métodos de pago
-                    </small>
-                  </div>
 
-                  <div class="card-body">
-                    <!-- Descuentos -->
-                    <div class="row mb-4">
-                      <div class="col-12">
-                        <h6 class="text-success mb-3">
-                          <svg cIcon name="cil-dollar" class="me-1" size="sm"></svg>
-                          Descuentos Disponibles
-                        </h6>
-                        <div class="row">
-                          <div class="col-md-4">
-                            <div class="mb-3">
-                              <label for="descuentoHermanos" class="form-label">Descuento por Hermanos (%)</label>
-                              <input cFormControl name="descuentoHermanos" type="number" class="form-control"
-                                id="descuentoHermanos" [(ngModel)]="descuentoHermanos" min="0" max="50" step="1"
-                                placeholder="10">
-                              <div class="form-text">Descuento cuando hay hermanos inscritos</div>
-                            </div>
-                          </div>
-                          <div class="col-md-4">
-                            <div class="mb-3">
-                              <label for="descuentoPagoAnual" class="form-label">Descuento Pago Anual (%)</label>
-                              <input cFormControl name="descuentoPagoAnual" type="number" class="form-control"
-                                id="descuentoPagoAnual" [(ngModel)]="descuentoPagoAnual" min="0" max="30" step="1"
-                                placeholder="15">
-                              <div class="form-text">Descuento por pago anual adelantado</div>
-                            </div>
-                          </div>
-                          <div class="col-md-4">
-                            <div class="mb-3">
-                              <label for="descuentoPrimeraVez" class="form-label">Descuento Primera Vez (%)</label>
-                              <input cFormControl name="descuentoPrimeraVez" type="number" class="form-control"
-                                id="descuentoPrimeraVez" [(ngModel)]="descuentoPrimeraVez" min="0" max="25" step="1"
-                                placeholder="5">
-                              <div class="form-text">Descuento para nuevos alumnos</div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <!-- Equipamiento -->
-                    <div class="row mb-4">
-                      <div class="col-md-6">
-                        <h6 class="text-info mb-3">
-                          <svg cIcon name="cil-basketball" class="me-1" size="sm"></svg>
-                          Equipamiento Incluido
-                        </h6>
-                        <div class="mb-3">
-                          <textarea cFormControl name="equipamientoIncluido" class="form-control"
-                            [(ngModel)]="equipamientoIncluidoText" rows="3" placeholder="Ej: Pelota, Conos, Petos">
-                          </textarea>
-                          <div class="form-text">Equipamiento proporcionado por la escuela (separar con comas)</div>
-                        </div>
-                      </div>
-                      <div class="col-md-6">
-                        <h6 class="text-warning mb-3">
-                          <svg cIcon name="cil-briefcase" class="me-1" size="sm"></svg>
-                          Equipamiento Requerido
-                        </h6>
-                        <div class="mb-3">
-                          <textarea cFormControl name="equipamientoRequerido" class="form-control"
-                            [(ngModel)]="equipamientoRequeridoText" rows="3"
-                            placeholder="Ej: Botines, Canilleras, Ropa deportiva">
-                          </textarea>
-                          <div class="form-text">Equipamiento que debe traer el alumno (separar con comas)</div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <!-- Configuración de Pago -->
-                    <div class="row">
-                      <div class="col-12">
-                        <h6 class="text-primary mb-3">
-                          <svg cIcon name="cil-credit-card" class="me-1" size="sm"></svg>
-                          Configuración de Pagos
-                        </h6>
-                        <div class="row">
-                          <div class="col-md-6">
-                            <div class="form-check form-switch mb-3">
-                              <input class="form-check-input" type="checkbox" id="habilitarDescuentos"
-                                [(ngModel)]="habilitarDescuentos" name="habilitarDescuentos">
-                              <label class="form-check-label" for="habilitarDescuentos">
-                                Habilitar sistema de descuentos
-                              </label>
-                            </div>
-                          </div>
-                          <div class="col-md-6">
-                            <label class="form-label">Métodos de Pago Permitidos</label>
-                            <div class="d-flex gap-3">
-                              <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="efectivo"
-                                  [checked]="categoria.configuracionPago?.metodosPermitidos?.includes('EFECTIVO') || false"
-                                  (change)="toggleMetodoPago('EFECTIVO', $event)">
-                                <label class="form-check-label" for="efectivo">Efectivo</label>
-                              </div>
-                              <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="transferencia"
-                                  [checked]="categoria.configuracionPago?.metodosPermitidos?.includes('TRANSFERENCIA') || false"
-                                  (change)="toggleMetodoPago('TRANSFERENCIA', $event)">
-                                <label class="form-check-label" for="transferencia">Transferencia</label>
-                              </div>
-                              <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="mercadopago"
-                                  [checked]="categoria.configuracionPago?.metodosPermitidos?.includes('MERCADOPAGO') || false"
-                                  (change)="toggleMetodoPago('MERCADOPAGO', $event)">
-                                <label class="form-check-label" for="mercadopago">MercadoPago</label>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
 
             <!-- Botones de Acción -->
             <div class="row mt-4">
@@ -438,11 +313,11 @@
                         </div>
                       </div>
                       <div class="d-flex gap-2">
-                        <button type="submit" class="btn btn-success" *ngIf="accion == 'new'" [disabled]="loading">
+                        <button type="submit" class="btn btn-success" *ngIf="accion == 'new'" [disabled]="!canSave">
                           <svg cIcon name="cil-save" class="me-1" size="sm"></svg>
                           {{ loading ? 'Guardando...' : 'Crear Categoría' }}
                         </button>
-                        <button type="submit" class="btn btn-primary" *ngIf="accion == 'update'" [disabled]="loading">
+                        <button type="submit" class="btn btn-primary" *ngIf="accion == 'update'" [disabled]="!canSave">
                           <svg cIcon name="cil-save" class="me-1" size="sm"></svg>
                           {{ loading ? 'Actualizando...' : 'Actualizar Categoría' }}
                         </button>

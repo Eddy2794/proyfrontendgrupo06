@@ -29,17 +29,17 @@ import { ColorModeService } from '@coreui/angular';
 import { Router, RouterModule } from '@angular/router';
 import { Categoria } from '../../models/categoria';
 import { CategoriaService } from '../../services/categoria.service';
-import { ProfesorService } from '../../services/profesor.service';
+
 import { AlumnoCategoriaService } from '../../services/alumno-categoria.service';
 import { TorneoCategoriaService } from '../../services/torneo-categoria.service';
-import { ProfesorCategoriaService } from '../../services/profesor-categoria.service';
+
 import { NotificationService } from '../../services/notification.service';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { debounceTime, Subject } from 'rxjs';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
-import { ProfesorCategoria } from '../../models/profesor-categoria';
+
 
 
 @Component({
@@ -87,7 +87,6 @@ export class CategoriaComponent implements OnInit {
 
   // Nuevos filtros avanzados
   filtroTipo?: string; // undefined, 'ESCUELA', 'COMPETITIVA', 'RECREATIVA'
-  filtroProfesor?: string; // undefined, id del profesor
   filtroPrecioMin?: number; // precio mínimo
   filtroPrecioMax?: number; // precio máximo
   filtroEdadMin?: number; // edad mínima
@@ -126,19 +125,13 @@ export class CategoriaComponent implements OnInit {
   categoriaAEliminar: Categoria | null = null;
 
   // Datos para el modal
-  profesores: any[] = [];
   alumnosCategoria: any[] = [];
   torneosCategoria: any[] = [];
 
-  // Relaciones profesor-categoría
-  profesoresCategorias: any[] = [];
-
   constructor(
     private categoriaService: CategoriaService,
-    private profesorService: ProfesorService,
     private alumnoCategoriaService: AlumnoCategoriaService,
     private torneoCategoriaService: TorneoCategoriaService,
-    private profesorCategoriaService: ProfesorCategoriaService,
     private router: Router,
     private colorModeService: ColorModeService,
     private notificationService: NotificationService,
@@ -156,8 +149,6 @@ export class CategoriaComponent implements OnInit {
 
     // Primero cargar datos relacionados
     Promise.all([
-      this.cargarProfesoresPromise(),
-      this.cargarProfesoresCategoriasPromise(),
       this.cargarAlumnosCategoriaPromise(),
       this.cargarTorneosCategoriasPromise()
     ]).then(() => {
@@ -224,7 +215,6 @@ export class CategoriaComponent implements OnInit {
           console.log('Datos después del mapeo:', {
             totalCategorias: this.categorias.length,
             totalAlumnosCategoria: this.alumnosCategoria.length,
-            totalProfesoresCategorias: this.profesoresCategorias.length,
             primeraCategoria: this.categorias[0]
           });
 
@@ -281,15 +271,7 @@ export class CategoriaComponent implements OnInit {
       categoriasFiltradas = categoriasFiltradas.filter(categoria => categoria.tipo === this.filtroTipo);
     }
 
-    // Filtro por profesor asignado
-    if (this.filtroProfesor) {
-      const categoriasDelProfesor = this.profesoresCategorias
-        .filter(pc => pc.profesorId === this.filtroProfesor)
-        .map(pc => pc.categoriaId);
-      categoriasFiltradas = categoriasFiltradas.filter(categoria =>
-        categoriasDelProfesor.includes(categoria._id)
-      );
-    }
+
 
     // Filtro por rango de precios
     if (this.filtroPrecioMin !== undefined && this.filtroPrecioMin > 0) {
@@ -361,7 +343,7 @@ export class CategoriaComponent implements OnInit {
     this.filtroEstado = undefined;
     this.filtroNivel = undefined;
     this.filtroTipo = undefined;
-    this.filtroProfesor = undefined;
+
     this.filtroPrecioMin = undefined;
     this.filtroPrecioMax = undefined;
     this.filtroEdadMin = undefined;
@@ -387,9 +369,7 @@ export class CategoriaComponent implements OnInit {
     return alumnosActivos * cuota;
   }
 
-  getNombreProfesorAsignado(categoriaId: string): string {
-    return this.getNombreProfesor(categoriaId);
-  }
+
 
   // Métodos para análisis de torneos
   getTorneosActivos(): number {
@@ -647,37 +627,6 @@ export class CategoriaComponent implements OnInit {
   }
 
   // Métodos Promise para carga de datos
-  cargarProfesoresPromise(): Promise<void> {
-    return new Promise((resolve, reject) => {
-      this.profesorService.getProfesoresActivos().subscribe({
-        next: (profesores: any) => {
-          this.profesores = profesores || [];
-          resolve();
-        },
-        error: (error: any) => {
-          console.error('Error al cargar profesores:', error);
-          reject(error);
-        }
-      });
-    });
-  }
-
-  cargarProfesoresCategoriasPromise(): Promise<void> {
-    return new Promise((resolve, reject) => {
-      this.profesorCategoriaService.getProfesorCategorias().subscribe({
-        next: (response: any) => {
-          let rawArray = Array.isArray(response) ? response : (response && Array.isArray(response.data) ? response.data : []);
-          this.profesoresCategorias = rawArray.map((item: any) => ProfesorCategoria.fromJSON(item));
-          resolve();
-        },
-        error: (error: any) => {
-          console.error('Error al cargar relaciones profesor-categoría:', error);
-          this.profesoresCategorias = [];
-          reject(error);
-        }
-      });
-    });
-  }
 
   cargarAlumnosCategoriaPromise(): Promise<void> {
     return new Promise((resolve, reject) => {
@@ -732,32 +681,7 @@ export class CategoriaComponent implements OnInit {
   }
 
   // Método para obtener nombre del profesor
-  getNombreProfesor(categoriaId: string | undefined): string {
-    if (!categoriaId) return 'Sin asignar';
 
-    // Verificar que profesoresCategorias sea un array
-    if (!Array.isArray(this.profesoresCategorias)) {
-      return 'Sin asignar';
-    }
-
-    // Buscar la relación profesor-categoría activa para esta categoría
-    const profesorCategoria = this.profesoresCategorias.find(pc =>
-      (pc.categoria?._id === categoriaId || pc.categoriaId === categoriaId) && 
-      (pc.estado === 'ACTIVO' || pc.activo === true)
-    );
-
-    if (!profesorCategoria) return 'Sin asignar';
-
-    // Obtener el profesor desde la relación
-    const profesor = profesorCategoria.profesor;
-    if (!profesor) return 'Sin asignar';
-
-    // Construir el nombre del profesor
-    const nombres = profesor.persona?.nombres || profesor.personaData?.nombres || profesor.nombres || '';
-    const apellidos = profesor.persona?.apellidos || profesor.personaData?.apellidos || profesor.apellidos || '';
-
-    return `${nombres} ${apellidos}`.trim() || 'Profesor no encontrado';
-  }
 
   // Método para cargar detalles de categoría
   cargarDetallesCategoria(categoriaId: string) {
@@ -839,8 +763,7 @@ export class CategoriaComponent implements OnInit {
     const edadMinima = edades.length > 0 ? Math.min(...edades) : 0;
     const edadMaxima = edades.length > 0 ? Math.max(...edades) : 0;
 
-    // Obtener información del entrenador
-    const nombreEntrenador = this.getNombreProfesor(this.categoriaSeleccionada._id);
+
 
     // Formatear horarios
     const horariosTexto = this.categoriaSeleccionada.horarios && this.categoriaSeleccionada.horarios.length > 0
@@ -873,7 +796,7 @@ export class CategoriaComponent implements OnInit {
             <div><strong>Tipo:</strong> ${this.categoriaSeleccionada.tipo}</div>
             <div><strong>Rango de edad:</strong> ${this.categoriaSeleccionada.edadMinima} - ${this.categoriaSeleccionada.edadMaxima} años</div>
             <div><strong>Cuota mensual:</strong> $${this.categoriaSeleccionada.precio?.cuotaMensual || 0}</div>
-            <div><strong>Entrenador:</strong> ${nombreEntrenador}</div>
+
             <div><strong>Estado:</strong> ${this.categoriaSeleccionada.estado}</div>
           </div>
           <div style="margin-top: 10px;"><strong>Horarios:</strong> ${horariosTexto}</div>

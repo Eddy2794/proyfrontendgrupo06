@@ -81,7 +81,6 @@
                 <th scope="col">Rango de Edad</th>
                 <th scope="col">Cuota Mensual</th>
                 <th scope="col">Ingresos Est.</th>
-                <th scope="col">Profesor</th>
                 <th scope="col">Ocupación</th>
                 <th scope="col">Creación</th>
                 <th scope="col">Estado</th>
@@ -125,12 +124,6 @@
                     <small class="text-body-secondary">{{ categoria.alumnosActuales || 0 }} alumnos</small>
                   </div>
 
-                </td>
-
-                <!-- Profesor -->
-                <td>
-                  <small class="text-body-secondary">{{ categoria._id ? getNombreProfesorAsignado(categoria._id) : 'No
-                    asignado' }}</small>
                 </td>
 
                 <!-- Ocupación -->
@@ -197,7 +190,7 @@
 
               <!-- Mensaje cuando no hay categorías -->
               <tr *ngIf="paginatedItems.length === 0">
-                <td colspan="10" class="text-center py-4">
+                <td colspan="9" class="text-center py-4">
                   <div class="text-body-secondary">
                     <svg cIcon name="cilFolder" size="xl" class="mb-2"></svg>
                     <p class="mb-0">No se encontraron categorías</p>
@@ -282,9 +275,6 @@
         <div class="col-md-6">
           <div class="mb-3">
             <strong>Cuota Mensual:</strong> ${{ (categoriaSeleccionada.precio.cuotaMensual || 0) | number:'1.0-0' }}
-          </div>
-          <div class="mb-3">
-            <strong>Profesor:</strong> {{ getNombreProfesor(categoriaSeleccionada._id) }}
           </div>
           <div class="mb-3">
             <strong>Capacidad:</strong> {{ (categoriaSeleccionada.alumnosActuales || 0) }}/{{
@@ -473,42 +463,7 @@
         </ng-template>
       </div>
 
-      <!-- Torneos participados -->
-      <div class="mb-4">
-        <h6 class="text-body-secondary mb-3">TORNEOS PARTICIPADOS ({{ torneosCategoria.length }})</h6>
-        <div *ngIf="torneosCategoria.length > 0; else noTorneos">
-          <div class="table-responsive">
-            <table class="table table-sm">
-              <thead>
-                <tr>
-                  <th>Torneo</th>
-                  <th>Fecha</th>
-                  <th>Estado</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr *ngFor="let torneoCategoria of torneosCategoria">
-                  <td>
-                    <div>
-                      <strong>{{ torneoCategoria.torneo?.nombre }}</strong><br>
-                      <small class="text-body-secondary">{{ torneoCategoria.torneo?.descripcion }}</small>
-                    </div>
-                  </td>
-                  <td>{{ (torneoCategoria.torneo?.fecha_inicio | date:'dd/MM/yyyy') || 'N/A' }}</td>
-                  <td>
-                    <c-badge [color]="torneoCategoria.estado === 'ACTIVO' ? 'success' : 'secondary'">
-                      {{ torneoCategoria.estado === 'ACTIVO' ? 'Participando' : 'No participando' }}
-                    </c-badge>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-        <ng-template #noTorneos>
-          <p class="text-body-secondary">Esta categoría no ha participado en torneos</p>
-        </ng-template>
-      </div>
+
     </div>
   </c-modal-body>
   <c-modal-footer>

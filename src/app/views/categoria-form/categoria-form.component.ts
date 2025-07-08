@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { Categoria, CategoriaClass, NIVELES, DIAS_SEMANA, TIPOS_CATEGORIA, Horario } from '../../models/categoria';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CategoriaService } from '../../services/categoria.service';
-import { ProfesorService } from '../../services/profesor.service';
+
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { IconDirective } from '@coreui/icons-angular';
@@ -37,66 +37,15 @@ export class CategoriaFormComponent implements OnInit {
   diasSemana = DIAS_SEMANA;
   tiposCategoria = TIPOS_CATEGORIA;
   loading = false;
-  profesores: any[] = [];
-  loadingProfesores = false;
+
   categoriaFormValidated = false;
-  equipamientoIncluidoText: string = '';
-  equipamientoRequeridoText: string = '';
-
-  // Getters y setters para navegación segura
-  get habilitarDescuentos(): boolean {
-    return this.categoria?.configuracionPago?.habilitarDescuentos || false;
-  }
-
-  set habilitarDescuentos(value: boolean) {
-    if (!this.categoria.configuracionPago) {
-      this.categoria.configuracionPago = {
-        habilitarDescuentos: false,
-        metodosPermitidos: ['EFECTIVO', 'TRANSFERENCIA', 'MERCADOPAGO']
-      };
-    }
-    this.categoria.configuracionPago.habilitarDescuentos = value;
-  }
-
-  get descuentoHermanos(): number {
-    return this.categoria?.precio?.descuentos?.hermanos || 0;
-  }
-
-  set descuentoHermanos(value: number) {
-    if (!this.categoria.precio.descuentos) {
-      this.categoria.precio.descuentos = {};
-    }
-    this.categoria.precio.descuentos.hermanos = value;
-  }
-
-  get descuentoPagoAnual(): number {
-    return this.categoria?.precio?.descuentos?.pagoAnual || 0;
-  }
-
-  set descuentoPagoAnual(value: number) {
-    if (!this.categoria.precio.descuentos) {
-      this.categoria.precio.descuentos = {};
-    }
-    this.categoria.precio.descuentos.pagoAnual = value;
-  }
-
-  get descuentoPrimeraVez(): number {
-    return this.categoria?.precio?.descuentos?.primeraVez || 0;
-  }
-
-  set descuentoPrimeraVez(value: number) {
-    if (!this.categoria.precio.descuentos) {
-      this.categoria.precio.descuentos = {};
-    }
-    this.categoria.precio.descuentos.primeraVez = value;
-  }
+  originalFormValue: any = null;
 
 
 
   constructor(
     private activatedRoute: ActivatedRoute, 
     private categoriaService: CategoriaService,
-    private profesorService: ProfesorService,
     private router: Router,
     private notificationService: NotificationService,
     private colorModeService: ColorModeService
@@ -109,7 +58,6 @@ export class CategoriaFormComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.cargarProfesores();
     this.activatedRoute.params.subscribe(params => {
       if (params['id'] == "0") {
         this.accion = "new";
@@ -124,8 +72,7 @@ export class CategoriaFormComponent implements OnInit {
   iniciarVariable() {
     this.categoria = new CategoriaClass();
     this.categoriaFormValidated = false;
-    this.equipamientoIncluidoText = '';
-    this.equipamientoRequeridoText = '';
+    this.originalFormValue = null; // En modo creación no hay valor original
   }
 
   cargarCategoria(id: string) {
@@ -134,9 +81,16 @@ export class CategoriaFormComponent implements OnInit {
       next: result => {
         if (result.success) {
           Object.assign(this.categoria, result.data);
-          // Convertir arrays de equipamiento a texto
-          this.equipamientoIncluidoText = this.categoria.equipamiento?.incluido?.join(', ') || '';
-          this.equipamientoRequeridoText = this.categoria.equipamiento?.requerido?.join(', ') || '';
+          // Asegurar que la estructura de descuentos esté inicializada
+          if (!this.categoria.precio.descuentos) {
+            this.categoria.precio.descuentos = {
+              hermanos: 0,
+              pagoAnual: 0,
+              primeraVez: 0
+            };
+          }
+          // Guardar copia profunda del valor original para comparación
+          this.originalFormValue = JSON.parse(JSON.stringify(this.categoria));
         }
         this.loading = false;
       },
@@ -152,9 +106,6 @@ export class CategoriaFormComponent implements OnInit {
     if (!this.validarFormulario()) {
       return;
     }
-
-    // Preparar equipamiento desde texto
-    this.prepararEquipamiento();
 
     this.loading = true;
     this.categoriaService.updateCategoria(this.categoria._id!, this.categoria).subscribe({
@@ -178,9 +129,6 @@ export class CategoriaFormComponent implements OnInit {
       return;
     }
 
-    // Preparar equipamiento desde texto
-    this.prepararEquipamiento();
-
     // Preparar datos solo con los campos requeridos por el backend
     const categoriaData = {
       nombre: this.categoria.nombre,
@@ -191,14 +139,13 @@ export class CategoriaFormComponent implements OnInit {
       estado: this.categoria.estado,
       precio: {
         cuotaMensual: this.categoria.precio.cuotaMensual,
-        descuentos: this.categoria.precio.descuentos
+        descuentos: {
+          pagoAnual: this.categoria.precio.descuentos?.pagoAnual || 0
+        }
       },
       cupoMaximo: this.categoria.cupoMaximo,
       nivel: this.categoria.nivel,
-      horarios: this.categoria.horarios,
-      profesor: this.categoria.profesor,
-      configuracionPago: this.categoria.configuracionPago,
-      equipamiento: this.categoria.equipamiento
+      horarios: this.categoria.horarios
     };
 
     console.log('Datos de categoría a enviar:', categoriaData);
@@ -227,6 +174,15 @@ export class CategoriaFormComponent implements OnInit {
     // Marcar el formulario como validado para mostrar errores
     this.categoriaFormValidated = true;
     
+    // En modo edición, verificar si hay cambios
+    if (this.accion === 'update' && this.originalFormValue) {
+      const currentFormValue = JSON.parse(JSON.stringify(this.categoria));
+      if (JSON.stringify(currentFormValue) === JSON.stringify(this.originalFormValue)) {
+        this.showWarningToast('Sin cambios', 'No se detectaron cambios para guardar.');
+        return;
+      }
+    }
+    
     if (this.accion === 'new') {
       this.agregarCategoria();
     } else {
@@ -238,6 +194,11 @@ export class CategoriaFormComponent implements OnInit {
     // Validaciones básicas de campos requeridos
     if (!this.categoria?.nombre?.trim()) {
       this.showErrorToast('Campo requerido', 'El nombre de la categoría es obligatorio');
+      return false;
+    }
+
+    if (!this.categoria?.descripcion?.trim()) {
+      this.showErrorToast('Campo requerido', 'La descripción de la categoría es obligatoria');
       return false;
     }
 
@@ -259,6 +220,12 @@ export class CategoriaFormComponent implements OnInit {
 
     if (this.categoria?.nombre?.trim().length > 100) {
       this.showErrorToast('Error en nombre', 'El nombre no puede exceder 100 caracteres');
+      return false;
+    }
+
+    // Validación de longitud de la descripción (sincronizada con backend)
+    if (this.categoria?.descripcion?.trim().length > 500) {
+      this.showErrorToast('Error en descripción', 'La descripción no puede exceder 500 caracteres');
       return false;
     }
 
@@ -398,6 +365,61 @@ export class CategoriaFormComponent implements OnInit {
     this.notificationService.showInfo(title, message);
   }
 
+  /**
+   * Verificar si el formulario está vacío (solo campos principales)
+   */
+  get isFormEmpty(): boolean {
+    return !this.categoria?.nombre?.trim() && 
+           !this.categoria?.descripcion?.trim() &&
+           !this.categoria?.tipo &&
+           !this.categoria?.nivel &&
+           (this.categoria?.edadMinima === 0 || !this.categoria?.edadMinima) &&
+           (this.categoria?.edadMaxima === 0 || !this.categoria?.edadMaxima) &&
+           (this.categoria?.precio?.cuotaMensual === 0 || !this.categoria?.precio?.cuotaMensual) &&
+           (this.categoria?.cupoMaximo === 0 || !this.categoria?.cupoMaximo);
+  }
+
+  /**
+   * Verificar si el formulario es válido (validación básica)
+   */
+  get isFormValid(): boolean {
+    return !!(this.categoria?.nombre?.trim() &&
+             this.categoria?.descripcion?.trim() &&
+             this.categoria?.tipo &&
+             this.categoria?.nivel &&
+             this.categoria?.edadMinima > 0 &&
+             this.categoria?.edadMaxima > 0 &&
+             this.categoria?.edadMinima < this.categoria?.edadMaxima &&
+             this.categoria?.precio?.cuotaMensual >= 0 &&
+             this.categoria?.cupoMaximo > 0);
+  }
+
+  /**
+   * Verificar si hay cambios en modo edición
+   */
+  get hasChanges(): boolean {
+    if (this.accion !== 'update' || !this.originalFormValue) {
+      return true; // En modo creación siempre permitir guardar si es válido
+    }
+    const currentFormValue = JSON.parse(JSON.stringify(this.categoria));
+    return JSON.stringify(currentFormValue) !== JSON.stringify(this.originalFormValue);
+  }
+
+  /**
+   * Determinar si el botón guardar debe estar habilitado
+   */
+  get canSave(): boolean {
+    if (this.loading) {
+      return false;
+    }
+    
+    if (this.accion === 'new') {
+      return !this.isFormEmpty && this.isFormValid;
+    } else {
+      return this.isFormValid && this.hasChanges;
+    }
+  }
+
   agregarHorario() {
     if (this.categoria?.horarios) {
       this.categoria.horarios.push({
@@ -418,57 +440,7 @@ export class CategoriaFormComponent implements OnInit {
     this.router.navigate(['categorias']);
   }
 
-  cargarProfesores() {
-    this.loadingProfesores = true;
-    this.profesorService.getProfesoresActivos().subscribe({
-      next: (profesores) => {
-        this.profesores = profesores || [];
-        this.loadingProfesores = false;
-      },
-      error: (error) => {
-        console.error('Error al cargar profesores:', error);
-        this.showErrorToast('Error', 'No se pudieron cargar los profesores');
-        this.loadingProfesores = false;
-      }
-    });
-  }
 
-  prepararEquipamiento() {
-    // Convertir texto a arrays para equipamiento
-    if (!this.categoria.equipamiento) {
-      this.categoria.equipamiento = { incluido: [], requerido: [] };
-    }
-    
-    this.categoria.equipamiento.incluido = this.equipamientoIncluidoText
-      .split(',')
-      .map(item => item.trim())
-      .filter(item => item.length > 0);
-    
-    this.categoria.equipamiento.requerido = this.equipamientoRequeridoText
-      .split(',')
-      .map(item => item.trim())
-      .filter(item => item.length > 0);
-  }
 
-  toggleMetodoPago(metodo: string, event: any) {
-    if (!this.categoria.configuracionPago) {
-      this.categoria.configuracionPago = {
-        habilitarDescuentos: true,
-        metodosPermitidos: []
-      };
-    }
 
-    const metodosPermitidos = this.categoria.configuracionPago.metodosPermitidos;
-    
-    if (event.target.checked) {
-      if (!metodosPermitidos.includes(metodo)) {
-        metodosPermitidos.push(metodo);
-      }
-    } else {
-      const index = metodosPermitidos.indexOf(metodo);
-      if (index > -1) {
-        metodosPermitidos.splice(index, 1);
-      }
-    }
-  }
 }
