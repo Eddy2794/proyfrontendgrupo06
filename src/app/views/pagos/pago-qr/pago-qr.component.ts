@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, ElementRef, ViewChild } from '@angular/core';
 import { CommonModule, DecimalPipe, CurrencyPipe } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
@@ -11,7 +11,7 @@ import {
   AlertModule,
   FormModule
 } from '@coreui/angular';
-import { QRCodeComponent } from 'angularx-qrcode';
+import * as QRCode from 'qrcode';
 import { Subject, takeUntil, interval, Subscription } from 'rxjs';
 
 import { PagoService } from '../../../services/pago.service';
@@ -35,7 +35,6 @@ import { Categoria, QRPaymentResponse } from '../../../models';
     SpinnerModule,
     AlertModule,
     FormModule,
-    QRCodeComponent,
     DecimalPipe,
     CurrencyPipe
   ],
@@ -43,6 +42,8 @@ import { Categoria, QRPaymentResponse } from '../../../models';
   styleUrls: ['./pago-qr.component.scss']
 })
 export class PagoQrComponent implements OnInit, OnDestroy {
+  @ViewChild('qrCanvas', { static: false }) qrCanvas!: ElementRef<HTMLCanvasElement>;
+  
   private readonly destroy$ = new Subject<void>();
   private readonly router = inject(Router);
   private readonly fb = inject(FormBuilder);
@@ -64,6 +65,7 @@ export class PagoQrComponent implements OnInit, OnDestroy {
   categoriaAlumnoMap: { [categoriaId: string]: any } = {};
   selectedCategoria: Categoria | null = null;
   qrPayment: QRPaymentResponse | null = null;
+  qrCodeDataURL: string = '';
   paymentStatus: 'pending' | 'approved' | 'rejected' | 'expired' | 'checking' = 'pending';
   
   // Timer
@@ -265,6 +267,9 @@ export class PagoQrComponent implements OnInit, OnDestroy {
         this.currentStep = 2;
         this.paymentStatus = 'pending';
         
+        // Generate QR Code
+        await this.generateQRCode();
+        
         // Set expiration time (typically 30 minutes from now)
         this.expirationTime = new Date(Date.now() + 30 * 60 * 1000);
         
@@ -377,5 +382,36 @@ export class PagoQrComponent implements OnInit, OnDestroy {
     } else {
       this.router.navigate(['/pagos']);
     }
+  }
+
+  private async generateQRCode(): Promise<void> {
+    if (!this.qrPayment) return;
+    
+    try {
+      // Use the initPoint URL for the QR code
+      const qrData = this.qrPayment.initPoint || this.qrPayment.qrData || '';
+      
+      if (!qrData) {
+        this.error = 'No se pudo obtener la información del QR';
+        return;
+      }
+      
+      // Generate QR code as data URL
+      this.qrCodeDataURL = await QRCode.toDataURL(qrData, {
+        width: 256,
+        margin: 2,
+        color: {
+          dark: '#000000',
+          light: '#FFFFFF'
+        }
+      });
+    } catch (error) {
+      console.error('Error generating QR code:', error);
+      this.error = 'Error al generar el código QR';
+    }
+  }
+
+  getQRCodeDataURL(): string {
+    return this.qrCodeDataURL;
   }
 }

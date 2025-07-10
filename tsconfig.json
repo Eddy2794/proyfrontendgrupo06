@@ -11,8 +11,8 @@
       "html2canvas": [
         "node_modules/html2canvas"
       ],
-      "angularx-qrcode": [
-        "node_modules/angularx-qrcode"
+      "qrcode": [
+        "node_modules/qrcode"
       ]
     },
     "outDir": "./dist/out-tsc",

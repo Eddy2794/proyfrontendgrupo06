@@ -172,11 +172,15 @@
             <!-- Código QR -->
             <div class="mb-4">
               <div class="d-inline-block p-3 bg-white border rounded shadow-sm">
-                <qrcode 
-                  [qrdata]="qrPayment.initPoint" 
-                  [width]="200" 
-                  [errorCorrectionLevel]="'M'">
-                </qrcode>
+                <img 
+                  *ngIf="qrCodeDataURL" 
+                  [src]="qrCodeDataURL" 
+                  alt="Código QR para pago"
+                  class="qr-code-image"
+                  style="max-width: 200px; height: auto;" />
+                <div *ngIf="!qrCodeDataURL" class="d-flex justify-content-center align-items-center" style="width: 200px; height: 200px;">
+                  <c-spinner></c-spinner>
+                </div>
               </div>
             </div>
 
