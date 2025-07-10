@@ -562,4 +562,34 @@ export class AuthService {
       this.initializeAuth();
     }
   }
+
+  /**
+   * Solicitar reset de contraseña (forgot password)
+   */
+  forgotPassword(email: string): Observable<any> {
+    return this.http.post(`${environment.apiUrl}/auth/forgot-password`, { email });
+  }
+
+  /**
+   * Resetear contraseña con código de verificación
+   */
+  resetPasswordWithCode(data: {
+    email: string;
+    resetCode: string;
+    newPassword: string;
+    confirmPassword: string;
+  }): Observable<any> {
+    return this.http.post(`${environment.apiUrl}/auth/reset-password-with-code`, data);
+  }
+
+  /**
+   * Resetear contraseña simple (sin código)
+   */
+  resetPasswordSimple(data: {
+    email: string;
+    newPassword: string;
+    confirmPassword: string;
+  }): Observable<any> {
+    return this.http.post(`${environment.apiUrl}/auth/reset-password-simple`, data);
+  }
 }

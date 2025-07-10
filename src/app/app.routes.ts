@@ -154,5 +154,12 @@ export const routes: Routes = [
       title: 'Register Page'
     }
   },
+  {
+    path: 'forgot-password',
+    loadComponent: () => import('./views/pages/forgot-password/forgot-password.component').then(m => m.ForgotPasswordComponent),
+    data: {
+      title: 'Recuperar Contraseña'
+    }
+  },
   { path: '**', redirectTo: 'dashboard' }
 ];

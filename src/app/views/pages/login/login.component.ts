@@ -140,4 +140,8 @@ export class LoginComponent implements OnInit {
     const oauthUrl = `${environment.apiUrl}/auth/google`;
     window.location.href = oauthUrl;
   }
+
+  navigateToForgotPassword(): void {
+    this.router.navigate(['/forgot-password']);
+  }
 }
