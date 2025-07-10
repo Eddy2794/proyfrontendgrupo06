@@ -6,7 +6,7 @@
           <strong>Gestión de Categorías</strong>
           <small class="text-body-secondary ms-2">Administrar categorías de entrenamiento</small>
         </div>
-        <button cButton color="primary" size="sm" (click)="agregarCategoria()" cTooltip="Agregar nueva categoría">
+        <button cButton  *ngIf="authService.currentRole === 'ADMIN' || authService.currentRole === 'MODERATOR'" color="primary" size="sm" (click)="agregarCategoria()" cTooltip="Agregar nueva categoría">
           <svg cIcon name="cilPlus" class="me-1"></svg>
           Nueva Categoría
         </button>
@@ -168,19 +168,19 @@
                       <svg cIcon name="cilInfo" size="sm"></svg>
                     </button>
 
-                    <button cButton size="sm" variant="outline" color="primary" (click)="editarCategoria(categoria)"
+                    <button cButton *ngIf="authService.currentRole === 'ADMIN' || authService.currentRole === 'MODERATOR'" size="sm" variant="outline" color="primary" (click)="editarCategoria(categoria)"
                       cTooltip="Editar categoría">
                       <svg cIcon name="cilPencil" size="sm"></svg>
                     </button>
 
-                    <button cButton size="sm" variant="outline"
+                    <button cButton *ngIf="authService.currentRole === 'ADMIN' || authService.currentRole === 'MODERATOR'" size="sm" variant="outline"
                       [color]="getEstadoActivo(categoria) ? 'warning' : 'success'"
                       (click)="cambiarEstadoCategoria(categoria, !getEstadoActivo(categoria))"
                       [cTooltip]="getButtonText(categoria)">
                       <svg cIcon [name]="getButtonIcon(categoria)" size="sm"></svg>
                     </button>
 
-                    <button cButton size="sm" variant="outline" color="danger" (click)="confirmarEliminacion(categoria)"
+                    <button cButton *ngIf="authService.currentRole === 'ADMIN' || authService.currentRole === 'MODERATOR'" size="sm" variant="outline" color="danger" (click)="confirmarEliminacion(categoria)"
                       cTooltip="Eliminar categoría">
                       <svg cIcon name="cilTrash" size="sm"></svg>
                     </button>

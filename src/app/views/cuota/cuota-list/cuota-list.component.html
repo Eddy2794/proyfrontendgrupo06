@@ -8,6 +8,7 @@
         </div>
         <button 
           cButton 
+          *ngIf="authService.currentRole === 'ADMIN' || authService.currentRole === 'MODERATOR'"
           color="success" 
           size="sm"
           (click)="onNuevaCuota()"
@@ -134,13 +135,13 @@
                     <button cButton size="sm" variant="outline" color="info" (click)="onVerDetalle(c)" cTooltip="Ver detalle">
                       <svg cIcon name="cilMagnifyingGlass" size="sm"></svg>
                     </button>
-                    <button cButton size="sm" variant="outline" color="primary" (click)="onModificar(c)" cTooltip="Modificar cuota">
+                    <button cButton *ngIf="authService.currentRole === 'ADMIN' || authService.currentRole === 'MODERATOR'" size="sm" variant="outline" color="primary" (click)="onModificar(c)" cTooltip="Modificar cuota">
                       <svg cIcon name="cilPencil" size="sm"></svg>
                     </button>
-                    <button cButton size="sm" variant="outline" color="danger" (click)="onEliminar(c._id!)" cTooltip="Eliminar cuota">
+                    <button cButton *ngIf="authService.currentRole === 'ADMIN' || authService.currentRole === 'MODERATOR'" size="sm" variant="outline" color="danger" (click)="onEliminar(c._id!)" cTooltip="Eliminar cuota">
                       <svg cIcon name="cilTrash" size="sm"></svg>
                     </button>
-                    <button cButton size="sm" variant="outline" color="success" class="ms-2"
+                    <button cButton *ngIf="authService.currentRole === 'ADMIN' || authService.currentRole === 'MODERATOR'" size="sm" variant="outline" color="success" class="ms-2"
                             (click)="onPagarEfectivo(c)"
                             [disabled]="c.estado === 'PAGA'"
                             cTooltip="Registrar pago">

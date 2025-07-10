@@ -40,7 +40,7 @@ import { CategoriaService } from '../../../services/categoria.service';
 import { User, UserModel } from '../../../models/user.model';
 import { Categoria } from '../../../models/categoria';
 import { AlumnoDetalleModalComponent } from '../alumno-detalle-modal.component';
-
+import {AuthService} from '../../../services/auth.service';
 @Component({
   standalone: true,
   selector: 'app-alumno-list',
@@ -103,7 +103,8 @@ export class AlumnoListComponent implements OnInit, OnDestroy {
     private userService: UserService,
     private categoriaService: CategoriaService,
     private notificationService: NotificationService,
-    private router: Router
+    private router: Router,
+    public authService: AuthService
   ) {}
 
   

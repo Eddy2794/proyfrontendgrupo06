@@ -562,4 +562,11 @@ export class AuthService {
       this.initializeAuth();
     }
   }
+
+  /**
+   * Obtener rol actual del usuario
+   */
+  get currentRole(): string | undefined {
+    return this.currentUser?.rol;
+  }
 }
