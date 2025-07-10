@@ -48,7 +48,8 @@
             "scripts": [],
             "allowedCommonJsDependencies": [
               "chart.js",
-              "lodash-es"
+              "lodash-es",
+              "angularx-qrcode"
             ],
             "stylePreprocessorOptions": {
               "sass": {

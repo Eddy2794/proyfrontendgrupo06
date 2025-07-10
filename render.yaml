@@ -12,7 +12,12 @@ services:
       echo "🔍 Node version: $(node --version)"
       echo "🔍 NPM version: $(npm --version)"
       echo "📦 Installing dependencies..."
+      rm -rf node_modules package-lock.json pnpm-lock.yaml
       pnpm install --no-frozen-lockfile --production=false
+      echo "🔧 Installing angularx-qrcode specifically..."
+      pnpm install angularx-qrcode@^20.0.0
+      echo "🔍 Verifying angularx-qrcode installation..."
+      ls -la node_modules/angularx-qrcode/ || echo "⚠️ angularx-qrcode not found"
       echo "🔍 Verifying Angular CLI installation..."
       if [ -f "node_modules/.bin/ng" ]; then
         echo "✅ Angular CLI found in node_modules"
@@ -21,8 +26,10 @@ services:
         echo "⚠️ Angular CLI not found in node_modules, installing globally..."
         npm install -g @angular/cli@latest
       fi
+      echo "🔧 Clearing Angular cache..."
+      npx ng cache clean || echo "Cache clean skipped"
       echo "🔨 Building application..."
-      npx @angular/cli@latest build --configuration production --verbose
+      npx @angular/cli@latest build --configuration production --verbose --preserve-symlinks
       echo "🔍 Checking build output..."
       if [ -d "dist" ]; then
         echo "✅ dist directory created"
