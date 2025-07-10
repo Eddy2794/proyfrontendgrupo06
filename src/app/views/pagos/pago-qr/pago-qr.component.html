@@ -177,9 +177,13 @@
                   [src]="qrCodeDataURL" 
                   alt="Código QR para pago"
                   class="qr-code-image"
-                  style="max-width: 200px; height: auto;" />
-                <div *ngIf="!qrCodeDataURL" class="d-flex justify-content-center align-items-center" style="width: 200px; height: 200px;">
-                  <c-spinner></c-spinner>
+                  style="max-width: 256px; height: auto; display: block;"
+                  (error)="error = 'Error al cargar el código QR'" />
+                <div *ngIf="!qrCodeDataURL" class="d-flex justify-content-center align-items-center" style="width: 256px; height: 256px;">
+                  <div class="text-center">
+                    <c-spinner></c-spinner>
+                    <p class="mt-2 mb-0 text-muted small">Generando código QR...</p>
+                  </div>
                 </div>
               </div>
             </div>

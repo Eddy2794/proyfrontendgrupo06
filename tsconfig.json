@@ -10,9 +10,6 @@
       ],
       "html2canvas": [
         "node_modules/html2canvas"
-      ],
-      "qrcode": [
-        "node_modules/qrcode"
       ]
     },
     "outDir": "./dist/out-tsc",

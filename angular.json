@@ -48,8 +48,7 @@
             "scripts": [],
             "allowedCommonJsDependencies": [
               "chart.js",
-              "lodash-es",
-              "qrcode"
+              "lodash-es"
             ],
             "stylePreprocessorOptions": {
               "sass": {

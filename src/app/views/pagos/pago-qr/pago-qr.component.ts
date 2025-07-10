@@ -11,7 +11,6 @@ import {
   AlertModule,
   FormModule
 } from '@coreui/angular';
-import * as QRCode from 'qrcode';
 import { Subject, takeUntil, interval, Subscription } from 'rxjs';
 
 import { PagoService } from '../../../services/pago.service';
@@ -268,7 +267,7 @@ export class PagoQrComponent implements OnInit, OnDestroy {
         this.paymentStatus = 'pending';
         
         // Generate QR Code
-        await this.generateQRCode();
+        this.generateQRCode();
         
         // Set expiration time (typically 30 minutes from now)
         this.expirationTime = new Date(Date.now() + 30 * 60 * 1000);
@@ -384,7 +383,7 @@ export class PagoQrComponent implements OnInit, OnDestroy {
     }
   }
 
-  private async generateQRCode(): Promise<void> {
+  private generateQRCode(): void {
     if (!this.qrPayment) return;
     
     try {
@@ -396,19 +395,36 @@ export class PagoQrComponent implements OnInit, OnDestroy {
         return;
       }
       
-      // Generate QR code as data URL
-      this.qrCodeDataURL = await QRCode.toDataURL(qrData, {
-        width: 256,
-        margin: 2,
-        color: {
-          dark: '#000000',
-          light: '#FFFFFF'
-        }
-      });
+      // Use QR Server API to generate QR code image with better parameters
+      const encodedData = encodeURIComponent(qrData);
+      this.qrCodeDataURL = `https://api.qrserver.com/v1/create-qr-code/?size=256x256&format=png&ecc=M&margin=10&data=${encodedData}`;
+      
+      // Add error handling for image loading
+      this.verifyQRImageLoad();
+      
     } catch (error) {
       console.error('Error generating QR code:', error);
       this.error = 'Error al generar el código QR';
     }
+  }
+
+  private verifyQRImageLoad(): void {
+    // Create a test image to verify the QR service is working
+    const testImg = new Image();
+    testImg.onload = () => {
+      // QR loaded successfully
+      console.log('QR code generated successfully');
+    };
+    testImg.onerror = () => {
+      // Fallback to a different QR service
+      console.warn('Primary QR service failed, using fallback');
+      const qrData = this.qrPayment?.initPoint || this.qrPayment?.qrData || '';
+      if (qrData) {
+        const encodedData = encodeURIComponent(qrData);
+        this.qrCodeDataURL = `https://chart.googleapis.com/chart?chs=256x256&cht=qr&chl=${encodedData}`;
+      }
+    };
+    testImg.src = this.qrCodeDataURL;
   }
 
   getQRCodeDataURL(): string {
