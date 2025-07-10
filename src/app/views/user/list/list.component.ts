@@ -121,6 +121,8 @@ export class ListComponent implements OnInit, OnDestroy {
     // Limpiar searchTerm si está vacío o solo contiene espacios
     const cleanSearchTerm = this.searchTerm?.trim() || undefined;
     
+    console.log('Cargando página:', this.currentPage, 'Items por página:', this.itemsPerPage);
+    
     this.userService.getAllUsers(
       this.currentPage, 
       this.itemsPerPage, 
@@ -131,10 +133,25 @@ export class ListComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response) => {
+          console.log('Respuesta del backend:', response);
           if (response.success && response.data) {
             this.users = response.data.users;
-            this.totalItems = response.data.total;
-            this.totalPages = Math.ceil(this.totalItems / this.itemsPerPage);
+            console.log('Usuarios recibidos:', this.users.length, this.users);
+            // El backend devuelve pagination como objeto anidado
+            if (response.data.pagination) {
+              this.totalItems = response.data.pagination.total;
+              this.totalPages = response.data.pagination.pages;
+              console.log('Paginación:', {
+                totalItems: this.totalItems,
+                totalPages: this.totalPages,
+                currentPage: this.currentPage,
+                itemsPerPage: this.itemsPerPage
+              });
+            } else {
+              // Fallback si no hay estructura de paginación
+              this.totalItems = this.users?.length || 0;
+              this.totalPages = 1;
+            }
           }
           this.loading = false;
         },
@@ -300,32 +317,71 @@ export class ListComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Verificar email del usuario (simular - el backend no tiene este endpoint específico)
+   * Verificar email del usuario manualmente
    */
   verifyUserEmail(user: User): void {
     if (!user._id) return;
 
-    // Como no hay endpoint específico, actualizamos el campo emailVerificado
-    this.userService.updateUser(user._id, { })
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (response: any) => {
-          if (response.success) {
-            this.notificationService.showSuccess('Email verificado correctamente');
-            this.loadUsers();
+    const personaName = this.getFullName(user.persona);
+    const personaEmail = this.getPersonaEmail(user.persona);
+    
+    const confirmMessage = `¿Confirmar verificación manual del email?\n\n` +
+                          `Usuario: ${user.username}\n` +
+                          `Nombre: ${personaName}\n` +
+                          `Email: ${personaEmail}\n\n` +
+                          `Esto marcará el email como verificado.`;
+    
+    if (confirm(confirmMessage)) {
+      this.userService.verifyUserEmail(user._id)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: (response: any) => {
+            if (response.success) {
+              this.notificationService.showSuccess('Email verificado correctamente');
+              this.loadUsers();
+            }
+          },
+          error: (error: any) => {
+            this.notificationService.showError('Error al verificar email: ' + (error.error?.message || error.message));
           }
-        },
-        error: (error: any) => {
-          this.notificationService.showError('Error al verificar email: ' + (error.error?.message || error.message));
-        }
-      });
+        });
+    }
   }
 
   /**
-   * Reset password del usuario (no disponible en backend - eliminar funcionalidad)
+   * Reset password del usuario
    */
   resetUserPassword(user: User): void {
-    this.notificationService.showInfo('La funcionalidad de reset de contraseña debe ser implementada en el backend');
+    if (!user._id) {
+      this.notificationService.showError('ID de usuario no válido');
+      return;
+    }
+
+    const userName = this.getFullName(user.persona) || user.username;
+    const confirmMessage = `¿Estás seguro de que quieres resetear la contraseña de ${userName}?\n\nSe generará una contraseña temporal que deberás proporcionar al usuario.`;
+    
+    if (confirm(confirmMessage)) {
+      this.userService.resetUserPassword(user._id)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: (response) => {
+            if (response.success && response.data) {
+              const { temporaryPassword, username } = response.data;
+              
+              // Mostrar la contraseña temporal en un alert
+              const message = `Contraseña reseteada exitosamente para ${username || userName}.\n\nContraseña temporal: ${temporaryPassword}\n\nPor favor, proporciona esta contraseña al usuario y pídele que la cambie en su próximo login.`;
+              
+              alert(message);
+              this.notificationService.showSuccess(`Contraseña reseteada para ${username || userName}`);
+            }
+          },
+          error: (error) => {
+            console.error('Error al resetear contraseña:', error);
+            const errorMessage = error.error?.message || error.message || 'Error desconocido al resetear contraseña';
+            this.notificationService.showError('Error al resetear contraseña: ' + errorMessage);
+          }
+        });
+    }
   }
 
   /**
@@ -359,15 +415,15 @@ export class ListComponent implements OnInit, OnDestroy {
    * Obtener nombre completo de la persona
    */
   getFullName(persona: string | Persona): string {
-    if (typeof persona === 'string') return '';
-    return `${persona.nombres} ${persona.apellidos}`;
+    if (typeof persona === 'string' || !persona) return '';
+    return `${persona.nombres || ''} ${persona.apellidos || ''}`.trim();
   }
 
   /**
    * Obtener email de la persona
    */
   getPersonaEmail(persona: string | Persona): string {
-    if (typeof persona === 'string') return '';
+    if (typeof persona === 'string' || !persona) return '';
     return persona.email || '';
   }
 
@@ -375,7 +431,7 @@ export class ListComponent implements OnInit, OnDestroy {
    * Obtener número de documento de la persona
    */
   getPersonaDocument(persona: string | Persona): string {
-    if (typeof persona === 'string') return '';
+    if (typeof persona === 'string' || !persona) return '';
     return persona.numeroDocumento || '';
   }
 
@@ -395,6 +451,13 @@ export class ListComponent implements OnInit, OnDestroy {
   }
 
   /**
+   * TrackBy function para optimizar la renderización de las páginas
+   */
+  trackByPageNumber(index: number, page: number): number {
+    return page;
+  }
+
+  /**
    * Obtener imagen de avatar del usuario
    */
   getUserAvatar(user: User): string {
@@ -404,5 +467,45 @@ export class ListComponent implements OnInit, OnDestroy {
     }
     // Sino, usar la imagen predeterminada del header
     return './assets/images/avatars/avatar.png';
+  }
+
+  /**
+   * Obtener páginas visibles para la paginación
+   */
+  getVisiblePages(): number[] {
+    const pages: number[] = [];
+    const maxVisiblePages = 5; // Mostrar máximo 5 páginas
+    
+    // Si hay pocas páginas, mostrar todas
+    if (this.totalPages <= maxVisiblePages) {
+      for (let i = 1; i <= this.totalPages; i++) {
+        pages.push(i);
+      }
+      return pages;
+    }
+    
+    // Lógica para muchas páginas
+    let startPage = Math.max(1, this.currentPage - Math.floor(maxVisiblePages / 2));
+    let endPage = Math.min(this.totalPages, startPage + maxVisiblePages - 1);
+    
+    // Ajustar si no hay suficientes páginas al final
+    if (endPage - startPage + 1 < maxVisiblePages) {
+      startPage = Math.max(1, endPage - maxVisiblePages + 1);
+    }
+    
+    for (let i = startPage; i <= endPage; i++) {
+      pages.push(i);
+    }
+    
+    return pages;
+  }
+
+  /**
+   * Obtener información para mostrar en el paginador
+   */
+  getDisplayInfo(): string {
+    const start = (this.currentPage - 1) * this.itemsPerPage + 1;
+    const end = Math.min(this.currentPage * this.itemsPerPage, this.totalItems);
+    return `${start}-${end}`;
   }
 }

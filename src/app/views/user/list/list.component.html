@@ -27,7 +27,7 @@
               </span>
               <input 
                 cFormControl 
-                placeholder="Buscar por nombre, username, email..."
+                placeholder="Buscar por nombre, apellido, username o email..."
                 [value]="searchTerm"
                 (input)="onSearch($any($event.target).value)"
                 type="text">
@@ -67,7 +67,7 @@
           </c-col>
           <c-col md="2" class="text-end">
             <small class="text-body-secondary">
-              {{ users.length }} de {{ totalItems }} usuarios
+              {{ getDisplayInfo() }}
             </small>
           </c-col>
         </c-row>
@@ -129,7 +129,7 @@
                 <td>
                   <div>
                     <div class="small">{{ getPersonaEmail(user.persona) }}</div>
-                    <small class="text-body-secondary" *ngIf="typeof user.persona === 'object' && user.persona.telefono">
+                    <small class="text-body-secondary" *ngIf="user.persona && typeof user.persona === 'object' && user.persona.telefono">
                       {{ user.persona.telefono }}
                     </small>
                   </div>
@@ -137,8 +137,14 @@
 
                 <!-- Rol -->
                 <td>
+                  <c-badge 
+                    [color]="getRoleBadgeColor(user.rol)"
+                    class="me-1">
+                    {{ user.rol }}
+                  </c-badge>
+                  <br>
                   <select 
-                    class="form-select form-select-sm"
+                    class="form-select form-select-sm mt-1"
                     [value]="user.rol"
                     (change)="changeUserRole(user, $any($event.target).value)"
                     cTooltip="Cambiar rol del usuario">
@@ -240,40 +246,58 @@
         </div>
 
         <!-- Paginación -->
-        <nav aria-label="Paginación de usuarios" *ngIf="totalPages > 1">
-          <c-pagination 
-            aria-label="Navegación de páginas"
-            class="justify-content-center mt-3">
-            
-            <c-page-item [disabled]="currentPage === 1">
-              <a cPageLink 
-                 (click)="onPageChange(currentPage - 1)"
-                 [class.disabled]="currentPage === 1"
-                 style="cursor: pointer;">
-                Anterior
-              </a>
-            </c-page-item>
+        <div *ngIf="totalPages > 1" class="d-flex justify-content-between align-items-center mt-3">
+          <!-- Información de registros -->
+          <div class="text-body-secondary">
+            <small>
+              Mostrando {{ getDisplayInfo() }} de {{ totalItems }} usuarios
+              <span *ngIf="searchTerm || selectedStatus || selectedRole"> 
+                (filtrado{{ searchTerm ? ' por "' + searchTerm + '"' : '' }}{{ selectedStatus ? ' - estado: ' + selectedStatus : '' }}{{ selectedRole ? ' - rol: ' + selectedRole : '' }})
+              </span>
+            </small>
+          </div>
 
-            <c-page-item 
-              *ngFor="let page of [].constructor(totalPages); let i = index"
-              [active]="currentPage === i + 1">
-              <a cPageLink 
-                 (click)="onPageChange(i + 1)"
-                 style="cursor: pointer;">
-                {{ i + 1 }}
-              </a>
-            </c-page-item>
+          <!-- Controles de paginación -->
+          <nav aria-label="Paginación de usuarios">
+            <c-pagination 
+              aria-label="Navegación de páginas"
+              class="mb-0">
+              
+              <!-- Botón Anterior -->
+              <c-page-item [disabled]="currentPage === 1">
+                <a cPageLink 
+                   (click)="onPageChange(currentPage - 1)"
+                   [class.disabled]="currentPage === 1"
+                   style="cursor: pointer;"
+                   cTooltip="Página anterior">
+                  Anterior
+                </a>
+              </c-page-item>
 
-            <c-page-item [disabled]="currentPage === totalPages">
-              <a cPageLink 
-                 (click)="onPageChange(currentPage + 1)"
-                 [class.disabled]="currentPage === totalPages"
-                 style="cursor: pointer;">
-                Siguiente
-              </a>
-            </c-page-item>
-          </c-pagination>
-        </nav>
+              <!-- Páginas numeradas -->
+              <c-page-item 
+                *ngFor="let page of getVisiblePages(); trackBy: trackByPageNumber"
+                [active]="currentPage === page">
+                <a cPageLink 
+                   (click)="onPageChange(page)"
+                   style="cursor: pointer;">
+                  {{ page }}
+                </a>
+              </c-page-item>
+
+              <!-- Botón Siguiente -->
+              <c-page-item [disabled]="currentPage === totalPages">
+                <a cPageLink 
+                   (click)="onPageChange(currentPage + 1)"
+                   [class.disabled]="currentPage === totalPages"
+                   style="cursor: pointer;"
+                   cTooltip="Página siguiente">
+                  Siguiente
+                </a>
+              </c-page-item>
+            </c-pagination>
+          </nav>
+        </div>
       </c-card-body>
     </c-card>
   </c-col>
