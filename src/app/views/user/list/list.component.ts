@@ -121,6 +121,8 @@ export class ListComponent implements OnInit, OnDestroy {
     // Limpiar searchTerm si está vacío o solo contiene espacios
     const cleanSearchTerm = this.searchTerm?.trim() || undefined;
     
+    console.log('Cargando página:', this.currentPage, 'Items por página:', this.itemsPerPage);
+    
     this.userService.getAllUsers(
       this.currentPage, 
       this.itemsPerPage, 
@@ -131,12 +133,20 @@ export class ListComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response) => {
+          console.log('Respuesta del backend:', response);
           if (response.success && response.data) {
             this.users = response.data.users;
+            console.log('Usuarios recibidos:', this.users.length, this.users);
             // El backend devuelve pagination como objeto anidado
             if (response.data.pagination) {
               this.totalItems = response.data.pagination.total;
               this.totalPages = response.data.pagination.pages;
+              console.log('Paginación:', {
+                totalItems: this.totalItems,
+                totalPages: this.totalPages,
+                currentPage: this.currentPage,
+                itemsPerPage: this.itemsPerPage
+              });
             } else {
               // Fallback si no hay estructura de paginación
               this.totalItems = this.users?.length || 0;
@@ -405,15 +415,15 @@ export class ListComponent implements OnInit, OnDestroy {
    * Obtener nombre completo de la persona
    */
   getFullName(persona: string | Persona): string {
-    if (typeof persona === 'string') return '';
-    return `${persona.nombres} ${persona.apellidos}`;
+    if (typeof persona === 'string' || !persona) return '';
+    return `${persona.nombres || ''} ${persona.apellidos || ''}`.trim();
   }
 
   /**
    * Obtener email de la persona
    */
   getPersonaEmail(persona: string | Persona): string {
-    if (typeof persona === 'string') return '';
+    if (typeof persona === 'string' || !persona) return '';
     return persona.email || '';
   }
 
@@ -421,7 +431,7 @@ export class ListComponent implements OnInit, OnDestroy {
    * Obtener número de documento de la persona
    */
   getPersonaDocument(persona: string | Persona): string {
-    if (typeof persona === 'string') return '';
+    if (typeof persona === 'string' || !persona) return '';
     return persona.numeroDocumento || '';
   }
 
@@ -438,6 +448,13 @@ export class ListComponent implements OnInit, OnDestroy {
    */
   trackByUserId(index: number, user: User): string {
     return user._id || index.toString();
+  }
+
+  /**
+   * TrackBy function para optimizar la renderización de las páginas
+   */
+  trackByPageNumber(index: number, page: number): number {
+    return page;
   }
 
   /**
@@ -459,6 +476,15 @@ export class ListComponent implements OnInit, OnDestroy {
     const pages: number[] = [];
     const maxVisiblePages = 5; // Mostrar máximo 5 páginas
     
+    // Si hay pocas páginas, mostrar todas
+    if (this.totalPages <= maxVisiblePages) {
+      for (let i = 1; i <= this.totalPages; i++) {
+        pages.push(i);
+      }
+      return pages;
+    }
+    
+    // Lógica para muchas páginas
     let startPage = Math.max(1, this.currentPage - Math.floor(maxVisiblePages / 2));
     let endPage = Math.min(this.totalPages, startPage + maxVisiblePages - 1);
     

@@ -129,7 +129,7 @@
                 <td>
                   <div>
                     <div class="small">{{ getPersonaEmail(user.persona) }}</div>
-                    <small class="text-body-secondary" *ngIf="typeof user.persona === 'object' && user.persona.telefono">
+                    <small class="text-body-secondary" *ngIf="user.persona && typeof user.persona === 'object' && user.persona.telefono">
                       {{ user.persona.telefono }}
                     </small>
                   </div>
@@ -263,6 +263,7 @@
               aria-label="Navegación de páginas"
               class="mb-0">
               
+              <!-- Botón Anterior -->
               <c-page-item [disabled]="currentPage === 1">
                 <a cPageLink 
                    (click)="onPageChange(currentPage - 1)"
@@ -273,27 +274,9 @@
                 </a>
               </c-page-item>
 
-              <!-- Primera página -->
+              <!-- Páginas numeradas -->
               <c-page-item 
-                *ngIf="currentPage > 3"
-                [active]="false">
-                <a cPageLink 
-                   (click)="onPageChange(1)"
-                   style="cursor: pointer;">
-                  1
-                </a>
-              </c-page-item>
-
-              <!-- Puntos suspensivos si es necesario -->
-              <c-page-item 
-                *ngIf="currentPage > 4"
-                [disabled]="true">
-                <span cPageLink>...</span>
-              </c-page-item>
-
-              <!-- Páginas alrededor de la actual -->
-              <c-page-item 
-                *ngFor="let page of getVisiblePages(); let i = index"
+                *ngFor="let page of getVisiblePages(); trackBy: trackByPageNumber"
                 [active]="currentPage === page">
                 <a cPageLink 
                    (click)="onPageChange(page)"
@@ -302,24 +285,7 @@
                 </a>
               </c-page-item>
 
-              <!-- Puntos suspensivos si es necesario -->
-              <c-page-item 
-                *ngIf="currentPage < totalPages - 3"
-                [disabled]="true">
-                <span cPageLink>...</span>
-              </c-page-item>
-
-              <!-- Última página -->
-              <c-page-item 
-                *ngIf="currentPage < totalPages - 2"
-                [active]="false">
-                <a cPageLink 
-                   (click)="onPageChange(totalPages)"
-                   style="cursor: pointer;">
-                  {{ totalPages }}
-                </a>
-              </c-page-item>
-
+              <!-- Botón Siguiente -->
               <c-page-item [disabled]="currentPage === totalPages">
                 <a cPageLink 
                    (click)="onPageChange(currentPage + 1)"
