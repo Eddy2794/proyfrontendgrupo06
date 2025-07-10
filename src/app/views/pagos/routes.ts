@@ -23,6 +23,13 @@ export const routes: Routes = [
     }
   },
   {
+    path: 'pago-qr',
+    loadComponent: () => import('./pago-qr/pago-qr.component').then(m => m.PagoQrComponent),
+    data: {
+      title: 'Pago con QR'
+    }
+  },
+  {
     path: 'pago/:id',
     loadComponent: () => import('./detalle-pago/detalle-pago.component').then(m => m.DetallePagoComponent),
     data: {

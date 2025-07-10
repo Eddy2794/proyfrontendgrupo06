@@ -357,15 +357,24 @@ export class AuthService {
       this.initializeAuth();
     }
     
-    if (this._isAuthenticated && this.tokenSubject.value) {
+    const currentToken = this.tokenSubject.value;
+    if (!currentToken) {
+      console.log('❌ No hay token disponible');
+      return false;
+    }
+    
+    // Verificar si el token está expirado antes de hacer cualquier solicitud
+    if (this.isTokenExpired(currentToken)) {
+      console.log('⏰ Token expirado, limpiando sesión...');
+      this.clearAuth();
+      return false;
+    }
+    
+    if (this._isAuthenticated) {
       return true;
     }
     
-    if (this.tokenSubject.value) {
-      return await this.validateTokenWithBackend();
-    }
-    
-    return false;
+    return await this.validateTokenWithBackend();
   }
 
   /**
@@ -591,5 +600,31 @@ export class AuthService {
     confirmPassword: string;
   }): Observable<any> {
     return this.http.post(`${environment.apiUrl}/auth/reset-password-simple`, data);
+  }
+
+  /**
+   * Verificar si un token JWT está expirado
+   */
+  private isTokenExpired(token: string): boolean {
+    try {
+      const parts = token.split('.');
+      if (parts.length !== 3) {
+        return true; // Token malformado
+      }
+      
+      const payload = JSON.parse(atob(parts[1]));
+      const currentTime = Math.floor(Date.now() / 1000);
+      
+      console.log('🔍 Verificación de expiración del token:');
+      console.log('  - Issued at:', new Date(payload.iat * 1000));
+      console.log('  - Expires at:', new Date(payload.exp * 1000));
+      console.log('  - Current time:', new Date());
+      console.log('  - Is expired:', currentTime > payload.exp);
+      
+      return currentTime > payload.exp;
+    } catch (error) {
+      console.error('Error verificando expiración del token:', error);
+      return true; // En caso de error, considerar expirado
+    }
   }
 }

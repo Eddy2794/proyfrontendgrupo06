@@ -86,6 +86,11 @@ export const navItems: INavData[] = [
         iconComponent: { name: 'cil-plus' }
       },
       {
+        name: 'Pago con QR',
+        url: '/pagos/pago-qr',
+        iconComponent: { name: 'cil-qr-code' }
+      },
+      {
         name: 'Historial',
         url: '/pagos/historial',
         iconComponent: { name: 'cil-history' }
