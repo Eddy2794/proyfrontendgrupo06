@@ -16,6 +16,8 @@ import { CategoriaService } from '../../../services/categoria.service';
 import { MercadoPagoService } from '../../../services/mercadopago.service';
 import { NotificationService } from '../../../services/notification.service';
 import { ConfigService } from '../../../services/config.service';
+import { AuthService } from '../../../services/auth.service';
+import { AlumnoService } from '../../../services/alumno.service';
 import { Categoria, CreatePaymentPreferenceRequest, PaymentPreferenceResponse } from '../../../models';
 import { environment } from '../../../../environments/environment';
 
@@ -241,6 +243,8 @@ export class RealizarPagoComponent implements OnInit, AfterViewInit {
   private mercadopagoService = inject(MercadoPagoService);
   private notificationService = inject(NotificationService);
   private configService = inject(ConfigService);
+  private authService = inject(AuthService);
+  private alumnoService = inject(AlumnoService);
 
   @ViewChild('mercadopagoButton', { static: false }) mercadopagoButton!: ElementRef;
 
@@ -250,8 +254,12 @@ export class RealizarPagoComponent implements OnInit, AfterViewInit {
   successMessage = '';
 
   categorias: Categoria[] = [];
+  categoriasOriginal: Categoria[] = [];
   selectedCategoria: Categoria | null = null;
   paymentPreference: PaymentPreferenceResponse | null = null;
+
+  // Relación categoría-alumno para tutores
+  categoriaAlumnoMap: { [categoriaId: string]: any } = {};
 
   paymentForm: FormGroup = this.fb.group({
     categoriaId: ['', Validators.required],
@@ -273,20 +281,55 @@ export class RealizarPagoComponent implements OnInit, AfterViewInit {
 
     this.categoriaService.getCategoriasActivas().subscribe({
       next: (categorias) => {
-        console.log('✅ Categorías cargadas:', categorias);
-        this.categorias = categorias || [];
-        this.loading = false;
-        
-        if (this.categorias.length === 0) {
-          console.warn('⚠️ No se encontraron categorías activas');
-          this.errorMessage = 'No hay categorías disponibles';
+        this.categoriasOriginal = categorias || [];
+        // Si el usuario es TUTOR, filtrar categorías según los alumnos que tiene como tutor
+        if (this.authService.currentRole === 'TUTOR' && this.authService.currentUser?._id) {
+          const tutorId = this.authService.currentUser._id;
+          this.alumnoService.getAlumnosByTutor(tutorId).subscribe({
+            next: (resp) => {
+              const alumnos = (resp.data || resp.alumnos || resp) || [];
+              // Mapear categoríaId -> alumno
+              this.categoriaAlumnoMap = {};
+              alumnos.forEach((alumno: any) => {
+                let catId = '';
+                if (alumno.categoriaPrincipal && typeof alumno.categoriaPrincipal === 'object' && alumno.categoriaPrincipal._id) {
+                  catId = alumno.categoriaPrincipal._id;
+                } else if (typeof alumno.categoriaPrincipal === 'string') {
+                  catId = alumno.categoriaPrincipal;
+                }
+                if (catId) {
+                  this.categoriaAlumnoMap[catId] = alumno;
+                }
+              });
+              const categoriasTutor = alumnos
+                .map((alumno: any) => {
+                  if (alumno.categoriaPrincipal && typeof alumno.categoriaPrincipal === 'object' && alumno.categoriaPrincipal._id) {
+                    return alumno.categoriaPrincipal._id;
+                  } else if (typeof alumno.categoriaPrincipal === 'string') {
+                    return alumno.categoriaPrincipal;
+                  }
+                  return null;
+                })
+                .filter((id: string | null) => !!id);
+              // Filtrar categorías activas
+              this.categorias = this.categoriasOriginal.filter(cat => categoriasTutor.includes(cat._id));
+              this.loading = false;
+              if (this.categorias.length === 0) {
+                this.errorMessage = 'No tienes categorías disponibles para tus alumnos.';
+              }
+            },
+            error: (error) => {
+              this.categorias = [];
+              this.loading = false;
+              this.errorMessage = 'Error al cargar las categorías de tus alumnos.';
+            }
+          });
         } else {
-          console.log(`📋 ${this.categorias.length} categorías disponibles:`, 
-            this.categorias.map(c => ({ 
-              nombre: c.nombre, 
-              precio: c.precio.cuotaMensual,
-              estado: c.estado 
-            })));
+          this.categorias = this.categoriasOriginal;
+          this.loading = false;
+          if (this.categorias.length === 0) {
+            this.errorMessage = 'No hay categorías disponibles';
+          }
         }
       },
       error: (error) => {
@@ -440,6 +483,20 @@ export class RealizarPagoComponent implements OnInit, AfterViewInit {
   getCategoriaLabel(categoria: Categoria): string {
     const monto = categoria?.precio?.cuotaMensual != null ? categoria.precio.cuotaMensual.toLocaleString('es-AR', { style: 'currency', currency: 'ARS', minimumFractionDigits: 2 }) : '';
     const descuentos = this.getDescuentosLabel(categoria);
+    // Si es tutor, mostrar el nombre del alumno relacionado
+    if (
+      this.authService.currentRole === 'TUTOR' &&
+      categoria && categoria._id && this.categoriaAlumnoMap[categoria._id]
+    ) {
+      const alumno = this.categoriaAlumnoMap[categoria._id];
+      let nombre = 'Alumno';
+      if (alumno.persona_datos) {
+        nombre = `${alumno.persona_datos.nombres} ${alumno.persona_datos.apellidos}`;
+      } else if (alumno.persona && typeof alumno.persona === 'object') {
+        nombre = `${alumno.persona.nombres} ${alumno.persona.apellidos}`;
+      }
+      return `${categoria.nombre} - ${monto}${descuentos ? ' ' + descuentos : ''} (Alumno: ${nombre})`;
+    }
     return `${categoria.nombre} - ${monto}${descuentos ? ' ' + descuentos : ''}`;
   }
 }

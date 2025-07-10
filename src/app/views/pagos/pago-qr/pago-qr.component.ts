@@ -17,6 +17,8 @@ import { Subject, takeUntil, interval, Subscription } from 'rxjs';
 import { PagoService } from '../../../services/pago.service';
 import { CategoriaService } from '../../../services/categoria.service';
 import { NotificationService } from '../../../services/notification.service';
+import { AuthService } from '../../../services/auth.service';
+import { AlumnoService } from '../../../services/alumno.service';
 import { Categoria, QRPaymentResponse } from '../../../models';
 
 @Component({
@@ -47,6 +49,8 @@ export class PagoQrComponent implements OnInit, OnDestroy {
   private readonly pagoService = inject(PagoService);
   private readonly categoriaService = inject(CategoriaService);
   private readonly notificationService = inject(NotificationService);
+  private readonly authService = inject(AuthService);
+  private readonly alumnoService = inject(AlumnoService);
 
   // State
   currentStep = 1;
@@ -55,6 +59,9 @@ export class PagoQrComponent implements OnInit, OnDestroy {
   
   // Data
   categorias: Categoria[] = [];
+  categoriasOriginal: Categoria[] = [];
+  // Relación categoría-alumno para tutores
+  categoriaAlumnoMap: { [categoriaId: string]: any } = {};
   selectedCategoria: Categoria | null = null;
   qrPayment: QRPaymentResponse | null = null;
   paymentStatus: 'pending' | 'approved' | 'rejected' | 'expired' | 'checking' = 'pending';
@@ -120,27 +127,85 @@ export class PagoQrComponent implements OnInit, OnDestroy {
     this.stopStatusChecking();
   }
 
-  async loadCategorias(): Promise<void> {
-    try {
-      this.loading = true;
-      this.error = '';
-      
-      const response = await this.categoriaService.getCategoriasActivas().toPromise();
-      this.categorias = response || [];
-      
-      if (this.categorias.length === 0) {
-        this.error = 'No hay categorías disponibles en este momento.';
+  private loadCategorias() {
+    this.loading = true;
+    this.categoriaService.getCategoriasActivas().subscribe({
+      next: (categorias) => {
+        this.categoriasOriginal = categorias || [];
+        // Si el usuario es TUTOR, filtrar categorías según los alumnos que tiene como tutor
+        if (this.authService.currentRole === 'TUTOR' && this.authService.currentUser?._id) {
+          const tutorId = this.authService.currentUser._id;
+          this.alumnoService.getAlumnosByTutor(tutorId).subscribe({
+            next: (resp) => {
+              const alumnos = (resp.data || resp.alumnos || resp) || [];
+              // Mapear categoríaId -> alumno
+              this.categoriaAlumnoMap = {};
+              alumnos.forEach((alumno: any) => {
+                let catId = '';
+                if (alumno.categoriaPrincipal && typeof alumno.categoriaPrincipal === 'object' && alumno.categoriaPrincipal._id) {
+                  catId = alumno.categoriaPrincipal._id;
+                } else if (typeof alumno.categoriaPrincipal === 'string') {
+                  catId = alumno.categoriaPrincipal;
+                }
+                if (catId) {
+                  this.categoriaAlumnoMap[catId] = alumno;
+                }
+              });
+              const categoriasTutor = alumnos
+                .map((alumno: any) => {
+                  if (alumno.categoriaPrincipal && typeof alumno.categoriaPrincipal === 'object' && alumno.categoriaPrincipal._id) {
+                    return alumno.categoriaPrincipal._id;
+                  } else if (typeof alumno.categoriaPrincipal === 'string') {
+                    return alumno.categoriaPrincipal;
+                  }
+                  return null;
+                })
+                .filter((id: string | null) => !!id);
+              // Filtrar categorías activas
+              this.categorias = this.categoriasOriginal.filter(cat => categoriasTutor.includes(cat._id));
+              this.loading = false;
+              if (this.categorias.length === 0) {
+                this.error = 'No tienes categorías disponibles para tus alumnos.';
+              }
+            },
+            error: (error) => {
+              this.categorias = [];
+              this.loading = false;
+              this.error = 'Error al cargar las categorías de tus alumnos.';
+            }
+          });
+        } else {
+          this.categorias = this.categoriasOriginal;
+          this.loading = false;
+          if (this.categorias.length === 0) {
+            this.error = 'No hay categorías disponibles';
+          }
+        }
+      },
+      error: (error) => {
+        this.error = `Error al cargar las categorías: ${error.message || error.error?.message || 'Error desconocido'}`;
+        this.loading = false;
       }
-    } catch (error: any) {
-      console.error('Error loading categories:', error);
-      this.error = 'Error al cargar las categorías. Por favor, intenta nuevamente.';
-    } finally {
-      this.loading = false;
-    }
+    });
   }
 
   getCategoriaLabel(categoria: Categoria): string {
-    return `${categoria.nombre} - $${categoria.precio.cuotaMensual.toFixed(2)}/mes`;
+    const monto = categoria?.precio?.cuotaMensual != null ? categoria.precio.cuotaMensual.toLocaleString('es-AR', { style: 'currency', currency: 'ARS', minimumFractionDigits: 2 }) : '';
+    // Si es tutor, mostrar el nombre del alumno relacionado
+    if (
+      this.authService.currentRole === 'TUTOR' &&
+      categoria && categoria._id && this.categoriaAlumnoMap[categoria._id]
+    ) {
+      const alumno = this.categoriaAlumnoMap[categoria._id];
+      let nombre = 'Alumno';
+      if (alumno.persona_datos) {
+        nombre = `${alumno.persona_datos.nombres} ${alumno.persona_datos.apellidos}`;
+      } else if (alumno.persona && typeof alumno.persona === 'object') {
+        nombre = `${alumno.persona.nombres} ${alumno.persona.apellidos}`;
+      }
+      return `${categoria.nombre} - ${monto} (Alumno: ${nombre})`;
+    }
+    return `${categoria.nombre} - ${monto}`;
   }
 
   getMesNombre(mesNumero: number): string {

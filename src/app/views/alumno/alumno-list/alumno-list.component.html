@@ -57,6 +57,7 @@
           </c-col>
           <c-col md="2">
             <select 
+              *ngIf="authService.currentRole !== 'TUTOR'"
               class="form-select"
               [value]="selectedTutor || ''"
               (change)="onTutorFilter($any($event.target).value || undefined)"

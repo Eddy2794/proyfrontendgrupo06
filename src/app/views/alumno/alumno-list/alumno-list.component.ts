@@ -169,14 +169,25 @@ ngOnInit(): void {
             // La respuesta del backend tiene estructura: { alumnos: [...], pagination: {...} }
             const alumnosData = response.data.alumnos || response.data || [];
             this.alumnos = alumnosData.map((alumno: any) => AlumnoModel.fromJSON(alumno));
-            this.filteredAlumnos = [...this.alumnos];
-            
+            // Filtrar si el usuario es TUTOR
+            if (this.authService.currentRole === 'TUTOR' && this.authService.currentUser?._id) {
+              const tutorId = this.authService.currentUser._id;
+              this.filteredAlumnos = this.alumnos.filter(a => {
+                // Puede ser string o referencia
+                if (!a.tutor) return false;
+                if (typeof a.tutor === 'string') return a.tutor === tutorId;
+                if (typeof a.tutor === 'object' && a.tutor._id) return a.tutor._id === tutorId;
+                return false;
+              });
+            } else {
+              this.filteredAlumnos = [...this.alumnos];
+            }
             // Si hay paginación, usar esos datos
             if (response.data.pagination) {
               this.totalItems = response.data.pagination.total;
               this.totalPages = response.data.pagination.pages;
             } else {
-              this.totalItems = this.alumnos.length;
+              this.totalItems = this.filteredAlumnos.length;
               this.totalPages = Math.ceil(this.totalItems / this.itemsPerPage);
             }
           }
@@ -298,13 +309,23 @@ ngOnInit(): void {
           if (response.success && response.data) {
             const alumnosData = response.data.alumnos || response.data || [];
             this.alumnos = alumnosData.map((alumno: any) => AlumnoModel.fromJSON(alumno));
-            this.filteredAlumnos = [...this.alumnos];
-            
+            // Filtrar si el usuario es TUTOR
+            if (this.authService.currentRole === 'TUTOR' && this.authService.currentUser?._id) {
+              const tutorId = this.authService.currentUser._id;
+              this.filteredAlumnos = this.alumnos.filter(a => {
+                if (!a.tutor) return false;
+                if (typeof a.tutor === 'string') return a.tutor === tutorId;
+                if (typeof a.tutor === 'object' && a.tutor._id) return a.tutor._id === tutorId;
+                return false;
+              });
+            } else {
+              this.filteredAlumnos = [...this.alumnos];
+            }
             if (response.data.pagination) {
               this.totalItems = response.data.pagination.total;
               this.totalPages = response.data.pagination.pages;
             } else {
-              this.totalItems = this.alumnos.length;
+              this.totalItems = this.filteredAlumnos.length;
               this.totalPages = Math.ceil(this.totalItems / this.itemsPerPage);
             }
           }
