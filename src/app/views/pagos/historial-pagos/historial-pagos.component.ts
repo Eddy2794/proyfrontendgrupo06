@@ -1,6 +1,6 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule, ActivatedRoute } from '@angular/router';
+import { RouterModule, ActivatedRoute, Router } from '@angular/router';
 import { ReactiveFormsModule, FormBuilder, FormGroup } from '@angular/forms';
 import { 
   CardModule, 
@@ -13,6 +13,7 @@ import {
 } from '@coreui/angular';
 
 import { PagoService } from '../../../services/pago.service';
+import { AuthService } from '../../../services/auth.service';
 import { Pago } from '../../../models';
 
 @Component({
@@ -225,7 +226,9 @@ import { Pago } from '../../../models';
 })
 export class HistorialPagosComponent implements OnInit {
   private pagoService = inject(PagoService);
+  private authService = inject(AuthService);
   private route = inject(ActivatedRoute);
+  private router = inject(Router);
   private fb = inject(FormBuilder);
 
   pagos: Pago[] = [];
@@ -248,20 +251,66 @@ export class HistorialPagosComponent implements OnInit {
     });
   }
 
-  ngOnInit() {
-    // Verificar si hay filtros en los query params
-    this.route.queryParams.subscribe(params => {
-      if (params['estado']) {
-        this.filterForm.patchValue({ estado: params['estado'] });
+  async ngOnInit() {
+    console.log('🔄 Iniciando historial de pagos...');
+    
+    try {
+      // Verificar autenticación antes de proceder
+      const isAuth = await this.authService.isAuthenticated();
+      console.log('📋 Estado de autenticación:', isAuth);
+      
+      // Log del token actual para depuración
+      const currentToken = this.authService.token;
+      console.log('🔑 Token actual:', currentToken ? `${currentToken.substring(0, 20)}...` : 'No hay token');
+      
+      // Log del usuario actual
+      const currentUser = this.authService.currentUser;
+      console.log('👤 Usuario actual:', currentUser?.username || 'No definido');
+      
+      // Verificar localStorage también
+      const storedToken = localStorage.getItem('token');
+      console.log('💾 Token en localStorage:', storedToken ? `${storedToken.substring(0, 20)}...` : 'No hay token');
+      
+      if (!isAuth) {
+        console.warn('⚠️ Usuario no autenticado, redirigiendo al login');
+        this.router.navigate(['/login']);
+        return;
       }
-      if (params['tipoPeriodo']) {
-        this.filterForm.patchValue({ tipoPeriodo: params['tipoPeriodo'] });
-      }
-      this.loadPagos();
-    });
+
+      // Verificar si hay filtros en los query params
+      this.route.queryParams.subscribe(params => {
+        if (params['estado']) {
+          this.filterForm.patchValue({ estado: params['estado'] });
+        }
+        if (params['tipoPeriodo']) {
+          this.filterForm.patchValue({ tipoPeriodo: params['tipoPeriodo'] });
+        }
+        this.loadPagos();
+      });
+    } catch (error) {
+      console.error('❌ Error en ngOnInit:', error);
+      this.loading = false;
+    }
   }
 
   loadPagos() {
+    console.log('🔄 Iniciando carga de pagos...');
+    
+    // Verificar autenticación antes de hacer la solicitud
+    const currentToken = this.authService.token;
+    const currentUser = this.authService.currentUser;
+    
+    console.log('🔐 Verificación previa a la solicitud:');
+    console.log('  - Token presente:', !!currentToken);
+    console.log('  - Usuario presente:', !!currentUser);
+    console.log('  - Username:', currentUser?.username || 'No definido');
+    
+    if (!currentToken) {
+      console.error('❌ No hay token disponible para la solicitud');
+      this.router.navigate(['/login']);
+      return;
+    }
+    
     this.loading = true;
     
     const filters = this.filterForm.value;
@@ -278,18 +327,39 @@ export class HistorialPagosComponent implements OnInit {
       queryParams.tipoPeriodo = filters.tipoPeriodo;
     }
 
+    console.log('📋 Parámetros de consulta:', queryParams);
+    console.log('🌐 Realizando solicitud a /api/pagos/historial...');
     this.isFiltered = !!(filters.estado || filters.tipoPeriodo);
 
     this.pagoService.getMyPayments(queryParams).subscribe({
       next: (response) => {
-        this.pagos = response.data;
-        this.totalItems = response.pagination.total;
-        this.totalPages = response.pagination.pages;
+        console.log('✅ Respuesta exitosa del servidor:', response);
+        this.pagos = response.data || [];
+        this.totalItems = response.pagination?.total || 0;
+        this.totalPages = response.pagination?.pages || 1;
         this.loading = false;
+        console.log('📊 Pagos cargados exitosamente:', this.pagos.length);
       },
       error: (error) => {
-        console.error('Error al cargar pagos:', error);
+        console.error('❌ Error al cargar pagos:', error);
+        console.error('📝 Detalles completos del error:', {
+          status: error.status,
+          statusText: error.statusText,
+          message: error.message,
+          url: error.url,
+          error: error.error,
+          headers: error.headers
+        });
+        
+        // Manejo específico para error 401
+        if (error.status === 401) {
+          console.warn('🔒 Token expirado o inválido, limpiando sesión...');
+          this.authService.logout();
+          this.router.navigate(['/login']);
+        }
+        
         this.loading = false;
+        this.pagos = [];
       }
     });
   }

@@ -1,0 +1,270 @@
+<c-row>
+  <c-col lg="8" class="mx-auto">
+    <c-card>
+      <c-card-header>
+        <div class="d-flex align-items-center">
+          <button 
+            cButton 
+            variant="ghost" 
+            color="secondary" 
+            size="sm"
+            class="me-3"
+            (click)="goBack()">
+            ⬅️
+          </button>
+          <h4 class="mb-0">📱 Pago con QR</h4>
+        </div>
+      </c-card-header>
+      <c-card-body>
+        <!-- Paso 1: Selección de categoría y período -->
+        <div *ngIf="currentStep === 1">
+          <h5>Paso 1: Selecciona tu categoría y período</h5>
+          
+          <form [formGroup]="paymentForm" (ngSubmit)="onStepOne()">
+            <!-- Selección de categoría -->
+            <div class="mb-3">
+              <label for="categoria" class="form-label">Categoría de Escuela</label>
+              <select 
+                class="form-select"
+                id="categoria"
+                formControlName="categoriaId">
+                <option value="">Selecciona una categoría</option>
+                <option *ngFor="let categoria of categorias" [value]="categoria._id">{{ getCategoriaLabel(categoria) }}</option>
+              </select>
+              <div *ngIf="paymentForm.get('categoriaId')?.invalid && paymentForm.get('categoriaId')?.touched" 
+                   class="text-danger small mt-1">
+                Selecciona una categoría
+              </div>
+            </div>
+
+            <!-- Información de la categoría seleccionada -->
+            <c-card *ngIf="selectedCategoria" class="mb-3 border-info">
+              <c-card-body>
+                <h6>{{ selectedCategoria.nombre }}</h6>
+                <p class="text-body-secondary mb-2">{{ selectedCategoria.descripcion }}</p>
+                <div class="row">
+                  <div class="col-md-6">
+                    <small><strong>Edad:</strong> {{ selectedCategoria.edadMinima }} - {{ selectedCategoria.edadMaxima }} años</small>
+                  </div>
+                  <div class="col-md-6">
+                    <small><strong>Precio base:</strong> ${{ selectedCategoria.precio.cuotaMensual | number:'1.2-2' }}</small>
+                  </div>
+                </div>
+              </c-card-body>
+            </c-card>
+
+            <!-- Selección de período -->
+            <div class="mb-3">
+              <label class="form-label">Período de Pago</label>
+              <div class="mt-2">
+                <div class="form-check">
+                  <input 
+                    class="form-check-input" 
+                    type="radio" 
+                    name="tipoPago"
+                    value="mensual"
+                    id="mensual"
+                    formControlName="tipoPago">
+                  <label class="form-check-label" for="mensual">
+                    🗓️ Pago Mensual
+                  </label>
+                </div>
+                <div class="form-check">
+                  <input 
+                    class="form-check-input" 
+                    type="radio" 
+                    name="tipoPago"
+                    value="anual"
+                    id="anual"
+                    formControlName="tipoPago">
+                  <label class="form-check-label" for="anual">
+                    📅 Pago Anual (con descuento)
+                  </label>
+                </div>
+              </div>
+              <div *ngIf="paymentForm.get('tipoPago')?.invalid && paymentForm.get('tipoPago')?.touched" 
+                   class="text-danger small mt-1">
+                Selecciona un tipo de pago
+              </div>
+            </div>
+
+            <!-- Selección de mes y año para pago mensual -->
+            <div *ngIf="paymentForm.get('tipoPago')?.value === 'mensual'" class="mb-3">
+              <div class="row">
+                <div class="col-md-6">
+                  <label for="mes" class="form-label">Mes</label>
+                  <select class="form-select" id="mes" formControlName="mes">
+                    <option value="">Selecciona un mes</option>
+                    <option *ngFor="let mes of meses; index as i" [value]="i + 1">{{ mes }}</option>
+                  </select>
+                </div>
+                <div class="col-md-6">
+                  <label for="anio" class="form-label">Año</label>
+                  <select class="form-select" id="anio" formControlName="anio">
+                    <option value="">Selecciona un año</option>
+                    <option *ngFor="let anio of anios" [value]="anio">{{ anio }}</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <!-- Selección de año para pago anual -->
+            <div *ngIf="paymentForm.get('tipoPago')?.value === 'anual'" class="mb-3">
+              <label for="anioAnual" class="form-label">Año</label>
+              <select class="form-select" id="anioAnual" formControlName="anio">
+                <option value="">Selecciona un año</option>
+                <option *ngFor="let anio of anios" [value]="anio">{{ anio }}</option>
+              </select>
+            </div>
+
+            <!-- Resumen del pago -->
+            <c-card *ngIf="selectedCategoria && paymentForm.get('tipoPago')?.value" class="mb-4 border-success">
+              <c-card-body class="bg-light">
+                <h6 class="text-success">💰 Resumen del Pago</h6>
+                <div class="row">
+                  <div class="col-md-8">
+                    <p class="mb-1"><strong>Categoría:</strong> {{ selectedCategoria.nombre }}</p>
+                    <p class="mb-1"><strong>Tipo:</strong> {{ paymentForm.get('tipoPago')?.value === 'mensual' ? 'Mensual' : 'Anual' }}</p>
+                    <p class="mb-1" *ngIf="paymentForm.get('tipoPago')?.value === 'mensual'">
+                      <strong>Período:</strong> {{ getMesNombre(paymentForm.get('mes')?.value) }} {{ paymentForm.get('anio')?.value }}
+                    </p>
+                    <p class="mb-1" *ngIf="paymentForm.get('tipoPago')?.value === 'anual'">
+                      <strong>Año:</strong> {{ paymentForm.get('anio')?.value }}
+                    </p>
+                  </div>
+                  <div class="col-md-4 text-end">
+                    <p class="mb-1"><strong>Monto:</strong></p>
+                    <h5 class="text-success mb-0">{{ getFinalAmount() | currency:'ARS':'symbol':'1.2-2' }}</h5>
+                    <small *ngIf="getDiscount() > 0" class="text-body-secondary">
+                      Descuento: -{{ getDiscount() | currency:'ARS':'symbol':'1.2-2' }}
+                    </small>
+                  </div>
+                </div>
+              </c-card-body>
+            </c-card>
+
+            <div class="d-flex justify-content-between">
+              <button 
+                type="button"
+                cButton 
+                color="secondary" 
+                variant="outline"
+                (click)="goBack()">
+                Cancelar
+              </button>
+              <button 
+                type="submit"
+                cButton 
+                color="primary"
+                [disabled]="!paymentForm.valid || loading">
+                <span *ngIf="loading" class="spinner-border spinner-border-sm me-2"></span>
+                Generar QR
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Paso 2: Mostrar QR y estado -->
+        <div *ngIf="currentStep === 2 && qrPayment">
+          <h5>Paso 2: Escanea el código QR</h5>
+          
+          <div class="text-center mb-4">
+            <!-- Código QR -->
+            <div class="mb-4">
+              <div class="d-inline-block p-3 bg-white border rounded shadow-sm">
+                <qrcode 
+                  [qrdata]="qrPayment.initPoint" 
+                  [width]="200" 
+                  [errorCorrectionLevel]="'M'">
+                </qrcode>
+              </div>
+            </div>
+
+            <!-- Instrucciones -->
+            <div class="alert alert-info">
+              <h6>📱 Instrucciones para pagar:</h6>
+              <ol class="text-start mb-0">
+                <li>Abre la app de <strong>MercadoPago</strong> en tu celular</li>
+                <li>Toca <strong>"Pagar con QR"</strong></li>
+                <li>Escanea este código QR</li>
+                <li>Confirma el pago en tu celular</li>
+              </ol>
+            </div>
+
+            <!-- Estado del pago -->
+            <c-card class="mb-3">
+              <c-card-body>
+                <h6>Estado del Pago</h6>
+                <div [ngSwitch]="paymentStatus">
+                  <div *ngSwitchCase="'pending'" class="text-warning">
+                    ⏳ Esperando pago...
+                  </div>
+                  <div *ngSwitchCase="'approved'" class="text-success">
+                    ✅ ¡Pago aprobado!
+                  </div>
+                  <div *ngSwitchCase="'rejected'" class="text-danger">
+                    ❌ Pago rechazado
+                  </div>
+                  <div *ngSwitchCase="'expired'" class="text-danger">
+                    ⏰ Código QR expirado
+                  </div>
+                  <div *ngSwitchDefault class="text-info">
+                    🔍 Verificando estado...
+                  </div>
+                </div>
+              </c-card-body>
+            </c-card>
+
+            <!-- Información adicional -->
+            <div class="row text-start">
+              <div class="col-md-6">
+                <small class="text-body-secondary">
+                  <strong>ID de Pago:</strong> {{ qrPayment.pagoId }}
+                </small>
+              </div>
+              <div class="col-md-6">
+                <small class="text-body-secondary">
+                  <strong>Expira en:</strong> {{ getTimeRemaining() }}
+                </small>
+              </div>
+            </div>
+          </div>
+
+          <div class="d-flex justify-content-between">
+            <button 
+              cButton 
+              color="secondary"
+              variant="outline"
+              (click)="goBack()">
+              Volver
+            </button>
+            <button 
+              cButton 
+              color="primary"
+              variant="outline"
+              (click)="checkPaymentStatus()"
+              [disabled]="loading">
+              <span *ngIf="loading" class="spinner-border spinner-border-sm me-2"></span>
+              Verificar Estado
+            </button>
+          </div>
+        </div>
+
+        <!-- Loading state -->
+        <div *ngIf="loading && currentStep === 1" class="text-center">
+          <c-spinner color="primary"></c-spinner>
+          <p class="mt-2">Cargando categorías...</p>
+        </div>
+
+        <!-- Error state -->
+        <c-alert 
+          *ngIf="error" 
+          color="danger" 
+          [dismissible]="true"
+          (alertClose)="error = ''">
+          {{ error }}
+        </c-alert>
+      </c-card-body>
+    </c-card>
+  </c-col>
+</c-row>

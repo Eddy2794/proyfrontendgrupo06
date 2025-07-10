@@ -5,7 +5,8 @@ import { environment } from '../../environments/environment';
 import { 
   Pago, 
   CreatePaymentPreferenceRequest, 
-  PaymentPreferenceResponse 
+  PaymentPreferenceResponse,
+  QRPaymentResponse 
 } from '../models/pago.model';
 
 @Injectable({
@@ -27,6 +28,17 @@ export class PagoService {
    */
   createAnualPreference(request: { categoriaId: string; anio: number; redirectUrls?: any }): Observable<{ data: PaymentPreferenceResponse }> {
     return this.http.post<{ data: PaymentPreferenceResponse }>(`${this.apiUrl}/anual`, request);
+  }
+
+  /**
+   * Crear pago QR para mostrar en pantalla
+   */
+  createQRPayment(request: { 
+    categoriaId: string; 
+    tipoPago: 'cuota' | 'anual'; 
+    periodo?: { mes?: number; anio?: number } 
+  }): Observable<{ data: QRPaymentResponse }> {
+    return this.http.post<{ data: QRPaymentResponse }>(`${this.apiUrl}/qr`, request);
   }
 
   /**

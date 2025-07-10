@@ -1,0 +1,23 @@
+.qr-container {
+  max-width: 300px;
+  margin: 0 auto;
+}
+
+.payment-status {
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.expiration-timer {
+  font-family: 'Courier New', monospace;
+  font-size: 1.1rem;
+  font-weight: bold;
+}
+
+.categoria-info {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+}
+
+.resumen-pago {
+  background: linear-gradient(135deg, #d1ecf1 0%, #bee5eb 100%);
+}

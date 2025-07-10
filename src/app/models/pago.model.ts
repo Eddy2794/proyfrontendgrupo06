@@ -48,5 +48,21 @@ export interface CreatePaymentPreferenceRequest {
 export interface PaymentPreferenceResponse {
   preferenceId: string;
   initPoint: string;
-  sandboxInitPoint: string;
+  sandboxInitPoint?: string;
+  monto: number;
+  categoria?: string;
+  periodo?: string;
+}
+
+export interface QRPaymentResponse {
+  preferenceId: string;
+  pagoId: string;
+  qrData?: string;
+  initPoint: string;
+  sandboxInitPoint?: string;
+  monto: number;
+  categoria: string;
+  descripcion: string;
+  expiresAt: Date;
+  metodoPago: string;
 }

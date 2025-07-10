@@ -48,17 +48,17 @@ export class UserService {
   }
 
   /**
-   * Actualizar perfil del usuario
+   * Actualizar perfil del usuario actual
    */
   updateProfile(updateData: UpdateProfileRequest): Observable<ApiResponse<User>> {
     return this.http.put<ApiResponse<User>>(`${this.apiUrl}/auth/profile`, updateData);
   }
 
   /**
-   * Cambiar contraseña del usuario
+   * Cambiar contraseña del usuario actual
    */
   changePassword(passwordData: ChangePasswordRequest): Observable<ApiResponse<any>> {
-    return this.http.put<ApiResponse<any>>(`${this.apiUrl}/auth/change-password`, passwordData);
+    return this.http.post<ApiResponse<any>>(`${this.apiUrl}/auth/change-password`, passwordData);
   }
 
   /**
@@ -76,24 +76,24 @@ export class UserService {
   }
 
   /**
-   * Obtener información de persona por ID
+   * Obtener persona por ID
    */
   getPersonaById(personaId: string): Observable<ApiResponse<Persona>> {
-    return this.http.get<ApiResponse<Persona>>(`${this.apiUrl}/persona/${personaId}`);
+    return this.http.get<ApiResponse<Persona>>(`${this.apiUrl}/personas/${personaId}`);
   }
 
   /**
    * Actualizar datos de persona
    */
   updatePersona(personaId: string, personaData: Partial<Persona>): Observable<ApiResponse<Persona>> {
-    return this.http.put<ApiResponse<Persona>>(`${this.apiUrl}/persona/${personaId}`, personaData);
+    return this.http.put<ApiResponse<Persona>>(`${this.apiUrl}/personas/${personaId}`, personaData);
   }
 
   /**
    * Obtener alumnos a cargo (para tutores)
    */
   getAlumnosACargo(): Observable<ApiResponse<User[]>> {
-    return this.http.get<ApiResponse<User[]>>(`${this.apiUrl}/tutor/alumnos`);
+    return this.http.get<ApiResponse<User[]>>(`${this.apiUrl}/tutores/alumnos`);
   }
 
   /**
@@ -106,9 +106,9 @@ export class UserService {
   // ==================== MÉTODOS ADMINISTRATIVOS ====================
 
   /**
-   * Obtener todos los usuarios (solo para administradores)
+   * Obtener todos los usuarios con paginación (solo para administradores)
    */
-  getAllUsers(page: number = 1, limit: number = 10, search?: string, estado?: string, rol?: string): Observable<ApiResponse<{users: User[], total: number, totalPages: number, currentPage: number}>> {
+  getAllUsers(page: number = 1, limit: number = 10, search?: string, estado?: string, rol?: string): Observable<ApiResponse<{users: User[], pagination: {page: number, limit: number, total: number, pages: number}}>> {
     let params = `?page=${page}&limit=${limit}`;
     if (search) {
       params += `&search=${encodeURIComponent(search)}`;
@@ -119,7 +119,7 @@ export class UserService {
     if (rol) {
       params += `&rol=${rol}`;
     }
-    return this.http.get<ApiResponse<{users: User[], total: number, totalPages: number, currentPage: number}>>(`${this.apiUrl}/users${params}`);
+    return this.http.get<ApiResponse<{users: User[], pagination: {page: number, limit: number, total: number, pages: number}}>>(`${this.apiUrl}/users${params}`);
   }
 
   /**
@@ -130,7 +130,7 @@ export class UserService {
   }
 
   /**
-   * Obtener perfil completo de usuario por ID (solo para administradores)
+   * Obtener perfil de usuario específico (solo para administradores)
    */
   getUserProfile(userId: string): Observable<ApiResponse<User>> {
     return this.http.get<ApiResponse<User>>(`${this.apiUrl}/users/${userId}/profile`);
@@ -204,5 +204,20 @@ export class UserService {
    */
   getAuditStats(): Observable<ApiResponse<any>> {
     return this.http.get<ApiResponse<any>>(`${this.apiUrl}/users/audit-stats`);
+  }
+
+  /**
+   * Resetear contraseña de usuario (solo para administradores)
+   */
+  resetUserPassword(userId: string, newPassword?: string): Observable<ApiResponse<{temporaryPassword: string, username: string}>> {
+    const body = newPassword ? { newPassword } : {};
+    return this.http.post<ApiResponse<{temporaryPassword: string, username: string}>>(`${this.apiUrl}/auth/dev/reset-password/${userId}`, body);
+  }
+
+  /**
+   * Verificar email de usuario manualmente (solo para administradores)
+   */
+  verifyUserEmail(userId: string): Observable<ApiResponse<User>> {
+    return this.http.put<ApiResponse<User>>(`${this.apiUrl}/users/${userId}`, { emailVerificado: true });
   }
 }

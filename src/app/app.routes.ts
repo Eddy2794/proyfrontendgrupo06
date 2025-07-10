@@ -3,6 +3,7 @@ import { AuthGuard } from './services/auth.guard';
 import { TorneoFormComponent } from './views/torneo-form/torneo-form.component';
 import { CategoriaFormComponent } from './views/categoria-form/categoria-form.component';
 import { TorneoCategoriaFormComponent} from './views/torneo-categoria-form/torneo-categoria-form.component'
+import { hasRoleGuard } from './guards/has-role.guard';
 
 export const routes: Routes = [
   {
@@ -85,8 +86,10 @@ export const routes: Routes = [
       {
         path: 'torneo-form/:id',
         component: TorneoFormComponent,
+        canActivate: [hasRoleGuard],
         data: {
-          title: 'Nuevo torneo'
+          title: 'Nuevo torneo',
+          roles: ['ADMIN', 'MODERATOR']
         }
       },
       {
@@ -108,8 +111,10 @@ export const routes: Routes = [
       {
         path: 'categoria-form/:id',
         component: CategoriaFormComponent,
+        canActivate: [hasRoleGuard],
         data: {
-          title: 'Gestión de Categoría'
+          title: 'Gestión de Categoría',
+          roles: ['ADMIN', 'MODERATOR']
         }
       },
       {
@@ -119,8 +124,10 @@ export const routes: Routes = [
       {
         path: 'torneo-categoria-form/:id',
         component: TorneoCategoriaFormComponent,
+        canActivate: [hasRoleGuard],
         data: {
-          title: 'Nuevo torneo'
+          title: 'Nuevo torneo',
+          roles: ['ADMIN', 'MODERATOR']
         }
       }
 
@@ -152,6 +159,13 @@ export const routes: Routes = [
     loadComponent: () => import('./views/pages/register/register.component').then(m => m.RegisterComponent),
     data: {
       title: 'Register Page'
+    }
+  },
+  {
+    path: 'forgot-password',
+    loadComponent: () => import('./views/pages/forgot-password/forgot-password.component').then(m => m.ForgotPasswordComponent),
+    data: {
+      title: 'Recuperar Contraseña'
     }
   },
   { path: '**', redirectTo: 'dashboard' }

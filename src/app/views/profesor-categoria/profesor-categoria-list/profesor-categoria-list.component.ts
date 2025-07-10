@@ -27,7 +27,7 @@ import { CategoriaService } from '../../../services/categoria.service';
 import { FormsModule } from '@angular/forms';
 import { ProfesorModel } from '../../../models/profesor-model';
 import { ProfesorCategoria } from '../../../models/profesor-categoria';
-
+import {AuthService} from '../../../services/auth.service';
 @Component({
   selector: 'app-profesor-categoria-list',
   standalone: true,
@@ -92,7 +92,8 @@ export class ProfesorCategoriaListComponent implements OnInit {
     private profesorCategoriaService: ProfesorCategoriaService,
     private profesorService: ProfesorService,
     private categoriaService: CategoriaService,
-    private router: Router
+    private router: Router,
+    public authService: AuthService
   ) {}
 
   ngOnInit() {

@@ -80,7 +80,7 @@ import { Pago, Categoria } from '../../models';
 
     <!-- Acciones principales -->
     <c-row class="mb-4">
-      <c-col md="6">
+      <c-col md="4">
         <c-card class="h-100">
           <c-card-body class="d-flex flex-column">
             <div class="text-center mb-3">
@@ -100,7 +100,27 @@ import { Pago, Categoria } from '../../models';
           </c-card-body>
         </c-card>
       </c-col>
-      <c-col md="6">
+      <c-col md="4">
+        <c-card class="h-100">
+          <c-card-body class="d-flex flex-column">
+            <div class="text-center mb-3">
+              <span style="font-size: 3rem;">📱</span>
+            </div>
+            <h5 class="card-title text-center">Pago con QR</h5>
+            <p class="card-text text-center text-body-secondary flex-grow-1">
+              Escanea el código QR y paga desde tu celular usando la app de MercadoPago
+            </p>
+            <button 
+              cButton 
+              color="success" 
+              class="w-100"
+              routerLink="/pagos/pago-qr">
+              📱 Pagar con QR
+            </button>
+          </c-card-body>
+        </c-card>
+      </c-col>
+      <c-col md="4">
         <c-card class="h-100">
           <c-card-body class="d-flex flex-column">
             <div class="text-center mb-3">
