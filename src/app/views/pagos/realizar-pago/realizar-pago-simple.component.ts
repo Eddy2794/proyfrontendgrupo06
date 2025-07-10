@@ -17,7 +17,7 @@ import { MercadoPagoService } from '../../../services/mercadopago.service';
 import { NotificationService } from '../../../services/notification.service';
 import { Categoria, CreatePaymentPreferenceRequest, PaymentPreferenceResponse } from '../../../models';
 import { environment } from '../../../../environments/environment';
-
+import {AuthService} from '../../../services/auth.service';
 @Component({
   selector: 'app-realizar-pago',
   standalone: true,
@@ -32,7 +32,7 @@ import { environment } from '../../../../environments/environment';
     SpinnerModule
   ],
   template: `
-    <c-row>
+    <c-row *ngIf="authService.currentRole === 'ADMIN' || authService.currentRole === 'TUTOR'">
       <c-col lg="8" class="mx-auto">
         <c-card>
           <c-card-header>
@@ -236,7 +236,7 @@ export class RealizarPagoComponent implements OnInit, AfterViewInit {
   private mercadopagoService = inject(MercadoPagoService);
   private notificationService = inject(NotificationService);
   private configService = inject(ConfigService);
-
+  public authService: AuthService
   @ViewChild('mercadopagoButton', { static: false }) mercadopagoButton!: ElementRef;
 
   currentStep = 1;

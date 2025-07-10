@@ -33,6 +33,7 @@ import {
 import { type ChartData } from 'chart.js';
 import { IconDirective } from '@coreui/icons-angular';
 import { ChartjsComponent } from '@coreui/angular-chartjs';
+import {AuthService} from '../../services/auth.service';
 @Component({
   selector: 'app-torneo',
   imports: [FormsModule, CommonModule,
@@ -77,7 +78,8 @@ export class TorneoComponent implements OnInit {
   constructor(
     private torneoService: TorneoService, 
     private router: Router,
-    private notificationService: NotificationService
+    private notificationService: NotificationService,
+    public authService: AuthService
   ) {
     this.getTorneos();
   }

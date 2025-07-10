@@ -17,6 +17,7 @@ import {
 import { DefaultFooterComponent, DefaultHeaderComponent } from './';
 import { navItems } from './_nav';
 import { NotificationsComponent } from '../../components/notifications/notifications.component';
+import { AuthService } from '../../services/auth.service';
 
 function isOverflown(element: HTMLElement) {
   return (
@@ -48,5 +49,19 @@ function isOverflown(element: HTMLElement) {
   ]
 })
 export class DefaultLayoutComponent {
-  public navItems = [...navItems];
+  public navItems: any[] = [];
+
+  constructor(public authService: AuthService) {
+    const userRole = this.authService.currentRole ?? '';
+    this.navItems = this.filterNavItems(navItems, userRole);
+  }
+
+  filterNavItems(items: any[], role: string): any[] {
+    return items
+      .filter(item => !item.roles || item.roles.includes(role))
+      .map(item => ({
+        ...item,
+        children: item.children ? this.filterNavItems(item.children, role) : undefined
+      }));
+  }
 }

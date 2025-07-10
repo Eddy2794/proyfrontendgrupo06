@@ -32,7 +32,7 @@ import {
 import { IconDirective } from '@coreui/icons-angular';
 import { NgIf, NgFor, DatePipe, DecimalPipe } from '@angular/common';
 import { ProfesorModel } from '../../models/profesor-model';
-
+import {AuthService} from '../../services/auth.service';
 @Component({
   selector: 'app-profesor-list',
   standalone: true,
@@ -90,7 +90,8 @@ export class ProfesorListComponent implements OnInit {
   constructor(
     private profesorService: ProfesorService,
     private router: Router,
-    private notificationService: NotificationService
+    private notificationService: NotificationService,
+    public authService: AuthService
   ) {}
 
   ngOnInit() {

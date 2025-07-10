@@ -21,7 +21,7 @@ import {
 } from '@coreui/angular';
 import { IconDirective } from '@coreui/icons-angular';
 import { FormsModule } from '@angular/forms';
-
+import {AuthService} from '../../../services/auth.service';
 @Component({
   standalone: true,
   selector: 'app-cuota-list',
@@ -98,7 +98,8 @@ export class CuotaListComponent {
   constructor(
     private cuotaService: CuotaService,
     private alumnoCategoriaService: AlumnoCategoriaService,
-    private categoriaService: CategoriaService
+    private categoriaService: CategoriaService,
+    public authService: AuthService
   ) {
     this.cargarDatos();
   }

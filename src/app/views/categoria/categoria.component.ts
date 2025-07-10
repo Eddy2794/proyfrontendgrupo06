@@ -37,7 +37,7 @@ import { NotificationService } from '../../services/notification.service';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { debounceTime, Subject } from 'rxjs';
-
+import {AuthService} from '../../services/auth.service';
 // Importaciones dinámicas para compatibilidad
 declare var jsPDF: any;
 declare var html2canvas: any;
@@ -137,7 +137,8 @@ export class CategoriaComponent implements OnInit {
     private router: Router,
     private colorModeService: ColorModeService,
     private notificationService: NotificationService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    public authService: AuthService
   ) { }
 
   ngOnInit(): void {

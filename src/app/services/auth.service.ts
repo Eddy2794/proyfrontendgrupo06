@@ -564,6 +564,12 @@ export class AuthService {
   }
 
   /**
+   * Obtener rol actual del usuario
+   */
+  get currentRole(): string | undefined {
+    return this.currentUser?.rol;
+  }
+  /*
    * Solicitar reset de contraseña (forgot password)
    */
   forgotPassword(email: string): Observable<any> {
@@ -591,5 +597,6 @@ export class AuthService {
     confirmPassword: string;
   }): Observable<any> {
     return this.http.post(`${environment.apiUrl}/auth/reset-password-simple`, data);
+
   }
 }
