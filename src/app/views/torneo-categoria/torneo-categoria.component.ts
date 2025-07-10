@@ -24,6 +24,7 @@ import {
 import { type ChartData } from 'chart.js';
 import { ChartjsComponent } from '@coreui/angular-chartjs';
 import { IconDirective } from '@coreui/icons-angular';
+import {AuthService} from '../../services/auth.service';
 @Component({
   selector: 'app-torneo-categoria',
   imports: [FormsModule, CommonModule,
@@ -66,7 +67,7 @@ export class TorneoCategoriaComponent implements OnInit {
       }
     ]
   };
-  constructor(private torneoCategoriaService: TorneoCategoriaService, private router: Router) {
+  constructor(private torneoCategoriaService: TorneoCategoriaService, private router: Router, public authService: AuthService) {
     this.getTorneosCategorias();
   }
   cargarChartTorneoCategoria(){

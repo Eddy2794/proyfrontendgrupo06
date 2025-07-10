@@ -20,7 +20,7 @@
                     <strong>Inscripciones categorias en torneo</strong>
                 </div>
                 <div>
-                    <button class=" btn btn-primary" (click)="agregar()">Nueva asignacion</button>
+                    <button *ngIf="authService.currentRole === 'ADMIN' || authService.currentRole === 'MODERATOR'" class=" btn btn-primary" (click)="agregar()">Nueva asignacion</button>
                 </div>
             </c-card-header>
             <c-card-body>
@@ -35,7 +35,7 @@
                             <th scope="col">Lugar</th>
                             <th scope="col">Inicio</th>
                             <th scope="col">Categoria</th>
-                            <th scope="col">Acciones</th>
+                            <th scope="col" *ngIf="authService.currentRole === 'ADMIN' || authService.currentRole === 'MODERATOR'">Acciones</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -46,7 +46,7 @@
                             <td>{{ t.torneo.lugar }}</td>
                             <td>{{ t.torneo.fecha_inicio | date:'dd/MM/yyyy' }}</td>
                             <td>{{ t.categoria.nombre }}</td>
-                            <td>
+                            <td *ngIf="authService.currentRole === 'ADMIN' || authService.currentRole === 'MODERATOR'">
                                 <button cButton size="sm" variant="outline" color="primary" (click)="modificar(t)"
                                     cTooltip="Editar torneo categoria">
                                     <svg cIcon name="cilPencil" size="sm"></svg>

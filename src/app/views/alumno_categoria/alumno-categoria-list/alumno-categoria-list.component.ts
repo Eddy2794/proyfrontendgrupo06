@@ -72,7 +72,7 @@ export class AlumnoCategoriaListComponent implements OnInit {
     private alumnoService: AlumnoService,
     private router: Router,
     private route: ActivatedRoute,
-    private authService: AuthService
+    public authService: AuthService
   ) {}
 
   ngOnInit(): void {

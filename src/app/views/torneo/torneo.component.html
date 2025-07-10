@@ -27,7 +27,7 @@
                         <svg cIcon name="cilCloudDownload" class="me-1"></svg>
                         Exportar PDF
                     </button>
-                    <button class="btn btn-primary" (click)="agregar()">NUEVO TORNEO</button>
+                    <button *ngIf="authService.currentRole === 'ADMIN' || authService.currentRole === 'MODERATOR'" class="btn btn-primary" (click)="agregar()">NUEVO TORNEO</button>
                 </div>
             </c-card-header>
             <c-card-body>
@@ -41,7 +41,7 @@
                             <th scope="col">Organizador</th>
                             <th scope="col">Direccion</th>
                             <th scope="col">Costo inscripcion</th>
-                            <th scope="col">Acciones</th>
+                            <th scope="col" *ngIf="authService.currentRole === 'ADMIN' || authService.currentRole === 'MODERATOR'">Acciones</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -51,7 +51,7 @@
                             <td>{{ t.organizador }}</td>
                             <td>{{ t.lugar}} - {{ t.direccion}}</td>
                             <td>{{ t.costo_inscripcion | currency}}</td>
-                            <td>
+                            <td *ngIf="authService.currentRole === 'ADMIN' || authService.currentRole === 'MODERATOR'">
                                 <button cButton size="sm" variant="outline" color="primary" (click)="modificar(t)"
                                     cTooltip="Editar torneo">
                                     <svg cIcon name="cilPencil" size="sm"></svg>

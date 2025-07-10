@@ -7,6 +7,7 @@
         </div>
         <button 
           cButton 
+          *ngIf="authService.currentRole === 'ADMIN' || authService.currentRole === 'MODERATOR'"
           color="primary" 
           size="sm"
           (click)="addProfesorCategoria()"
@@ -156,6 +157,7 @@
                     
                     <button 
                       cButton 
+                      *ngIf="authService.currentRole === 'ADMIN' || authService.currentRole === 'MODERATOR'"
                       size="sm" 
                       variant="outline" 
                       color="primary"
@@ -166,6 +168,7 @@
                     
                     <button 
                       cButton 
+                      *ngIf="authService.currentRole === 'ADMIN' || authService.currentRole === 'MODERATOR'"
                       size="sm" 
                       variant="outline" 
                       color="danger"

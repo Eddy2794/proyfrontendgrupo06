@@ -17,6 +17,7 @@
             Exportar PDF
           </button>
           <button 
+            *ngIf="authService.currentRole === 'ADMIN' || authService.currentRole === 'MODERATOR'"
             cButton 
             color="primary" 
             size="sm"
@@ -212,6 +213,7 @@
                     
                     <button 
                       cButton 
+                      *ngIf="authService.currentRole === 'ADMIN' || authService.currentRole === 'MODERATOR'"
                       size="sm" 
                       variant="outline" 
                       color="primary"
@@ -223,6 +225,7 @@
                     <!-- Botón Activar/Desactivar -->
                     <button 
                       cButton
+                      *ngIf="authService.currentRole === 'ADMIN' || authService.currentRole === 'MODERATOR'"
                       size="sm"
                       variant="outline"
                       [color]="alumno.estado === 'ACTIVO' ? 'warning' : 'success'"
@@ -233,6 +236,7 @@
 
                     <button 
                       cButton 
+                      *ngIf="authService.currentRole === 'ADMIN' || authService.currentRole === 'MODERATOR'"
                       size="sm" 
                       variant="outline" 
                       color="danger"
